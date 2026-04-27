@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import MenuItem from "../models/MenuItem.js";
 
+
+
 // POST /orders
 export const createOrder = async (req, res) => {
   const session = await mongoose.startSession();
@@ -109,6 +111,56 @@ export const createOrder = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: err.message || "Order creation failed"
+    });
+  }
+};
+
+
+
+
+export const getOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // ❌ validate ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID"
+      });
+    }
+
+    // 🔍 fetch order
+    const order = await Order.findById(id)
+      .populate("items.menu_item_id", "name price")
+      .lean();
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    // 🔒 ensure ownership
+    if (order.user_id.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized access"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (err) {
+    console.error("GET ORDER ERROR:", err.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch order"
     });
   }
 };

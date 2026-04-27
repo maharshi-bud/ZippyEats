@@ -4,6 +4,7 @@ const instance = axios.create({
   baseURL: "http://localhost:5010/api"
 });
 
+// attach token automatically
 instance.interceptors.request.use((config) => {
   const token =
     typeof window !== "undefined"
