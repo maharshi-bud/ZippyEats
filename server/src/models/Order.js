@@ -66,7 +66,10 @@ const orderSchema = new mongoose.Schema(
 
 
 
-orderSchema.pre("save", function () {
+// ✅ FIXED STATUS VALIDATION HOOK
+orderSchema.pre("save", async function () {
+  if (this.isNew) return;
+
   const validFlow = {
     placed: ["accepted", "cancelled"],
     accepted: ["preparing"],
@@ -74,13 +77,20 @@ orderSchema.pre("save", function () {
     out_for_delivery: ["delivered"]
   };
 
-  if (!this.isNew) {
-    const prev = this.get("status");
-    const nextStatus = this.status;
+  // 🔥 Get previous state from DB
+  const prevDoc = await this.constructor.findById(this._id);
 
-    if (validFlow[prev] && !validFlow[prev].includes(nextStatus)) {
-      throw new Error("Invalid status transition");
-    }
+  if (!prevDoc) return;
+
+  const prev = prevDoc.status;
+  const next = this.status;
+
+  // skip if same
+  if (prev === next) return;
+
+  // ❌ invalid transition
+  if (validFlow[prev] && !validFlow[prev].includes(next)) {
+    throw new Error("Invalid status transition");
   }
 });
 

@@ -12,7 +12,7 @@ import Order from "./models/Order.js";
 import authRoutes from "./routes/authRoutes.js"
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-
+import { runOrderEngine } from "./services/orderEngine.js";
 dotenv.config();
 
 const app = express();
@@ -45,7 +45,10 @@ const startServer = async () => {
     Restaurant.init(),
     MenuItem.init(),
     Order.init()
+
   ]);
+
+  setInterval(runOrderEngine, 5000); // every 5 sec
 
   app.listen(PORT, () => {
     console.log(`🚀 ZippyEats running on ${PORT}`);
