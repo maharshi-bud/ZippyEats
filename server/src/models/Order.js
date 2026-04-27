@@ -66,7 +66,7 @@ const orderSchema = new mongoose.Schema(
 
 
 
-orderSchema.pre("save", function (next) {
+orderSchema.pre("save", function () {
   const validFlow = {
     placed: ["accepted", "cancelled"],
     accepted: ["preparing"],
@@ -79,11 +79,9 @@ orderSchema.pre("save", function (next) {
     const nextStatus = this.status;
 
     if (validFlow[prev] && !validFlow[prev].includes(nextStatus)) {
-      return next(new Error("Invalid status transition"));
+      throw new Error("Invalid status transition");
     }
   }
-
-  next();
 });
 
 export default mongoose.model("Order", orderSchema);

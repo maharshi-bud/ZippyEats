@@ -11,14 +11,19 @@ import MenuItem from "./models/MenuItem.js";
 import Order from "./models/Order.js";
 import authRoutes from "./routes/authRoutes.js"
 import restaurantRoutes from "./routes/restaurantRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 dotenv.config();
 
 const app = express();
 
+
+
+
 app.use(cors());
 app.use(express.json());
 
+app.use("/api", orderRoutes);
 app.use("/api/test", testRoutes);
 
 app.get("/api/health", (req, res) => {
