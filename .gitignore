@@ -119,3 +119,7 @@ dump/
 *.zip
 *.tar
 *.gz
+
+
+.hooks
+.codex

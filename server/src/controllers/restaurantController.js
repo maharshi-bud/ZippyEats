@@ -17,31 +17,40 @@ export const getRestaurants = async (req, res, next) => {
 };
 
 // GET /restaurant/:id
-export const getRestaurantById = async (req, res, next) => {
+export const getRestaurantById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // validate id format (optional but safe)
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid ID" });
     }
 
-    // console.log("DEBUG: Param ID:", id);
-    // console.log("DEBUG: DB Name:", mongoose.connection.name);
-    // console.log("DEBUG: Collection Name:", Restaurant.collection.name);
-
-    const restaurant = await Restaurant.findOne({
-      _id: id
-    }).lean();
+    // get restaurant
+    const restaurant = await Restaurant.findById(id).lean();
 
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
 
+    // 🔥 string-based query (matches your DB)
+    const menu = await MenuItem.find({
+      restaurant_id: id
+    }).lean();
+
+    console.log("Restaurant ID:", id);
+    console.log("Menu found:", menu);
+
     res.json({
       success: true,
-      data: restaurant
+      data: {
+        ...restaurant,
+        menu
+      }
     });
+
   } catch (err) {
-    next(err);
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };

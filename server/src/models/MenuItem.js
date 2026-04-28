@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const menuItemSchema = new mongoose.Schema(
   {
     restaurant_id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "Restaurant",
       required: true,
       index: true
