@@ -1,8 +1,8 @@
 "use client";
 
 import { useSelector, useDispatch } from "react-redux";
-import { selectCartItems, clearCart } from "@/store/slices/cartSlice";
-import axios from "@/lib/axios";
+import { selectCartItems, clearCart } from "../../store/slices/cartSlice";
+import axios from "../../lib/axios";
 import { useRouter } from "next/navigation";
 
 export default function Checkout() {
