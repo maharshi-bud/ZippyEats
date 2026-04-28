@@ -3,38 +3,67 @@
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/slices/authSlice";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
+  const [mounted, setMounted] = useState(false);
+  const [location, setLocation] = useState("Ahmedabad");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
-    <div style={{
-      background: "#fc8019",
-      padding: "12px",
-      color: "white",
-      display: "flex",
-      justifyContent: "space-between"
-    }}>
-      <h2>ZippyEats</h2>
+    <nav className="navbar">
 
-      <div>
-        <Link href="/" style={{ marginRight: "10px", color: "white" }}>
-          Home
-        </Link>
+      {/* LEFT */}
+      <div className="nav-left">
+        
+<Link href="/" className="nav-header">
+  <h2 className="logo">ZippyEats</h2>
+</Link> 
+        {/* 📍 LOCATION */}
+        <select
+          className="location-select"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        >
+          <option>Ahmedabad</option>
+          <option>Mumbai</option>
+          <option>Delhi</option>
+          <option>Bangalore</option>
+        </select>
+      </div>
 
-        <Link href="/cart" style={{ marginRight: "10px", color: "white" }}>
-          Cart
-        </Link>
+      {/* 🔍 SEARCH */}
+      <div className="nav-search">
+        <input
+          type="text"
+          placeholder="Search restaurants..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* RIGHT */}
+      <div className="nav-links">
+        <Link href="/">Home</Link>
+        <Link href="/cart">Cart</Link>
 
         {token ? (
-          <button onClick={() => dispatch(logout())}>Logout</button>
+          <button className="logout-btn" onClick={() => dispatch(logout())}>
+            Logout
+          </button>
         ) : (
-          <Link href="/login" style={{ color: "white" }}>
-            Login
-          </Link>
+          <Link href="/login">Login</Link>
         )}
       </div>
-    </div>
+    </nav>
   );
 }

@@ -1,21 +1,44 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://localhost:5010/api"
+  baseURL: "http://localhost:5010/api",
+  withCredentials: false
 });
 
-// attach token automatically
-instance.interceptors.request.use((config) => {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null;
+// 🔐 Request interceptor
+instance.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        // ensure headers exist
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ❌ Response interceptor (important)
+instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle unauthorized globally
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized - token may be invalid");
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
   }
-
-  return config;
-});
+);
 
 export default instance;

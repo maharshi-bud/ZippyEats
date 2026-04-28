@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "../../../lib/axios";
+import gsap from "gsap";
 
 const steps = [
   "placed",
@@ -13,6 +14,7 @@ const steps = [
 
 export default function OrderPage({ params }) {
   const [order, setOrder] = useState(null);
+  const progressRef = useRef([]);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -26,43 +28,77 @@ export default function OrderPage({ params }) {
     return () => clearInterval(interval);
   }, [params.id]);
 
+  // 🔥 GSAP animation
+  useEffect(() => {
+    if (!order) return;
+
+    const currentIndex = steps.indexOf(order.status);
+
+    progressRef.current.forEach((el, index) => {
+      gsap.to(el, {
+        width: index <= currentIndex ? "100%" : "0%",
+        duration: 0.6,
+        ease: "power2.out"
+      });
+    });
+  }, [order]);
+
   if (!order) return <p>Loading...</p>;
 
   const currentIndex = steps.indexOf(order.status);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div>
       <h1>Order Tracking</h1>
 
-      {/* 🔵 Progress Bar */}
+      {/* 🔵 Animated Progress */}
       <div style={{ display: "flex", margin: "20px 0" }}>
         {steps.map((step, index) => (
           <div key={step} style={{ flex: 1, textAlign: "center" }}>
             <div
               style={{
-                height: "10px",
-                background:
-                  index <= currentIndex ? "green" : "#ddd",
+                height: "8px",
+                background: "#eee",
+                borderRadius: "10px",
+                overflow: "hidden",
                 margin: "0 5px"
               }}
-            />
-            <p style={{ fontSize: "12px" }}>{step}</p>
+            >
+              <div
+                ref={(el) => (progressRef.current[index] = el)}
+                style={{
+                  height: "100%",
+                  width: index <= currentIndex ? "100%" : "0%",
+                  background: "#fc8019"
+                }}
+              />
+            </div>
+
+            <p
+              style={{
+                fontSize: "12px",
+                marginTop: "6px",
+                color: index <= currentIndex ? "#fc8019" : "#888"
+              }}
+            >
+              {step}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* 📦 Status */}
-      <h2>Status: {order.status}</h2>
-      <p>Total: ₹{order.total_amount}</p>
-      <p>ETA: {new Date(order.eta).toLocaleTimeString()}</p>
+      {/* 📦 Info */}
+      <div className="card">
+        <h2>Status: {order.status}</h2>
+        <p>Total: ₹{order.total_amount}</p>
+        <p>ETA: {new Date(order.eta).toLocaleTimeString()}</p>
+      </div>
 
       {/* 🍔 Items */}
       <h3>Items</h3>
       {order.items.map((item) => (
-        <div key={item.menu_item_id._id}>
-          <p>
-            {item.menu_item_id.name} × {item.quantity}
-          </p>
+        <div className="card" key={item.menu_item_id._id}>
+          {item.menu_item_id.name} × {item.quantity}
         </div>
       ))}
     </div>
