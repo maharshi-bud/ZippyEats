@@ -8,11 +8,18 @@ import CuisineBar from "../components/CuisineBar";
 import PromoCarousel from "../components/PromoCarousel";
 import PopularBar from "../components/PopularBar";
 import RushDeals from "../components/RushDeals";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, decreaseQty } from "../store/slices/cartSlice";
 
+// import { useRouter } from "next/navigation";
+// const router = useRouter();
 export default function Home() {
   const [restaurants, setRestaurants] = useState([]);
   const [selectedCuisine, setSelectedCuisine] = useState("All");
-
+  const router = useRouter();
+const dispatch = useDispatch();
+const cart = useSelector((state) => state.cart.items);
   useEffect(() => {
     let url = "/restaurants";
 
@@ -54,32 +61,98 @@ export default function Home() {
         </div>
 
         <div className="restaurant-grid">
-          {visibleRestaurants.map((r) => (
-            <Link key={r._id} href={`/restaurant/${r._id}`}>
-              <div className="rescard2">
+         {visibleRestaurants.map((r) => {
+  // 🔥 TEMP fallback item (since you don't have featured_item yet)
+  const fakeItem = {
+    _id: r._id,
+    name: r.name,
+    price: 199
+  };
 
-                <div
-                  className="rescard2-img"
-                  style={{
-                    backgroundImage: `url(https://source.unsplash.com/400x300/?food,${r.name})`
-                  }}
-                />
+  const itemInCart = cart.find(
+    (i) => i.menu_item_id === fakeItem._id
+  );
 
-                <div className="rescard2-info">
-                  <h3>{r.name}</h3>
+  return (
+    <div key={r._id} className="rescard2">
 
-                  <p>
-                    {r.cuisine?.join(", ") || "Multi Cuisine"}
-                  </p>
+      {/* IMAGE */}
+      <div
+        className="rescard2-img"
+        style={{
+          backgroundImage: `url(https://source.unsplash.com/400x300/?food,${r.name})`
+        }}
+        onClick={() => router.push(`/restaurant/${r._id}`)}
+      >
 
-                  <div className="rescard2-meta">
-                    ⭐ {r.rating} • {r.delivery_time} mins
-                  </div>
-                </div>
+        {/* 🔥 BUTTON */}
+        <div className="rescard-action">
 
-              </div>
-            </Link>
-          ))}
+          {!itemInCart ? (
+            <button
+              className="add-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                dispatch(
+                  addToCart({
+                    menu_item_id: fakeItem._id,
+                    name: fakeItem.name,
+                    price: fakeItem.price
+                  })
+                );
+              }}
+            >
+              Add
+            </button>
+          ) : (
+            <div className="stepper">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(decreaseQty(fakeItem._id));
+                }}
+              >
+                -
+              </button>
+
+              <span>{itemInCart.quantity}</span>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(
+                    addToCart({
+                      menu_item_id: fakeItem._id,
+                      name: fakeItem.name,
+                      price: fakeItem.price
+                    })
+                  );
+                }}
+              >
+                +
+              </button>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* INFO */}
+      <div
+        className="rescard2-info"
+        onClick={() => router.push(`/restaurant/${r._id}`)}
+      >
+        <h3>{r.name}</h3>
+        <p>{r.cuisine?.join(", ") || "Multi Cuisine"}</p>
+
+        <div className="rescard2-meta">
+          ⭐ {r.rating} • {r.delivery_time} mins
+        </div>
+      </div>
+
+    </div>
+  );
+})}
         </div>
       </div>
 

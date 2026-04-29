@@ -25,6 +25,8 @@ export default function RestaurantList({ restaurants }) {
               style={{
                 backgroundImage: `url(https://source.unsplash.com/400x300/?food,${r.name})`
               }}
+              
+
             />
 
             <div className="rescard2-info">

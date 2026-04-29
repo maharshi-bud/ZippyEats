@@ -5,10 +5,14 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/slices/authSlice";
 import { useState, useEffect } from "react";
 import logo from "../lib/imgs/logoText.png";
+import CartDrawer from "./CartDrawer";
+// import { useState } from "react";
+
 
 export default function Navbar() {
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
+  const [cartOpen, setCartOpen] = useState(false);
 
   const [mounted, setMounted] = useState(false);
   const [location, setLocation] = useState("Ahmedabad");
@@ -75,7 +79,7 @@ export default function Navbar() {
         <Link href="/">Home</Link>
         {/* <Link href="/cart">Cart</Link> */}
 
-      <Link href="/cart" className="cart-link">
+      {/* <Link href="/cart" className="cart-link">
           🛒 Cart
 
           {totalItems > 0 && (
@@ -83,7 +87,25 @@ export default function Navbar() {
               {totalItems}
             </span>
           )}
-        </Link>
+
+
+
+        </Link> */}
+
+<button  className="navlinkbutton" onClick={() => setCartOpen(true) }>
+          🛒 Cart {totalItems > 0 && (
+            <span className="cart-badge">
+              {totalItems}
+            </span>
+          )}
+        </button>
+
+
+         <CartDrawer
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+      />
+
 
 
 
@@ -92,7 +114,7 @@ export default function Navbar() {
             Logout
           </button>
         ) : (
-          <Link href="/login">Login</Link>
+          <Link href="/login" className="navlinkbutton">Login</Link>
         )}
       </div>
     </nav>
