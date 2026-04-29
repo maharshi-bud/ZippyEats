@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "gsap": "^3.15.0"
+    "gsap": "^3.15.0",
+    "redux-persist": "^6.0.0"
   }
 }

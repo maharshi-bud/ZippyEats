@@ -9,7 +9,7 @@ import {
 } from "../../store/slices/cartSlice";
 import { useRouter } from "next/navigation";
 
-export default function CartPage() {
+export default function CheckoutPage() {
   const items = useSelector(selectCartItems);
   const total = useSelector(selectCartTotal);
   const dispatch = useDispatch();
@@ -71,7 +71,7 @@ export default function CartPage() {
 
           <button
             className="cart1-btn"
-            onClick={() => router.push("/checkout")}
+            onClick={() => router.push("/orders")}
           >
             Checkout
           </button>

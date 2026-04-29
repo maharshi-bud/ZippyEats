@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/slices/authSlice";
 import { useState, useEffect } from "react";
+import logo from "../lib/imgs/logoText.png";
 
 export default function Navbar() {
   const token = useSelector((state) => state.auth.token);
@@ -12,6 +13,16 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [location, setLocation] = useState("Ahmedabad");
   const [search, setSearch] = useState("");
+
+  
+  const cart = useSelector((state) => state.cart.items);
+
+  // 🔥 total items (not just length)
+  const totalItems = cart.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
 
   useEffect(() => {
     setMounted(true);
@@ -26,7 +37,9 @@ export default function Navbar() {
       <div className="nav-left">
         
 <Link href="/" className="nav-header">
-  <h2 className="logo">ZippyEats</h2>
+
+  <img src={logo.src} alt="ZippyEats" className="logo-img" />
+  
 </Link> 
         {/* 📍 LOCATION */}
         <select
@@ -51,10 +64,28 @@ export default function Navbar() {
         />
       </div>
 
+
+      
+
+
+
+
       {/* RIGHT */}
       <div className="nav-links">
         <Link href="/">Home</Link>
-        <Link href="/cart">Cart</Link>
+        {/* <Link href="/cart">Cart</Link> */}
+
+      <Link href="/cart" className="cart-link">
+          🛒 Cart
+
+          {totalItems > 0 && (
+            <span className="cart-badge">
+              {totalItems}
+            </span>
+          )}
+        </Link>
+
+
 
         {token ? (
           <button className="logout-btn" onClick={() => dispatch(logout())}>

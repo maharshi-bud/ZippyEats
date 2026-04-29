@@ -5,7 +5,20 @@ import MenuItem from "../models/MenuItem.js";
 // GET /restaurants
 export const getRestaurants = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find().lean();
+    const { cuisine } = req.query;
+
+    let filter = {};
+
+    // 🔥 filter by cuisine (via menu items)
+    if (cuisine) {
+      const restaurantIds = await MenuItem.distinct("restaurant_id", {
+        cuisine
+      });
+
+      filter._id = { $in: restaurantIds };
+    }
+
+    const restaurants = await Restaurant.find(filter).lean();
 
     res.json({
       success: true,
@@ -21,30 +34,29 @@ export const getRestaurantById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // validate id format (optional but safe)
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
-    }
+    // if (!mongoose.Types.ObjectId.isValid(id)) {
+    //   return res.status(400).json({ message: "Invalid ID" });
+    // }
 
-    // get restaurant
     const restaurant = await Restaurant.findById(id).lean();
 
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
 
-    // 🔥 string-based query (matches your DB)
+    // 🔥 fetch menu
     const menu = await MenuItem.find({
       restaurant_id: id
     }).lean();
 
-    console.log("Restaurant ID:", id);
-    console.log("Menu found:", menu);
+    // 🔥 derive cuisines (no need for sync script)
+    const cuisines = [...new Set(menu.map((m) => m.cuisine))];
 
     res.json({
       success: true,
       data: {
         ...restaurant,
+        cuisines,
         menu
       }
     });

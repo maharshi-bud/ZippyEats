@@ -34,14 +34,14 @@ export const runOrderEngine = async () => {
       if (!STATUS_FLOW[currentStatus]) continue;
 
       const lastUpdate = order.updatedAt;
-      const diff = (now - lastUpdate) / 1000; // seconds
+      const diff = (now - lastUpdate) / 1; // seconds
 
       let requiredTime = 10; // default seconds per stage
 
       // ⏱️ customize timings
-      if (currentStatus === "accepted") requiredTime = 15;
-      if (currentStatus === "preparing") requiredTime = 20;
-      if (currentStatus === "out_for_delivery") requiredTime = 25;
+      if (currentStatus === "accepted") requiredTime = 5;
+      if (currentStatus === "preparing") requiredTime = 5;
+      if (currentStatus === "out_for_delivery") requiredTime = 5;
 
       if (diff >= requiredTime) {
         order.status = STATUS_FLOW[currentStatus];

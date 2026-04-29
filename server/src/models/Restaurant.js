@@ -20,8 +20,14 @@ const restaurantSchema = new mongoose.Schema(
     delivery_time: {
       type: Number,
       required: true
+    },
+    cuisines: {
+      type: [String],
+      default: []
     }
   },
+   
+  
   { timestamps: true }
 );
 

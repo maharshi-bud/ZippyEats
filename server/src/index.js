@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import menuRoutes from "./routes/menuRoutes.js";
 
 import { connectDB } from "./config/db.js";
 import testRoutes from "./routes/testRoutes.js";
@@ -13,6 +14,8 @@ import authRoutes from "./routes/authRoutes.js"
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import { runOrderEngine } from "./services/orderEngine.js";
+import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
+
 dotenv.config();
 
 const app = express();
@@ -22,7 +25,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
 app.use("/api", orderRoutes);
 app.use("/api/test", testRoutes);
 
@@ -30,7 +32,7 @@ app.get("/api/health", (req, res) => {
   res.json({ success: true, app: "ZippyEats" });
 });
 app.use("/api/auth", authRoutes);
-
+app.use("/api/menu", menuRoutes);
 app.use ("/api", restaurantRoutes);
 app.use(errorHandler);
 
@@ -38,21 +40,22 @@ const PORT = process.env.PORT || 5010;
 
 const startServer = async () => {
   await connectDB();
-
-
-    await Promise.all([
+  
+  
+  await Promise.all([
     User.init(),
     Restaurant.init(),
     MenuItem.init(),
     Order.init()
-
+    
   ]);
-
+  
   setInterval(runOrderEngine, 5000); // every 5 sec
-
+  
   app.listen(PORT, () => {
     console.log(`🚀 ZippyEats running on ${PORT}`);
   });
+  await syncRestaurantCuisines();
 };
 
 startServer();

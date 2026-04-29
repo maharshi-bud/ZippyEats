@@ -5,15 +5,26 @@ import {
   selectCartItems,
   selectCartTotal,
   addToCart,
-  removeFromCart
+  removeFromCart,decreaseQty
 } from "../../store/slices/cartSlice";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import api from "../../lib/axios";
 
 export default function CartPage() {
   const items = useSelector(selectCartItems);
   const total = useSelector(selectCartTotal);
   const dispatch = useDispatch();
   const router = useRouter();
+
+  // 🔥 FIX
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // ⛔ prevent SSR mismatch
 
   return (
     <div className="cart1-container">
@@ -34,7 +45,7 @@ export default function CartPage() {
               <div className="cart1-quantity">
                 <button
                   onClick={() =>
-                    dispatch(removeFromCart(item.menu_item_id))
+                    dispatch(decreaseQty(item.menu_item_id))
                   }
                 >
                   -
@@ -76,7 +87,28 @@ export default function CartPage() {
 
           <button
             className="cart1-btn"
-            onClick={() => router.push("/checkout")}
+
+            onClick={async () => {
+  try {
+    const formattedItems = items.map((item) => ({
+      menu_item_id: item.menu_item_id,
+      quantity: item.quantity
+    }));
+
+    const res = await api.post("/orders", {
+      items: formattedItems,
+      total_amount: total + 40
+    });
+
+    const orderId = res.data.data._id;
+
+    router.push(`/orders/${orderId}`);
+  } catch (err) {
+    console.error("ORDER ERROR:", err.response?.data || err.message);
+  }
+}}
+
+
           >
             Checkout
           </button>
