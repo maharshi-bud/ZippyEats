@@ -6,19 +6,20 @@ import { logout } from "../store/slices/authSlice";
 import { useState, useEffect } from "react";
 import logo from "../lib/imgs/logoText.png";
 import CartDrawer from "./CartDrawer";
+
 // import { useState } from "react";
 
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
   const [cartOpen, setCartOpen] = useState(false);
-
   const [mounted, setMounted] = useState(false);
   const [location, setLocation] = useState("Ahmedabad");
   const [search, setSearch] = useState("");
-
   
+  const router = useRouter();
   const cart = useSelector((state) => state.cart.items);
 
   // 🔥 total items (not just length)
@@ -105,6 +106,24 @@ export default function Navbar() {
         open={cartOpen}
         onClose={() => setCartOpen(false)}
       />
+
+       
+
+
+        {token ? (
+  <button
+    onClick={() => router.push("/profile")}
+    className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition"
+  >
+    👤
+  </button>
+
+
+) :
+(
+          <Link href="/login" className="navlinkbutton">👤</Link>
+        )}
+
 
 
 

@@ -33,7 +33,7 @@ export default function AllRestaurants() {
                 <h3>{r.name}</h3>
 
                 <p>
-                  {r.cuisine?.join(", ") || "Multi Cuisine"}
+                  {r.cuisine?.join(", ") }
                 </p>
 
                 <div className="rescard2-meta">

@@ -164,3 +164,31 @@ export const getOrderById = async (req, res) => {
     });
   }
 };
+
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user_id: req.user.id })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "items.menu_item_id",
+        select: "name price restaurant_id",
+        populate: {
+          path: "restaurant_id",
+          select: "name"
+        }
+      })
+      .lean();
+
+    res.json({
+      success: true,
+      data: orders
+    });
+  } catch (err) {
+    console.error("GET MY ORDERS ERROR:", err.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Error fetching orders"
+    });
+  }
+};

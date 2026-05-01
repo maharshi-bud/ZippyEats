@@ -31,7 +31,7 @@ export default function RestaurantList({ restaurants }) {
 
             <div className="rescard2-info">
               <h3>{r.name}</h3>
-              <p>{r.cuisine?.join(", ") || "Multi Cuisine"}</p>
+              <p>{r.cuisine?.join(", ") }</p>
 
               <div className="rescard2-meta">
                 ⭐ {r.rating || 4.2} • {r.delivery_time || 30} mins

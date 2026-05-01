@@ -88,7 +88,7 @@ const cart = useSelector((state) => state.cart.items);
         {/* 🔥 BUTTON */}
         <div className="rescard-action">
 
-          {!itemInCart ? (
+          {/* {!itemInCart ? (
             <button
               className="add-btn"
               onClick={(e) => {
@@ -132,7 +132,7 @@ const cart = useSelector((state) => state.cart.items);
                 +
               </button>
             </div>
-          )}
+          )} */}
 
         </div>
       </div>
@@ -143,7 +143,7 @@ const cart = useSelector((state) => state.cart.items);
         onClick={() => router.push(`/restaurant/${r._id}`)}
       >
         <h3>{r.name}</h3>
-        <p>{r.cuisine?.join(", ") || "Multi Cuisine"}</p>
+        <p>{r.cuisine?.join(", ") }</p>
 
         <div className="rescard2-meta">
           ⭐ {r.rating} • {r.delivery_time} mins

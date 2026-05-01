@@ -15,11 +15,10 @@ import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import { runOrderEngine } from "./services/orderEngine.js";
 import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
-
+import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
 
 const app = express();
-
 
 
 
@@ -34,6 +33,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/menu", menuRoutes);
 app.use ("/api", restaurantRoutes);
+app.use("/api/users", userRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5010;

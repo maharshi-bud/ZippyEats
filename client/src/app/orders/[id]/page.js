@@ -24,11 +24,9 @@ export default function OrderPage({ params }) {
 
     fetchOrder();
     const interval = setInterval(fetchOrder, 4000);
-
     return () => clearInterval(interval);
   }, [params.id]);
 
-  // 🔥 GSAP animation
   useEffect(() => {
     if (!order) return;
 
@@ -37,70 +35,130 @@ export default function OrderPage({ params }) {
     progressRef.current.forEach((el, index) => {
       gsap.to(el, {
         width: index <= currentIndex ? "100%" : "0%",
-        duration: 0.6,
-        ease: "power2.out"
+        duration: 0.5
       });
     });
   }, [order]);
 
-  if (!order) return <p>Loading...</p>;
+  if (!order) return <div className="p-10">Loading...</div>;
 
   const currentIndex = steps.indexOf(order.status);
 
   return (
-    <div>
-      <h1>Order Tracking</h1>
+    <div className="max-w-6xl mx-auto px-6 py-8">
 
-      {/* 🔵 Animated Progress */}
-      <div style={{ display: "flex", margin: "20px 0" }}>
-        {steps.map((step, index) => (
-          <div key={step} style={{ flex: 1, textAlign: "center" }}>
-            <div
-              style={{
-                height: "8px",
-                background: "#eee",
-                borderRadius: "10px",
-                overflow: "hidden",
-                margin: "0 5px"
-              }}
-            >
-              <div
-                ref={(el) => (progressRef.current[index] = el)}
-                style={{
-                  height: "100%",
-                  width: index <= currentIndex ? "100%" : "0%",
-                  background: "#fc8019"
-                }}
-              />
+      {/* 🔥 HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">📦 Order Tracking</h1>
+
+        <button
+          onClick={() => window.print()}
+          className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800"
+        >
+          🧾 Print Bill
+        </button>
+      </div>
+
+      {/* 🔥 PROGRESS */}
+      <div className="bg-white p-5 rounded-xl shadow-sm border mb-6">
+        <div className="flex gap-2">
+          {steps.map((step, index) => (
+            <div key={step} className="flex-1 text-center">
+
+              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  ref={(el) => (progressRef.current[index] = el)}
+                  className="h-full bg-green-500"
+                  style={{
+                    width: index <= currentIndex ? "100%" : "0%"
+                  }}
+                />
+              </div>
+
+              <p
+                className={`text-xs mt-2 capitalize ${
+                  index <= currentIndex
+                    ? "text-green-600 font-semibold"
+                    : "text-slate-400"
+                }`}
+              >
+                {step.replaceAll("_", " ")}
+              </p>
             </div>
+          ))}
+        </div>
+      </div>
 
-            <p
-              style={{
-                fontSize: "12px",
-                marginTop: "6px",
-                color: index <= currentIndex ? "#fc8019" : "#888"
-              }}
-            >
-              {step}
+      {/* 🔥 2 COLUMN GRID */}
+      <div className="grid md:grid-cols-2 gap-6">
+
+        {/* LEFT → ORDER DETAILS */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <h2 className="text-lg font-semibold mb-4">
+            Order Details
+          </h2>
+
+          <div className="space-y-3 text-sm">
+            <p>
+              <span className="text-slate-500">Status:</span>{" "}
+              <span className="font-semibold text-green-600 capitalize">
+                {order.status.replaceAll("_", " ")}
+              </span>
+            </p>
+
+            <p>
+              <span className="text-slate-500">Total:</span>{" "}
+              <span className="font-semibold">
+                ₹{order.total_amount}
+              </span>
+            </p>
+
+            <p>
+              <span className="text-slate-500">ETA:</span>{" "}
+              <span className="font-semibold">
+                {new Date(order.eta).toLocaleTimeString()}
+              </span>
+            </p>
+
+            <p>
+              <span className="text-slate-500">Order ID:</span>{" "}
+              <span className="font-mono text-xs">
+                {params.id}
+              </span>
             </p>
           </div>
-        ))}
-      </div>
-
-      {/* 📦 Info */}
-      <div className="card">
-        <h2>Status: {order.status}</h2>
-        <p>Total: ₹{order.total_amount}</p>
-        <p>ETA: {new Date(order.eta).toLocaleTimeString()}</p>
-      </div>
-
-      {/* 🍔 Items */}
-      <h3>Items</h3>
-      {order.items.map((item) => (
-        <div className="card" key={item.menu_item_id._id}>
-          {item.menu_item_id.name} × {item.quantity}
         </div>
-      ))}
+
+        {/* RIGHT → ITEMS */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <h2 className="text-lg font-semibold mb-4">
+            Items
+          </h2>
+
+          <div className="space-y-3">
+            {order.items.map((item) => (
+              <div
+                key={item.menu_item_id._id}
+                className="flex justify-between items-center p-3 bg-slate-50 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">
+                    {item.menu_item_id.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Qty: {item.quantity}
+                  </p>
+                </div>
+
+                <p className="font-semibold">
+                  ₹{item.menu_item_id.price * item.quantity}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

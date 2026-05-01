@@ -26,47 +26,84 @@ export default function LoginPage() {
     }
   };
 
-  // ✅ redirect after login
   useEffect(() => {
-    if (token) {
-      router.push("/");
-    }
+    if (token) router.push("/");
   }, [token, router]);
 
   return (
-    <div className="card">
-      <h2>{isLogin ? "Login" : "Register"}</h2>
+    <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-4 ml-[33vw]">
 
-      {!isLogin && (
-        <input
-          placeholder="Name"
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-      )}
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border">
 
-      <input
-        placeholder="Email"
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-      />
+        {/* TITLE */}
+        <h2 className="text-2xl font-bold text-center mb-6">
+          {isLogin ? "Welcome Back 👋" : "Create Account 🚀"}
+        </h2>
 
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-      />
+        {/* FORM */}
+        <div className="space-y-4">
 
-      <button className="btn" onClick={handleSubmit}>
-        {loading ? "Please wait..." : isLogin ? "Login" : "Register"}
-      </button>
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              onChange={(e) =>
+                setForm({ ...form, name: e.target.value })
+              }
+            />
+          )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
 
-      <p
-        onClick={() => setIsLogin(!isLogin)}
-        style={{ cursor: "pointer" }}
-      >
-        {isLogin ? "New user? Register" : "Already have account? Login"}
-      </p>
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
+          />
+
+        </div>
+
+        {/* BUTTON */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full mt-6 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition active:scale-95 disabled:opacity-60"
+        >
+          {loading
+            ? "Please wait..."
+            : isLogin
+            ? "Login"
+            : "Register"}
+        </button>
+
+        {/* ERROR */}
+        {error && (
+          <p className="text-red-500 text-sm mt-3 text-center">
+            {error}
+          </p>
+        )}
+
+        {/* SWITCH */}
+        <p
+          onClick={() => setIsLogin(!isLogin)}
+          className="mt-6 text-center text-sm text-slate-600 cursor-pointer hover:text-green-600 transition"
+        >
+          {isLogin
+            ? "New user? Register"
+            : "Already have an account? Login"}
+        </p>
+      </div>
     </div>
   );
 }

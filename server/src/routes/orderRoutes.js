@@ -1,13 +1,17 @@
 import express from "express";
-import { createOrder } from "../controllers/orderController.js";
+import {
+  createOrder,
+  getMyOrders,
+  getOrderById
+} from "../controllers/orderController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { getOrderById } from "../controllers/orderController.js";
 
 
 
 const router = express.Router();
 
 router.post("/orders", protect, createOrder);
+router.get("/orders/my", protect, getMyOrders);
 router.get("/orders/:id", protect, getOrderById);
 
 export default router;

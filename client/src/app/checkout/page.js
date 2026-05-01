@@ -8,12 +8,47 @@ import {
   removeFromCart
 } from "../../store/slices/cartSlice";
 import { useRouter } from "next/navigation";
+import api from "../../lib/axios";
+import { useEffect, useState } from "react";
+import { clearCart } from "../../store/slices/cartSlice";
 
 export default function CheckoutPage() {
   const items = useSelector(selectCartItems);
   const total = useSelector(selectCartTotal);
   const dispatch = useDispatch();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+const handleCheckout = async () => {
+  try {
+    const formattedItems = items.map((item) => ({
+      menu_item_id: item.menu_item_id,
+      quantity: item.quantity
+    }));
+
+    const res = await api.post("/orders", {
+      items: formattedItems,
+      total_amount: total + 40
+    });
+
+    const orderId = res.data.data._id;
+
+    // ✅ CLEAR CART
+    dispatch(clearCart());
+
+    // ✅ REDIRECT
+    router.push(`/orders/${orderId}`);
+
+  } catch (err) {
+    console.error("ORDER ERROR:", err.response?.data || err.message);
+  }
+};
+
+  if (!mounted) return null;
 
   return (
     <div className="cart1-master">
@@ -40,7 +75,7 @@ export default function CheckoutPage() {
 
                 <label>{item.quantity}</label>
 
-                <button onClick={() => dispatch(addToCart(item))}>
+                <button onClick={() => dispatch(addToCart())}>
                   +
                 </button>
               </div>
@@ -71,7 +106,7 @@ export default function CheckoutPage() {
 
           <button
             className="cart1-btn"
-            onClick={() => router.push("/orders")}
+            onClick={handleCheckout}
           >
             Checkout
           </button>
