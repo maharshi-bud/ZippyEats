@@ -13,11 +13,13 @@ import Order from "./models/Order.js";
 import authRoutes from "./routes/authRoutes.js"
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import adminStatsRoutes from "./routes/admin/statsRoutes.js";
 import { runOrderEngine } from "./services/orderEngine.js";
 import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
 import userRoutes from "./routes/userRoutes.js";
+import { protect } from "./middleware/authMiddleware.js";
+import { adminOnly } from "./middleware/adminMiddleware.js";
 dotenv.config();
-// import adminRoutes from "./routes/admin/"
 const app = express();
 
 
@@ -26,7 +28,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api", orderRoutes);
 app.use("/api/test", testRoutes);
-// app.use("/api/admin", adminRoutes);
+app.use("/api/admin/stats", protect, adminOnly, adminStatsRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, app: "ZippyEats" });

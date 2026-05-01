@@ -2,8 +2,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const generateToken = (userId, role) => {
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
     expiresIn: "30m"
   });
 };
@@ -30,7 +30,7 @@ export const register = async (req, res, next) => {
       password: hashed
     });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     res.status(201).json({
       success: true,
@@ -58,9 +58,7 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id,
-    user.role, // ✅ REQUIRED
-    );
+    const token = generateToken(user._id, user.role);
 
     res.json({
       success: true,
