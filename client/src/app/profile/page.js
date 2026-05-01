@@ -29,86 +29,141 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-slate-100">
 
-      {/* 🔥 HEADER */}
-      <h1 className="text-2xl font-bold mb-2">👤 My Profile</h1>
+      <div className="max-w-6xl mx-auto px-6 py-10">
 
-      {profile && (
-        <p className="text-slate-500 mb-6">
-          {profile.name} • {profile.email}
-        </p>
-      )}
+        {/* 🔥 HEADER */}
+       <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-6 mb-10 shadow">
 
-      {/* 🔥 STATS */}
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
+  <div className="flex items-center gap-5 flex justify-center ">
 
-        <div className="bg-white p-5 rounded-xl shadow border">
-          <p className="text-sm text-slate-500">Total Orders</p>
-          <h2 className="text-xl font-bold">
-            {stats?.totalOrders || 0}
+    {/* Avatar */}
+    <div className="rounded-full bg-green-500 text-white text-2xl font-bold shadow-lg px-4 py-[8px] text-center">
+  {profile?.name?.[0] || "U"}
+</div>
+
+    {/* Info */}
+    <div>
+      <h1 className="text-2xl font-semibold text-right ">
+        {profile?.name || "User"}
+      </h1>
+
+      <p className="text-sm text-slate-300 text-right">
+        {profile?.email}
+      </p>
+    </div>
+
+  </div>
+
+</div>
+
+        {/* 🔥 STATS */}
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
+
+          <div className="bg-white p-6 rounded-2xl shadow hover:shadow-md transition">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">
+              Total Orders
+            </p>
+            <h2 className="text-2xl font-bold mt-2 text-slate-900">
+              {stats?.totalOrders || 0}
+            </h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow hover:shadow-md transition">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">
+              Most Bought
+            </p>
+            <h2 className="text-lg font-semibold mt-2 text-slate-800">
+              {stats?.mostBoughtItem || "—"}
+            </h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow hover:shadow-md transition">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">
+              Favorite Restaurant
+            </p>
+            <h2 className="text-lg font-semibold mt-2 text-slate-800">
+              {stats?.favoriteRestaurant || "—"}
+            </h2>
+          </div>
+
+        </div>
+
+        {/* 🔥 ORDER HISTORY */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-800">
+            🧾 Order History
           </h2>
         </div>
 
-        <div className="bg-white p-5 rounded-xl shadow border">
-          <p className="text-sm text-slate-500">Most Bought Item</p>
-          <h2 className="text-lg font-semibold">
-            {stats?.mostBoughtItem || "—"}
-          </h2>
-        </div>
+        <div className="space-y-5">
 
-        <div className="bg-white p-5 rounded-xl shadow border">
-          <p className="text-sm text-slate-500">Favorite Restaurant</p>
-          <h2 className="text-lg font-semibold">
-            {stats?.favoriteRestaurant || "-"}
-          </h2>
-        </div>
-
-      </div>
-
-      {/* 🔥 ORDER HISTORY */}
-      <h2 className="text-lg font-semibold mb-4">
-        🧾 Order History
-      </h2>
-
-      <div className="space-y-4">
-
-        {orders.length === 0 ? (
-          <p className="text-slate-500">No orders yet</p>
-        ) : (
-          orders.map((order) => (
-            <div
-              key={order._id}
-              className="bg-white p-5 rounded-xl shadow border"
-            >
-              <div className="flex justify-between mb-3">
-                <span className="text-sm text-slate-500">
-                  Order ID: {order._id}
-                </span>
-
-                <span className="text-sm font-semibold capitalize text-green-600">
-                  {order.status}
-                </span>
-              </div>
-
-              <div className="text-sm text-slate-600">
-                {order.items.map((item) => (
-                    
-                    
-
-                  <div key={item._id}>
-                    {item.menu_item_id?.name} × {item.quantity}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-3 font-semibold">
-                ₹{order.total_amount}
-              </div>
+          {orders.length === 0 ? (
+            <div className="bg-white p-8 rounded-xl text-center text-slate-400 shadow">
+              No orders yet
             </div>
-          ))
-        )}
+          ) : (
+            orders.map((order) => (
+              <div
+                key={order._id}
+                className="bg-white rounded-2xl shadow hover:shadow-md transition overflow-hidden"
+              >
 
+                {/* HEADER */}
+                <div className="flex justify-between items-center px-5 py-3 border-b bg-slate-50">
+                  <span className="text-xs text-slate-500">
+                    Order ID: {order._id.slice(-8)}
+                  </span>
+
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full 
+                    ${order.status === "delivered"
+                      ? "bg-green-100 text-green-600"
+                      : "bg-yellow-100 text-yellow-600"}`}>
+                    {order.status}
+                  </span>
+                </div>
+
+                {/* BODY */}
+                <div className="p-5">
+
+                  {/* ITEMS */}
+                  <div className="space-y-2 text-sm text-slate-700">
+                    {order.items.map((item) => (
+                      <div
+                        key={item._id}
+                        className="flex justify-between"
+                      >
+                        <span>
+                          {item.menu_item_id?.name}
+                        </span>
+                        <span className="text-slate-500">
+                          × {item.quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* FOOTER */}
+                  <div className="flex justify-between items-center mt-4 pt-3 border-t">
+
+                    <span className="text-xs text-slate-400">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </span>
+
+                    <span className="text-lg font-bold text-slate-900">
+                      ₹{order.total_amount}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+            ))
+          )}
+
+        </div>
       </div>
     </div>
   );

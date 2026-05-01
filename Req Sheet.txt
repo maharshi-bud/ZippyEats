@@ -1,0 +1,749 @@
+Here is your **final strict handoff document** with **PostgreSQL + strict rules + best practices enforced**.
+No extra fluff. Only what the next AI must follow.
+
+---
+
+# 📄 PROJECT SPEC (STRICT MODE)
+
+## 🍔 Full Stack Food Delivery Web App
+
+---
+
+## 🧠 OBJECTIVE
+
+Build a full-stack food delivery web application similar to
+Swiggy / Zomato
+
+System must support:
+
+* Restaurant browsing
+* Cart management
+* Order placement
+* Automated order tracking
+
+---
+
+# ⚙️ TECH STACK (MANDATORY)
+
+### Frontend
+
+* Next.js (App Router)
+* Redux Toolkit
+* Axios
+* GSAP
+
+### Backend
+
+* Node.js + Express
+
+### Database
+
+* PostgreSQL
+
+---
+
+# 🧭 ROUTES
+
+```bash
+/app
+  /page.js
+  /restaurant/[id]/page.js
+  /cart/page.js
+  /checkout/page.js
+  /orders/[id]/page.js
+  /profile/page.js
+```
+
+---
+
+# 📦 FEATURES
+
+## Home
+
+* Fetch restaurants from backend
+
+## Restaurant
+
+* Fetch menu
+* Add to cart
+
+## Cart
+
+* Add/remove/update items
+* Calculate total
+
+## Checkout
+
+* Create order
+
+## Order Tracking
+
+States:
+
+```text
+placed → accepted → preparing → out_for_delivery → delivered
+```
+
+---
+
+# ⏱️ TIME LOGIC
+
+* Auto cancel if not accepted within defined time
+* Preparing duration must be enforced
+* Delivery ETA must update
+* All transitions must be automatic
+
+---
+
+# 🧠 STATE MANAGEMENT
+
+```js
+authSlice
+cartSlice
+orderSlice
+```
+
+---
+
+# 🌐 API
+
+### Restaurants
+
+* GET /restaurants
+* GET /restaurant/:id
+
+### Orders
+
+* POST /orders
+* GET /orders/:id
+* PATCH /orders/:id/status
+
+### Auth
+
+* POST /auth/register
+* POST /auth/login
+
+---
+
+# 🗃️ DATABASE (POSTGRESQL)
+
+## Users
+
+```sql
+id SERIAL PRIMARY KEY
+name
+email UNIQUE
+password
+created_at
+```
+
+## Restaurants
+
+```sql
+id SERIAL PRIMARY KEY
+name
+rating
+delivery_time
+created_at
+```
+
+## Menu_Items
+
+```sql
+id SERIAL PRIMARY KEY
+restaurant_id REFERENCES restaurants(id)
+name
+price
+description
+```
+
+## Orders
+
+```sql
+id SERIAL PRIMARY KEY
+user_id REFERENCES users(id)
+status
+total_amount
+eta
+timeout_at
+created_at
+updated_at
+```
+
+## Order_Items
+
+```sql
+id SERIAL PRIMARY KEY
+order_id REFERENCES orders(id)
+menu_item_id REFERENCES menu_items(id)
+quantity
+price
+```
+
+---
+
+# 🔄 ORDER FLOW
+
+```text
+Order created → placed
+
+IF accepted within timeout:
+    → accepted
+    → preparing
+    → out_for_delivery
+    → delivered
+ELSE:
+    → cancelled
+```
+
+---
+
+# 🎞️ ANIMATION
+
+* GSAP must be used for:
+
+  * Order progress bar
+  * Status transitions
+
+---
+
+# 🔁 DATA SYNC
+
+* Poll every 3–5 sec using Axios
+  OR
+* WebSockets (optional)
+
+---
+
+# 🔐 AUTH
+
+* JWT authentication
+* Protect:
+
+  * checkout
+  * orders
+
+---
+
+# ⚠️ STRICT RULES
+
+## RESPONSE RULES
+
+* Only implement what is defined
+* No extra features
+* No unnecessary explanations
+* No assumptions
+
+---
+
+## IMPLEMENTATION RULES
+
+❌ No static/mock data
+❌ No skipping backend
+❌ No manual status updates
+❌ No business logic in frontend
+
+---
+
+## MUST FOLLOW
+
+✔ Backend controls all state transitions
+✔ Time logic must run server-side
+✔ Frontend reads state only
+✔ Use proper relational schema
+✔ Enforce foreign keys
+✔ Handle:
+
+* timeouts
+* invalid input
+* duplicate requests
+
+---
+
+# 🧩 BEST PRACTICES (MANDATORY)
+
+## Backend
+
+* Use MVC or modular architecture
+* Use environment variables (.env)
+* Validate all inputs (e.g. Joi/Zod)
+* Use proper HTTP status codes
+* Centralized error handling middleware
+* Use async/await with proper error handling
+* Prevent race conditions in order updates
+* Use transactions for order creation
+
+---
+
+## Database (PostgreSQL)
+
+* Use normalized schema (no redundancy)
+* Use indexes on:
+
+  * foreign keys
+  * frequently queried fields
+* Use constraints:
+
+  * NOT NULL
+  * UNIQUE
+* Maintain referential integrity
+* Use transactions where required
+
+---
+
+## Frontend
+
+* Use clean component structure
+* Separate UI and logic
+* Use reusable components
+* Avoid unnecessary re-renders
+* Handle loading and error states
+* Use Axios interceptors for auth
+
+---
+
+## Redux
+
+* Keep slices minimal and focused
+* Avoid storing derived data
+* Use async thunks properly
+
+---
+
+## API
+
+* Follow REST conventions
+* Use consistent response format
+* Do not expose sensitive data
+* Implement proper authentication checks
+
+---
+
+## Security
+
+* Hash passwords (bcrypt)
+* Use JWT securely
+* Validate all requests
+* Prevent SQL injection
+
+---
+
+## Code Quality
+
+* Use consistent naming conventions
+* Write modular code
+* Avoid deeply nested logic
+* Keep functions small and focused
+
+---
+
+# 🎯 COMPLETION CRITERIA
+
+* Order placement works end-to-end
+* Order progresses automatically
+* Backend controls full lifecycle
+* Frontend reflects real-time data
+* No manual intervention
+
+---
+
+# END OF SPEC
+
+
+
+
+
+
+
+
+
+
+
+==========================================================================================================================
+
+
+Act as a senior full-stack engineer using a structured workflow.
+
+Follow this EXACT process:
+1. Understand the requirement clearly
+2. Identify edge cases and possible issues
+3. Create a step-by-step plan
+4. Then implement clean, production-level code
+5. Keep code modular and minimal
+6. Avoid unnecessary explanations
+
+Constraints:
+- Do not over-engineer
+- Do not add features I didn’t ask for
+- If my approach is wrong, say it clearly and fix it
+
+Output format:
+- Plan (short)
+- Code (final)
+
+
+
+
+
+
+==========================================================================================================================
+
+
+
+
+
+
+
+Good call — jumping straight into code without a roadmap is how projects collapse halfway ❗
+Let’s structure this like a **production build plan** so you don’t get stuck.
+
+---
+
+# 🧠 FULL ROADMAP (STRICT + ACTIONABLE)
+
+This is broken into **phases**, each with clear outcomes ✔️
+
+---
+
+# 🟢 PHASE 1 — FOUNDATION (Project Setup)
+
+### 🎯 Goal:
+
+Project runs end-to-end with DB connection
+
+### Steps:
+
+1. Initialize repos
+
+   * `/client` (Next.js App Router)
+   * `/server` (Node + Express)
+
+2. Install dependencies (both sides)
+
+3. Setup PostgreSQL
+
+   * Create DB
+   * Run schema
+
+4. Setup environment variables
+
+   * DB URL
+   * JWT secret
+   * Time configs
+
+5. Setup backend server
+
+   * Express app
+   * Middleware (JSON, CORS, logger)
+
+6. Test DB connection
+
+✔️ **Checkpoint:** Server runs + DB connected
+
+---
+
+# 🟡 PHASE 2 — DATABASE & MODELS
+
+### 🎯 Goal:
+
+Reliable data layer with constraints
+
+### Steps:
+
+1. Create all tables
+
+   * users
+   * restaurants
+   * menu_items
+   * orders
+   * order_items
+
+2. Add constraints
+
+   * NOT NULL
+   * UNIQUE
+   * FOREIGN KEYS
+
+3. Add indexes
+
+   * `orders(user_id)`
+   * `menu_items(restaurant_id)`
+
+4. Create DB helper (pg pool)
+
+✔️ **Checkpoint:** Clean relational DB with integrity
+
+---
+
+# 🔵 PHASE 3 — AUTH SYSTEM
+
+### 🎯 Goal:
+
+Secure user system
+
+### Steps:
+
+1. Register API
+
+   * Hash password (bcrypt)
+
+2. Login API
+
+   * Generate JWT
+
+3. Auth middleware
+
+   * Protect routes
+
+4. Validation (Zod/Joi)
+
+✔️ **Checkpoint:** User can register/login + protected routes work
+
+---
+
+# 🟣 PHASE 4 — RESTAURANT & MENU APIs
+
+### 🎯 Goal:
+
+Dynamic data (no mock)
+
+### Steps:
+
+1. GET `/restaurants`
+2. GET `/restaurant/:id`
+3. Join menu_items with restaurant
+
+✔️ **Checkpoint:** Frontend can fetch real restaurants
+
+---
+
+# 🔴 PHASE 5 — CART SYSTEM (Frontend Only State)
+
+### 🎯 Goal:
+
+User can manage cart
+
+### Steps:
+
+1. Create `cartSlice`
+2. Add/remove/update items
+3. Calculate totals (frontend only)
+
+✔️ **Checkpoint:** Cart works locally
+
+---
+
+# 🟠 PHASE 6 — ORDER CREATION (CRITICAL)
+
+### 🎯 Goal:
+
+Transactional order system
+
+### Steps:
+
+1. POST `/orders`
+
+2. Use DB transaction:
+
+   * Insert order
+   * Insert order_items
+
+3. Calculate total server-side
+
+4. Set `timeout_at`
+
+✔️ **Checkpoint:** Order stored correctly in DB
+
+---
+
+# ⚫ PHASE 7 — ORDER STATE ENGINE (MOST IMPORTANT)
+
+### 🎯 Goal:
+
+Fully automated lifecycle
+
+### Steps:
+
+1. Create cron job (`node-cron`)
+2. Implement transitions:
+
+```
+placed → accepted → preparing → out_for_delivery → delivered
+```
+
+3. Timeout logic:
+
+   * placed → cancelled
+
+4. Use timestamps (`updated_at`) for transitions
+
+✔️ **Checkpoint:** Orders update automatically WITHOUT frontend
+
+---
+
+# 🟤 PHASE 8 — ORDER FETCHING
+
+### 🎯 Goal:
+
+Frontend reads real-time order
+
+### Steps:
+
+1. GET `/orders/:id`
+2. Include:
+
+   * items
+   * status
+   * ETA
+
+✔️ **Checkpoint:** Order details API complete
+
+---
+
+# 🔵 PHASE 9 — FRONTEND CORE PAGES
+
+### 🎯 Goal:
+
+Basic UI connected to backend
+
+### Pages:
+
+1. Home → restaurants list
+2. Restaurant → menu
+3. Cart
+4. Checkout
+5. Order tracking
+
+✔️ **Checkpoint:** Full flow works manually
+
+---
+
+# 🟢 PHASE 10 — ORDER TRACKING (LIVE)
+
+### 🎯 Goal:
+
+Real-time UI updates
+
+### Steps:
+
+1. Poll every 3–5 sec (Axios)
+2. Update UI state
+3. Map status → progress %
+
+✔️ **Checkpoint:** UI reflects backend state automatically
+
+---
+
+# 🟡 PHASE 11 — GSAP ANIMATION
+
+### 🎯 Goal:
+
+Smooth UX
+
+### Steps:
+
+1. Animate progress bar
+2. Animate status transitions
+
+✔️ **Checkpoint:** Visual feedback working
+
+---
+
+# 🔴 PHASE 12 — SECURITY & VALIDATION
+
+### 🎯 Goal:
+
+Production safety
+
+### Steps:
+
+1. Input validation everywhere
+2. Prevent duplicate orders
+3. Protect routes
+4. Handle invalid states
+
+✔️ **Checkpoint:** App is safe from bad input
+
+---
+
+# ⚫ PHASE 13 — OPTIMIZATION
+
+### 🎯 Goal:
+
+Performance + stability
+
+### Steps:
+
+1. Add DB indexes
+2. Optimize queries
+3. Avoid unnecessary re-renders
+4. Use memoization
+
+---
+
+# 🟤 PHASE 14 — FINAL TESTING
+
+### 🎯 Goal:
+
+End-to-end validation
+
+### Test:
+
+✔ Register → Login
+✔ Browse restaurants
+✔ Add to cart
+✔ Place order
+✔ Order auto progresses
+✔ Timeout works
+✔ No manual intervention
+
+---
+
+# 🎯 FINAL FLOW (MENTAL MODEL)
+
+```
+Frontend → API → DB
+             ↓
+        Cron Engine
+             ↓
+       Status Updates
+             ↓
+Frontend Polling → UI updates
+```
+
+---
+
+# 🚀 WHAT YOU SHOULD DO NEXT
+
+Start with:
+
+👉 Phase 1 + Phase 2 TODAY
+
+Then tell me:
+
+> "start phase 1 implementation"
+
+I’ll guide you step-by-step with **full production code (no gaps)** 🔨🤖🔧
+
+---
+
+# 💡 REAL TALK
+
+If you follow this roadmap strictly:
+
+✔ You’ll build a real system (not a tutorial app)
+✔ You’ll understand backend architecture deeply
+✔ You’ll be ahead of 95% devs
+
+---
+
+If you want, I can also turn this into:
+
+✅ GitHub project plan
+✅ Task checklist
+✅ Daily build schedule
+
+Just say the word ✔️
+
+
+

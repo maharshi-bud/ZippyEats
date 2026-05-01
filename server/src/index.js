@@ -17,7 +17,7 @@ import { runOrderEngine } from "./services/orderEngine.js";
 import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
 import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
-
+// import adminRoutes from "./routes/admin/"
 const app = express();
 
 
@@ -26,6 +26,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api", orderRoutes);
 app.use("/api/test", testRoutes);
+// app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, app: "ZippyEats" });

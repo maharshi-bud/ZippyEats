@@ -58,7 +58,9 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id,
+    user.role, // ✅ REQUIRED
+    );
 
     res.json({
       success: true,
@@ -68,4 +70,17 @@ export const login = async (req, res, next) => {
     next(err);
   }
 };
+
+
+
+
+// const token = jwt.sign(
+//   {
+//     user._id,
+//   },
+//   process.env.JWT_SECRET,
+//   { expiresIn: "1h" }
+// );
+
+// authController.js
 
