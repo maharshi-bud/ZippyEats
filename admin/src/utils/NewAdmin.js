@@ -1,8 +1,16 @@
-// db.users.insertOne({
-//   name: "Admin",
-//   email: "admin@example.com",
-//   password: "$2b$10$Q7z6Y5KZx3Qx8vX8v5pQ9eWk7V8x0uKZlYp9YxQf5Yxq2kYy8Qw7a", // bcrypt("admin123")
-//   role: "admin",
-//   createdAt: new Date(),
-//   updatedAt: new Date()
-// });
+db.users.updateOne(
+  { email: "admin@example.com" },
+  {
+    $set: {
+      name: "Admin",
+      email: "admin@example.com",
+      password: "$2b$10$9kcvqE1nvOOYRbSmqmPzgOCR3WyuF1gSz4BXUarrth/9HIL5GLsC.",
+      role: "admin",
+      updatedAt: new Date(),
+    },
+    $setOnInsert: {
+      createdAt: new Date(),
+    },
+  },
+  { upsert: true }
+);
