@@ -163,3 +163,126 @@ export const userGrowth = async (req, res) => {
 
   res.json(data);
 };
+
+
+// server/src/controllers/admin/adminStatsController.js
+
+export const orderStats = async (req, res) => {
+  const data = await Order.aggregate([
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const total = await Order.countDocuments();
+
+  const result = {
+    total,
+    placed: 0,
+    delivered: 0,
+    cancelled: 0,
+  };
+
+  data.forEach((d) => {
+    result[d._id] = d.count;
+  });
+
+  res.json(result);
+};
+
+export const getOrderData = async (req, res) => {
+  try {
+    const { status, sort = "desc" } = req.query;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+
+    const query = {};
+    if (status) query.status = status;
+
+    const sortDirection = sort === "asc" ? 1 : -1;
+
+    const [result] = await Order.aggregate([
+      { $match: query },
+      {
+        $facet: {
+          orders: [
+            { $sort: { createdAt: sortDirection } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "users",
+                localField: "user_id",
+                foreignField: "_id",
+                as: "user",
+              },
+            },
+            {
+              $lookup: {
+                from: "menuitems",
+                localField: "items.menu_item_id",
+                foreignField: "_id",
+                as: "menuItems",
+              },
+            },
+            {
+              $lookup: {
+                from: "restaurants",
+                localField: "menuItems.restaurant_id",
+                foreignField: "_id",
+                as: "restaurants",
+              },
+            },
+            {
+              $addFields: {
+                user_id: {
+                  $let: {
+                    vars: { user: { $first: "$user" } },
+                    in: {
+                      _id: "$$user._id",
+                      name: "$$user.name",
+                    },
+                  },
+                },
+                restaurant: {
+                  $let: {
+                    vars: { restaurant: { $first: "$restaurants" } },
+                    in: {
+                      _id: "$$restaurant._id",
+                      name: "$$restaurant.name",
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                user: 0,
+                menuItems: 0,
+                restaurants: 0,
+              },
+            },
+          ],
+          total: [{ $count: "count" }],
+        },
+      },
+    ]);
+
+    res.json({
+      orders: result?.orders || [],
+      total: result?.total?.[0]?.count || 0,
+    });
+  } catch (err) {
+    console.error("GET ADMIN ORDERS ERROR:", err.message);
+
+    res.status(500).json({
+      message: "Failed to fetch orders",
+    });
+  }
+};
+
+
+

@@ -7,6 +7,8 @@ import {
   topRestaurants,
   topItems,
   userGrowth,
+  orderStats,
+  getOrderData,
 } from "../../controllers/admin/adminStatsController.js";
 
 const router = express.Router();
@@ -18,5 +20,7 @@ router.get("/status", orderStatus);
 router.get("/top-restaurants", topRestaurants);
 router.get("/top-items", topItems);
 router.get("/users-growth", userGrowth);
+router.get("/orders-summary", orderStats);
+router.get("/get-orderData", getOrderData);
 
 export default router;

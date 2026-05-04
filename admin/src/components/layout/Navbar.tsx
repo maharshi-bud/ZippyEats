@@ -1,16 +1,35 @@
 // admin/src/components/layout/Navbar.tsx
 
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export default function Navbar() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
   return (
-    <div className="h-full bg-white border-b flex items-center justify-between px-6">
-      <h1 className="text-lg font-semibold tracking-tight">
-        ZippyEats Admin
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">
+      <h1 className="text-lg font-semibold text-slate-900">
+        Admin Dashboard
       </h1>
 
       <div className="flex items-center gap-4">
-        <div className="text-sm text-gray-500">Admin</div>
-        <div className="w-9 h-9 rounded-full bg-gray-300" />
+        <span className="text-sm text-slate-500">Admin</span>
+
+        <div className="w-8 h-8 rounded-full bg-slate-300" />
+
+        <button
+          onClick={handleLogout}
+          className="text-sm bg-black text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition"
+        >
+          Logout
+        </button>
       </div>
-    </div>
+    </header>
   );
 }

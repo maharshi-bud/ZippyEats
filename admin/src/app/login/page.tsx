@@ -5,7 +5,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import api from "../../lib/api";
+import api from "../../../../client/src/lib/api";
 
 
 export default function LoginPage() {
@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault(); 
     setError("");
 
     try {
@@ -57,12 +57,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 text-zinc-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 text-zinc-950 " >
 
-  <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-5 py-10">
+  <div className="mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-5 py-10 scale-100">
 
-    <main className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-zinc-200 bg-white/80 backdrop-blur-md shadow-[0_30px_80px_rgba(0,0,0,0.12)] md:grid-cols-[1fr_380px]">
-
+<main className="
+  grid w-full max-w-4xl overflow-hidden
+  rounded-2xl border border-zinc-200
+  bg-white/80 backdrop-blur-md
+  md:grid-cols-[1fr_380px]
+  transition-all duration-300
+  scale-140
+  shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_20px_rgba(0,0,0,0.08)]
+">
       {/* LEFT PANEL */}
       <section className="hidden bg-gradient-to-br from-zinc-950 to-zinc-800 p-8 text-white md:flex md:flex-col md:justify-between">
         
