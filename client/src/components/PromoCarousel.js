@@ -21,7 +21,7 @@ export default function PromoCarousel() {
   const items = [...banners, ...banners, ...banners];
   const startIndex = banners.length;
 
-  const gap = 16;
+  const gap = 20;
 
   const realIndex =
     ((index % banners.length) + banners.length) % banners.length;
@@ -108,8 +108,8 @@ export default function PromoCarousel() {
               key={i}
               className="Promocard"
               style={{
-                minWidth: "500px",
-                height: "260px",
+                minWidth: "650px",
+                height: "350px",
                 borderRadius: "18px",
                 backgroundImage: `url(${b.img})`,
                 backgroundSize: "cover",

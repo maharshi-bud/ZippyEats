@@ -67,7 +67,7 @@ export default function LoginPage() {
   bg-white/80 backdrop-blur-md
   md:grid-cols-[1fr_380px]
   transition-all duration-300
-  scale-140
+  scale-120
   shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_20px_rgba(0,0,0,0.08)]
 ">
       {/* LEFT PANEL */}

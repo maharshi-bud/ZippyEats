@@ -474,6 +474,7 @@ height: 80px;
   overflow: hidden;
   position: relative;
   width: 100%;
+  
 }
 .track {
   align-items: center;
@@ -490,6 +491,11 @@ height: 80px;
   height: 100%;
   padding: 20px;
 }
+
+.overlay h2 {
+  font-size: 26px;
+  font-weight: 600;
+}
 .arrow {
   align-items: center;
   background: rgba(0, 0, 0, 0.6);
@@ -498,14 +504,19 @@ height: 80px;
   color: white;
   cursor: pointer;
   display: flex;
-  font-size: 20px;
-  height: 42px;
+  /* font-size: 20px; */
+  /* height: 42px; */
+  font-size: 26px;
+  height: 56px;
+
   justify-content: center;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   transition: 0.25s;
-  width: 42px;
+  /* width: 42px; */
+  width: 56px;
+
 }
 .arrow:hover {
   background: #111827;

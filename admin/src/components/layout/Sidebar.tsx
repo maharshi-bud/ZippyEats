@@ -18,8 +18,7 @@ export default function Sidebar() {
   const path = usePathname();
 
   return (
-    <aside className="w-64 bg-slate-900 text-white flex flex-col border-r border-slate-800">
-      
+<aside className="sticky top-0 h-screen w-64 bg-slate-900 text-white flex flex-col border-r border-slate-800 overflow-y-auto">      
       {/* LOGO */}
       <Link href="/"  >
       <div className="px-6 py-5 border-b border-slate-700 flex items-center">

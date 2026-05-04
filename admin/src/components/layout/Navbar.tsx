@@ -13,8 +13,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="h-18 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">
-      <h1 className="text-lg font-semibold text-slate-900">
+<header className="sticky top-0 z-50 h-17 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">      <h1 className="text-lg font-semibold text-slate-900">
         Admin Dashboard
       </h1>
 
