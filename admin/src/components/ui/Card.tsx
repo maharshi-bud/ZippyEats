@@ -3,11 +3,21 @@ type CardProps = {
   value: string | number;
 };
 
-export default function Card({ title, value }: CardProps) {
+
+
+// admin/src/components/ui/Card.tsx
+
+export default function Card({
+  title,
+  value,
+}: {
+  title: string;
+  value: string | number;
+}) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-zinc-500">{title}</p>
-      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">
+    <div className="bg-white rounded-xl p-5 border border-zinc-200 shadow-sm hover:shadow-md transition">
+      <p className="text-sm text-zinc-500">{title}</p>
+      <h2 className="text-2xl font-bold text-emerald-600 mt-2">
         {value}
       </h2>
     </div>

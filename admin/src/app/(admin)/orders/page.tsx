@@ -88,6 +88,11 @@ export default function OrdersPage() {
         placed: 0,
         delivered: 0,
         cancelled: 0,
+        outfordelivery: 0,
+        preparing: 0,
+        accepted: 0,
+
+
       });
       setOrders([]);
     } finally {
@@ -103,13 +108,18 @@ export default function OrdersPage() {
     return () => window.clearTimeout(timer);
   }, [fetchData]);
 
-  if (loading)
-    return <p className="text-sm text-zinc-500">Loading orders...</p>;
+  if (loading){
+    return( <p className="text-sm text-zinc-500">Loading orders...</p>
+
+      
+    );
+  
+  }
 
   if (error) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Orders</h1>
+        <h1 className="text-2xl font-bold text-zinc-900">Orders</h1>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
@@ -123,9 +133,14 @@ export default function OrdersPage() {
       <h1 className="text-2xl font-bold text-zinc-950">Orders</h1>
 
       {/* CARDS */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
         <Card title="Total Orders" value={stats?.total || 0} />
-        <Card title="Placed" value={stats?.placed || 0} />
+        <Card title="In Process" value={
+    (stats?.placed ?? 0) +
+    (stats?.accepted ?? 0) +
+    (stats?.preparing ?? 0) +
+    (stats?.out_for_delivery ?? 0)
+  } />
         <Card title="Delivered" value={stats?.delivered || 0} />
         <Card title="Cancelled" value={stats?.cancelled || 0} />
       </div>
@@ -133,7 +148,7 @@ export default function OrdersPage() {
       {/* FILTERS */}
       <div className="flex flex-wrap gap-4">
         <select
-          className="border px-3 py-2 rounded-lg text-sm"
+          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
           value={status}
           onChange={(e) => {
             setPage(1);
@@ -150,7 +165,7 @@ export default function OrdersPage() {
         </select>
 
         <select
-          className="border px-3 py-2 rounded-lg text-sm"
+          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
@@ -160,7 +175,7 @@ export default function OrdersPage() {
       </div>
 
       {/* TABLE */}
-      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm">
         <table className="w-full text-sm">
           <thead className="bg-zinc-50 text-zinc-600">
             <tr>
@@ -182,19 +197,21 @@ export default function OrdersPage() {
 
                 <td className="p-3">
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      o.status === "delivered"
-                        ? "bg-green-100 text-green-700"
-                        : o.status === "cancelled"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
+  className={`px-2 py-1 rounded text-xs font-medium ${
+    o.status === "delivered"
+      ? "bg-emerald-100 text-emerald-700"
+      : o.status === "cancelled"
+      ? "bg-red-100 text-red-700"
+      : o.status === "out_for_delivery"
+      ? "bg-blue-100 text-blue-700"
+      : "bg-yellow-100 text-yellow-700"
+  }`}
+>
                     {o.status}
                   </span>
                 </td>
 
-                <td className="p-3 font-medium">₹{o.total_amount}</td>
+                <td className="p-3 font-semibold text-emerald-600">₹{o.total_amount}</td>
 
                 <td className="p-3 text-zinc-500">
                   {new Date(o.createdAt).toLocaleDateString()}
@@ -222,7 +239,7 @@ export default function OrdersPage() {
           <button
             disabled={page === 1}
             onClick={() => setPage((currentPage) => currentPage - 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            className="px-3 py-1 border rounded hover:bg-zinc-100 disabled:opacity-50"
           >
             Prev
           </button>
@@ -230,7 +247,7 @@ export default function OrdersPage() {
           <button
             disabled={page >= total / limit}
             onClick={() => setPage((currentPage) => currentPage + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            className="px-3 py-1 border rounded hover:bg-zinc-100 disabled:opacity-50"
           >
             Next
           </button>
