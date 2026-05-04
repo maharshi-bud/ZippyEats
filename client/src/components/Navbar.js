@@ -113,16 +113,18 @@ export default function Navbar() {
         {token ? (
   <button
     onClick={() => router.push("/profile")}
-    className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition"
+    className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition text-xl"
   >
     👤
   </button>
-
-
-) :
-(
-          <Link href="/login" className="navlinkbutton">👤</Link>
-        )}
+) : (
+  <Link
+    href="/login" 
+    className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition text-xl"
+  >
+    👤
+  </Link>
+)}
 
 
 

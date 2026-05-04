@@ -107,21 +107,31 @@ const dispatch = useDispatch();
     </div>
 
     {/* BUTTON */}
+        {/* // Find the checkout button in the FOOTER section and replace it with this: */}
+    
     {token ? (
       <button
-        onClick={() => router.push("/checkout")}
+        onClick={() => {
+          onClose(); // Close the drawer
+          router.push("/checkout"); // Navigate to checkout page
+        }}
         className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition active:scale-95"
       >
         Checkout
       </button>
     ) : (
       <button
-        onClick={() => router.push("/login")}
+        onClick={() => {
+          onClose(); // Also close the drawer when redirecting to login
+          router.push("/login");
+        }}
         className="w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-base hover:bg-slate-800 transition active:scale-95"
       >
         Login to Proceed
       </button>
     )}
+
+
   </div>
 </aside>
 

@@ -9,6 +9,8 @@ import PieChartComp from "../../components/charts/PieChart";
 import BarChartComp from "../../components/charts/BarChart";
 import Card from "../../components/ui/Card";
 import api from "../../lib/api";
+import Loader from "../../components/ui/Loader";
+
 
 type OverviewStats = {
   revenue: number;

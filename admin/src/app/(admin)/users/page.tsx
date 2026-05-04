@@ -5,6 +5,8 @@
 import { useEffect, useState } from "react";
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
+import Loader from "../../../components/ui/Loader";
+
 
 export default function UsersPage() {
   const [stats, setStats] = useState<any>(null);
@@ -38,7 +40,11 @@ useEffect(() => {
 //     fetchData();
 //   }, []);
 
-  if (!stats) return <p>Loading...</p>;
+  if (!stats) return 
+  (<div className="min-h-screen flex items-center justify-center">
+  <Loader />
+</div>)
+  ;
 
   return (
     <div className="space-y-6">
@@ -98,11 +104,15 @@ useEffect(() => {
                 <td className="p-3">₹{u.avgTicket}</td>
                 <td className="p-3">{u.favRestaurant}</td>
                 <td>
-  {u.isActive ? (
-    <span className=" p-3 text-green-600 font-semibold">Active</span>
-  ) : (
-    <span className="p-3 text-red-500">Inactive</span>
-  )}
+<span
+  className={`px-2 py-1 rounded text-xs font-medium ${
+    u.isActive
+      ? "!bg-emerald-100 !text-emerald-700"
+      : "!bg-red-100 !text-red-700"
+  }`}
+>
+  {u.isActive ? "Active" : "Inactive"}
+</span>
 </td>
 
 <td  className="p-3 ">{u.favDish || "-"}</td>

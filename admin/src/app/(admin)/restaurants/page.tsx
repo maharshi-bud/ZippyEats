@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
+import Loader from "../../../components/ui/Loader";
+
 
 const safe = (v: any) => Number(v) || 0;
 
@@ -105,17 +107,28 @@ export default function RestaurantsPage() {
 
                 <td className="p-3">{r.topDish || "-"}</td>
 
-                <td className="p-3">
-                  {r.isActive ? (
-                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
-                      Inactive
-                    </span>
-                  )}
-                </td>
+                {/* <td className="p-3"> */}
+                
+
+  <td className="p-3">
+  <span
+    className={`px-2 py-1 rounded text-xs font-medium ${
+      r.isActive
+        ? "bg-emerald-100 text-emerald-700"
+        : "bg-red-100 text-red-700"
+    }`}
+  >
+    {r.isActive ? "Active" : "Inactive"}
+  </span>
+</td>
+
+
+
+
+
+
+
+                {/* </td> */}
               </tr>
             ))}
           </tbody>

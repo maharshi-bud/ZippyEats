@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
+import Loader from "../../../components/ui/Loader";
+
 
 type ApiErrorBody = {
   message?: string;
@@ -109,16 +111,20 @@ export default function OrdersPage() {
   }, [fetchData]);
 
   if (loading){
-    return( <p className="text-sm text-zinc-500">Loading orders...</p>
+    return( 
 
-      
+      <div className="min-h-screen flex items-center justify-center">
+  <Loader />
+</div>
+
+
     );
   
   }
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 ">
         <h1 className="text-2xl font-bold text-zinc-900">Orders</h1>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
@@ -133,7 +139,7 @@ export default function OrdersPage() {
       <h1 className="text-2xl font-bold text-zinc-950">Orders</h1>
 
       {/* CARDS */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4 w-[100%]">
         <Card title="Total Orders" value={stats?.total || 0} />
         <Card title="In Process" value={
     (stats?.placed ?? 0) +
@@ -207,7 +213,8 @@ export default function OrdersPage() {
       : "bg-yellow-100 text-yellow-700"
   }`}
 >
-                    {o.status}
+                    {/* {o.status[0].toUpperCase()+o.slice(1)} */}
+                    {o.status?.charAt(0).toUpperCase() + o.status?.slice(1)}
                   </span>
                 </td>
 
