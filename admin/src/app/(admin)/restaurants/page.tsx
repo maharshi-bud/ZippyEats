@@ -5,7 +5,6 @@ import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
 import Loader from "../../../components/ui/Loader";
 
-
 const safe = (v: any) => Number(v) || 0;
 
 export default function RestaurantsPage() {
@@ -14,17 +13,39 @@ export default function RestaurantsPage() {
   const [order, setOrder] = useState("desc");
   const [activeFilter, setActiveFilter] = useState("");
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     const fetchData = async () => {
-      const res = await api.get("/admin/stats/restaurants-list", {
-        params: { sortBy, order, active: activeFilter },
-      });
+      try {
+        setLoading(true);
+        setError("");
 
-      setRestaurants(res.data || []);
+        const res = await api.get("/admin/stats/restaurants-list", {
+          params: { sortBy, order, active: activeFilter },
+        });
+
+        setRestaurants(res.data || []);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load restaurants");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
   }, [sortBy, order, activeFilter]);
+
+  // ✅ HANDLE STATES FIRST
+  if (loading) return <Loader />;
+
+  if (error)
+    return (
+      <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
+        {error}
+      </div>
+    );
 
   // ✅ Correct aggregations
   const totalRevenue = restaurants.reduce(
@@ -107,28 +128,17 @@ export default function RestaurantsPage() {
 
                 <td className="p-3">{r.topDish || "-"}</td>
 
-                {/* <td className="p-3"> */}
-                
-
-  <td className="p-3">
-  <span
-    className={`px-2 py-1 rounded text-xs font-medium ${
-      r.isActive
-        ? "bg-emerald-100 text-emerald-700"
-        : "bg-red-100 text-red-700"
-    }`}
-  >
-    {r.isActive ? "Active" : "Inactive"}
-  </span>
-</td>
-
-
-
-
-
-
-
-                {/* </td> */}
+                <td className="p-3">
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      r.isActive
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {r.isActive ? "Active" : "Inactive"}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>

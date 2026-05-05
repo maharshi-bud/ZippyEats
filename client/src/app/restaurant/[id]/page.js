@@ -15,6 +15,7 @@ import {
 
 export default function RestaurantPage({ params }) {
   const [data, setData] = useState(null);
+  const [openCuisines, setOpenCuisines] = useState([]); // ✅ multiple open
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
 
@@ -23,156 +24,184 @@ export default function RestaurantPage({ params }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const res = await api.get(`/restaurant/${params.id}`);
-        setData(res.data.data);
-      } catch (err) {
-        console.error(err);
-      }
+      const res = await api.get(`/restaurant/${params.id}`);
+      setData(res.data.data);
     };
     fetchData();
   }, [params.id]);
 
-  if (!data)
-    return (
-      <div className="p-10 text-center text-slate-500">
-        Loading restaurant...
-      </div>
-    );
-
-  const grouped = data.menu.reduce((acc, item) => {
+  // 🔥 group
+  const grouped = data?.menu?.reduce((acc, item) => {
     if (!acc[item.cuisine]) acc[item.cuisine] = [];
     acc[item.cuisine].push(item);
     return acc;
   }, {});
 
+  // 🔥 open all by default
+  useEffect(() => {
+    if (grouped) {
+      setOpenCuisines(Object.keys(grouped));
+    }
+  }, [data]);
+
+  const toggleCuisine = (cuisine) => {
+    setOpenCuisines((prev) =>
+      prev.includes(cuisine)
+        ? prev.filter((c) => c !== cuisine)
+        : [...prev, cuisine]
+    );
+  };
+
+  if (!data)
+    return <div className="p-10 text-center">Loading...</div>;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+    <div className="max-w-6xl mx-auto px-4 py-10 bg-slate-100 min-h-screen  ">
 
-      {/* 🔥 HERO HEADER */}
-      <div className="relative mb-10 rounded-3xl overflow-hidden shadow-xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30 z-10" />
+      {/* HEADER */}
+<div className="relative rounded-2xl overflow-hidden mb-10 shadow-xl border border-slate-200">
 
-        <img
-          src={resolveItemImage(data.menu[0])}
-          onError={handleImgError}
-          className="w-full h-52 object-cover"
-        />
+  {/* 🔹 BACKGROUND */}
+  <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700" />
 
-        <div className="absolute z-20 bottom-6 left-6 text-white">
-          <h1 className="text-3xl font-bold">{data.name}</h1>
-          <p className="text-sm mt-1 opacity-90">
-            {data.cuisines?.join(" • ")}
-          </p>
+  {/* 🔹 OVERLAY GLOW */}
+  <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+
+  {/* 🔹 CONTENT */}
+  <div className="relative z-10 p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 text-white">
+
+    {/* ================= LEFT SIDE ================= */}
+    <div className="flex flex-col gap-3">
+
+      {/* NAME */}
+      <h1 className="text-3xl mb-[2px] md:text-6xl font-bold tracking-tight">
+        {data.name}
+      </h1>
+
+      {/* CUISINES */}
+      <p className="text-sm text-slate-300">
+        {data.cuisines?.join(" • ")}
+      </p>
+
+      {/* EXTRA INFO ROW */}
+      <div className="flex items-center gap-3 mt-2 flex-wrap">
+
+        {/* ⭐ RATING */}
+        <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">
+          <span className="text-green-400 font-semibold text-sm">
+            ⭐ {data.rating || "4.2"}
+          </span>
+          <span className="text-xs text-slate-300">
+            {data.totalReviews || "120+"} reviews
+          </span>
         </div>
+
+        {/* 🕒 DELIVERY (optional) */}
+        <div className="text-xs text-slate-300 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">
+          ⏱ 30–40 mins
+        </div>
+
+      </div>
+    </div>
+
+    {/* ================= RIGHT SIDE ================= */}
+  <div className="flex flex-col items-end gap-3">
+
+  {/* PARTNER BADGE */}
+  <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20 shadow-sm">
+    <span className="text-xs font-medium tracking-wide">
+      ⭐ Official ZippyEats Partner
+    </span>
+  </div>
+
+</div>
+
+  </div>
+</div>
+
+      {/* MENU */}
+      {Object.entries(grouped).map(([cuisine, items]) => {
+        const isOpen = openCuisines.includes(cuisine);
+
+        return (
+          <div key={cuisine} className="mb-6">
+
+            {/* HEADER */}
+          <button
+            onClick={() => toggleCuisine(cuisine)}
+
+          className="w-full flex justify-between items-center bg-white px-6 py-4 rounded-2xl shadow-md border border-slate-200">
+              <span className="text-lg font-semibold">
+                {cuisine}
+              </span>
+<span className="text-2xl font-semibold text-slate-600">
+  {isOpen ? "−" : "+"}
+</span>
+            </button>
+
+            {/* 🔥 ANIMATED CONTENT */}
+           <div
+  className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 overflow-hidden transition-all duration-500 ${
+    isOpen ? "max-h-[2000px] opacity-100 mt-5" : "max-h-0 opacity-0"
+  }`}
+>
+  {items.map((item) => (
+    <div
+      key={item._id}
+      className="w-full bg-white flex flex-col rounded-2xl mb-[10px] shadow-md hover:shadow-xl transition border border-slate-200 overflow-hidden"
+    >
+      {/* IMAGE */}
+      <div className="h-44 w-full overflow-hidden group bg-slate-200 flex-shrink-0">
+        <img
+          src={resolveItemImage(item)}
+          onError={handleImgError}
+          alt={item.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+        />
       </div>
 
-      {/* 🍽️ MENU */}
-      {Object.entries(grouped).map(([cuisine, items]) => (
-        <div key={cuisine} className="mb-12">
+      {/* BODY */}
+      <div className="flex flex-col flex-1 justify-between p-3 w-full" >
 
-          {/* SECTION TITLE */}
-          <h2 className="text-xl font-semibold text-slate-800 mb-6 tracking-wide border-b pb-2">
-            {cuisine}
-          </h2>
+      {/* NAME + PRICE */}
+<div className="w-full">
+  <div className="flex items-start justify-between gap-2">
+    <span className="text-sm font-semibold text-slate-900 leading-tight text-left">
+      {item.name}
+    </span>
+    <span className="text-sm font-bold text-red-500 whitespace-nowrap flex-shrink-0">
+      ₹{item.price}
+    </span>
+  </div>
+  <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 text-left">
+    {item.description || "Popular item"}
+  </p>
+</div>
 
-          {/* ITEMS */}
-          <div className="space-y-5">
-            {items.map((item) => (
-              <div
-                key={item._id}
-                className="group flex items-center justify-between bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-2xl transition-all duration-300 p-4 gap-5 hover:-translate-y-1"
-              >
-
-                {/* LEFT */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    {item.name}
-                  </h3>
-
-                  <p className="text-slate-600 text-sm mt-1 font-medium">
-                    ₹{item.price}
-                  </p>
-
-                  {item.description && (
-                    <p className="text-slate-400 text-xs mt-2 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* RIGHT */}
-                <div className="flex flex-col items-center gap-3">
-
-                  {/* IMAGE */}
-                  <div className="w-28 h-20 rounded-xl overflow-hidden bg-slate-100 shadow-sm group-hover:shadow-md transition">
-                    <img
-                      src={resolveItemImage(item)}
-                      alt={item.name}
-                      onError={handleImgError}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-
-                  {/* STEPPER */}
-                  <div className="w-28 h-10 flex items-center justify-center">
-                    {getQty(item._id) === 0 ? (
-                      <button
-                        className="w-full h-full rounded-lg bg-gradient-to-r from-slate-900 to-slate-700 text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition"
-                        onClick={() =>
-                          dispatch(
-                            addToCart({
-                              menu_item_id: item._id,
-                              name: item.name,
-                              price: item.price,
-                            })
-                          )
-                        }
-                      >
-                        Add
-                      </button>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-between bg-slate-900 text-white rounded-lg px-2 shadow-md">
-
-                        <button
-                          className="w-7 h-7 flex items-center justify-center text-lg hover:opacity-70 active:scale-90 transition"
-                          onClick={() =>
-                            dispatch(decreaseQty(item._id))
-                          }
-                        >
-                          -
-                        </button>
-
-                        <span className="text-sm font-semibold">
-                          {getQty(item._id)}
-                        </span>
-
-                        <button
-                          className="w-7 h-7 flex items-center justify-center text-lg hover:opacity-70 active:scale-90 transition"
-                          onClick={() =>
-                            dispatch(
-                              addToCart({
-                                menu_item_id: item._id,
-                                name: item.name,
-                                price: item.price,
-                              })
-                            )
-                          }
-                        >
-                          +
-                        </button>
-
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-              </div>
-            ))}
-          </div>
-
+        <div className="h-10 mt-3">
+          {getQty(item._id) === 0 ? (
+            <button
+              className="w-full h-full bg-sky-800 hover:bg-sky-700 text-white text-sm rounded-lg transition pr-[15px] pl-[15px]"
+              onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }))}
+            >
+              Add to cart
+            </button>
+          ) : (
+            <div className="w-full h-full bg-sky-800 text-white rounded-lg flex items-center justify-between px-4 ">
+              <button className="text-xl w-6 text-center mr-[10px] hover:opacity-70" onClick={() => dispatch(decreaseQty(item._id))}>−</button>
+              <span className="font-semibold">{getQty(item._id)}</span>
+              <button className="text-xl w-6 text-center ml-[10px] hover:opacity-70" onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }))}>+</button>
+            </div>
+          )}
         </div>
-      ))}
+
+      </div>
+    </div>
+  ))}
+</div>
+          </div>
+        );
+      })}
     </div>
   );
 }

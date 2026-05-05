@@ -1,6 +1,6 @@
 export default function Loader() {
   return (
-    <div className="flex items-center justify-center h-[60vh]">
+    <div className="w-full flex justify-center mt-[0vh]">
       <div className="loader scale-90">
         <svg
           id="cloud"
@@ -19,11 +19,6 @@ export default function Loader() {
                 <polygon points="50 37.5 80 75 20 75 50 37.5" />
                 <circle cx="20" cy="60" r="15" />
                 <circle cx="80" cy="60" r="15" />
-                <g>
-                  <circle cx="20" cy="60" r="15" />
-                  <circle cx="20" cy="60" r="15" />
-                  <circle cx="20" cy="60" r="15" />
-                </g>
               </g>
             </mask>
 
@@ -53,7 +48,6 @@ export default function Loader() {
         </svg>
       </div>
 
-      {/* REQUIRED CSS */}
       <style jsx>{`
         .loader {
           --cloud-color: #4387f4;

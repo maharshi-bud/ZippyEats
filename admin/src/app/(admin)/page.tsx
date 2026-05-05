@@ -88,7 +88,11 @@ export default function Dashboard() {
   }
 
   if (loading || !stats) {
-    return <p className="text-sm text-zinc-500">Loading dashboard...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader />
+      </div>
+    );
   }
 
   return (
