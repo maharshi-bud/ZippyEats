@@ -1,11 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import api from "../lib/axios";
+import { getRestaurantCoverImage } from "../lib/imageUtils";
 
 export default function RestaurantList({ restaurants }) {
   const [showAll, setShowAll] = useState(false);
+  const [restaurantImages, setRestaurantImages] = useState({});
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const images = {};
+      for (const restaurant of restaurants) {
+        try {
+          const res = await api.get(`/menu/restaurant/${restaurant._id}`);
+          // console.log("sample item:", res.data.data?.[0]); // ← log one item
+
+          images[restaurant._id] = getRestaurantCoverImage(res.data.data || []);
+        } catch (err) {
+          images[restaurant._id] = "https://via.placeholder.com/400x300?text=No+Image";
+        }
+      }
+      setRestaurantImages(images);
+    };
+    if (restaurants.length > 0) fetchImages();
+  }, [restaurants]);
 
   const visibleData = showAll ? restaurants : restaurants.slice(0, 7);
 
@@ -23,10 +44,8 @@ export default function RestaurantList({ restaurants }) {
             <div
               className="rescard2-img"
               style={{
-                backgroundImage: `url(https://source.unsplash.com/400x300/?food,${r.name})`
+                backgroundImage: `url(${restaurantImages[r._id] || "https://via.placeholder.com/400x300?text=Loading..."})`
               }}
-              
-
             />
 
             <div className="rescard2-info">

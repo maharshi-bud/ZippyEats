@@ -5,6 +5,7 @@ import { selectCartItems, selectCartTotal } from "../store/slices/cartSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { addToCart, decreaseQty } from "../store/slices/cartSlice";
+import { resolveItemImage, handleImgError } from "../lib/imageUtils";
 
 export default function CartDrawer({ open, onClose }) {
   const items = useSelector(selectCartItems);
@@ -48,10 +49,20 @@ const dispatch = useDispatch();
       items.map((item) => (
       <div
   key={item.menu_item_id}
-  className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition"
+  className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition gap-3"
 >
+  {/* IMAGE */}
+  <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-200 flex-shrink-0">
+    <img
+      src={resolveItemImage(item)}
+      alt={item.name}
+      className="w-full h-full object-cover"
+      onError={handleImgError}
+    />
+  </div>
+
   {/* LEFT */}
-  <div>
+  <div className="flex-1">
     <p className="text-sm font-semibold">{item.name}</p>
 
     {/* 🔥 STEPPER */}
