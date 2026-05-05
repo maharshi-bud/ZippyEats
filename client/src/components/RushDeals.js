@@ -41,7 +41,8 @@ export default function RushDeals() {
       price: 350,
       discountPrice: 199,
       discount: "40%",
-      img: "https://images.unsplash.com/photo-1604908176997-431dfc0e7a3d"
+      // img: "https://images.unsplash.com/photo-1604908176997-431dfc0e7a3d"
+      img : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRs1nkXfdrJgGxUXvlzUAWB-_qKj5snjoguBFEqpSEgCbfh3V2qxg3IA3q0JlAIrBaWw0LtTbjp6-9zLUaBQwwy2bAPBSOzsJ5Mf_TgR2bi&s=10"
     }
   ];
 

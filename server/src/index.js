@@ -53,7 +53,7 @@ const startServer = async () => {
     
   ]);
   
-  setInterval(runOrderEngine, 5000); // every 5 sec
+  setInterval(runOrderEngine, 5); // every 5 sec
   
   app.listen(PORT, () => {
     console.log(`🚀 ZippyEats running on ${PORT}`);

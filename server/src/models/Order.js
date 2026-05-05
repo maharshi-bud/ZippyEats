@@ -16,6 +16,12 @@ const orderItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0
+    },
+
+    // ✅ NEW FIELD
+    image: {
+      type: String,
+      required: true
     }
   },
   { _id: false }

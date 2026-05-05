@@ -1,0 +1,400 @@
+[{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf68c"
+  },
+  "restaurant_id": "r8",
+  "name": "Vada Pav",
+  "price": 60,
+  "description": "Mumbai street burger",
+  "cuisine": "Street Food"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf670"
+  },
+  "restaurant_id": "r1",
+  "name": "Butter Naan",
+  "price": 40,
+  "description": "Soft butter naan",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf679"
+  },
+  "restaurant_id": "r3",
+  "name": "Spring Rolls",
+  "price": 160,
+  "description": "Crispy rolls",
+  "cuisine": "Chinese"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf684"
+  },
+  "restaurant_id": "r6",
+  "name": "Seekh Kebab",
+  "price": 280,
+  "description": "Minced meat skewers",
+  "cuisine": "BBQ"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf67d"
+  },
+  "restaurant_id": "r4",
+  "name": "Chicken Wings",
+  "price": 220,
+  "description": "Spicy wings",
+  "cuisine": "American"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf683"
+  },
+  "restaurant_id": "r6",
+  "name": "Paneer Tikka",
+  "price": 260,
+  "description": "Grilled paneer cubes",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf686"
+  },
+  "restaurant_id": "r7",
+  "name": "Veg Salad Bowl",
+  "price": 200,
+  "description": "Fresh veggie salad",
+  "cuisine": "Healthy"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf68f"
+  },
+  "restaurant_id": "r9",
+  "name": "Farmhouse Pizza",
+  "price": 320,
+  "description": "Loaded veggie pizza",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf691"
+  },
+  "restaurant_id": "r9",
+  "name": "Pepperoni Pizza",
+  "price": 400,
+  "description": "Pepperoni loaded pizza",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf67f"
+  },
+  "restaurant_id": "r5",
+  "name": "Cappuccino",
+  "price": 140,
+  "description": "Hot frothy coffee",
+  "cuisine": "Cafe"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf68d"
+  },
+  "restaurant_id": "r8",
+  "name": "Pani Puri",
+  "price": 50,
+  "description": "Crispy golgappa",
+  "cuisine": "Street Food"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf67e"
+  },
+  "restaurant_id": "r5",
+  "name": "Cold Coffee",
+  "price": 120,
+  "description": "Chilled creamy coffee",
+  "cuisine": "Cafe"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf671"
+  },
+  "restaurant_id": "r1",
+  "name": "Biryani",
+  "price": 250,
+  "description": "Spiced rice dish",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf680"
+  },
+  "restaurant_id": "r5",
+  "name": "Chocolate Cake",
+  "price": 180,
+  "description": "Rich chocolate dessert",
+  "cuisine": "Desserts"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf690"
+  },
+  "restaurant_id": "r9",
+  "name": "Cheese Burst Pizza",
+  "price": 350,
+  "description": "Extra cheesy pizza",
+  "cuisine": "Fast Food"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf681"
+  },
+  "restaurant_id": "r5",
+  "name": "Brownie",
+  "price": 160,
+  "description": "Chocolate brownie",
+  "cuisine": "Desserts"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf693"
+  },
+  "restaurant_id": "r10",
+  "name": "Gulab Jamun",
+  "price": 90,
+  "description": "Sweet syrup balls",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf672"
+  },
+  "restaurant_id": "r2",
+  "name": "Pasta Alfredo",
+  "price": 280,
+  "description": "Creamy white sauce pasta",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf682"
+  },
+  "restaurant_id": "r6",
+  "name": "Tandoori Chicken",
+  "price": 300,
+  "description": "Grilled chicken",
+  "cuisine": "BBQ"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf675"
+  },
+  "restaurant_id": "r2",
+  "name": "Garlic Bread",
+  "price": 120,
+  "description": "Buttery garlic bread",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf689"
+  },
+  "restaurant_id": "r7",
+  "name": "Smoothie",
+  "price": 150,
+  "description": "Healthy smoothie",
+  "cuisine": "Healthy"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf692"
+  },
+  "restaurant_id": "r10",
+  "name": "Ice Cream",
+  "price": 120,
+  "description": "Chilled dessert",
+  "cuisine": "Desserts"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf67a"
+  },
+  "restaurant_id": "r4",
+  "name": "Cheese Burger",
+  "price": 150,
+  "description": "Juicy cheese burger",
+  "cuisine": "Fast Food"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf685"
+  },
+  "restaurant_id": "r6",
+  "name": "Butter Chicken",
+  "price": 320,
+  "description": "Creamy chicken curry",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf68a"
+  },
+  "restaurant_id": "r8",
+  "name": "Pav Bhaji",
+  "price": 120,
+  "description": "Spicy mashed veggies with bread",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf677"
+  },
+  "restaurant_id": "r3",
+  "name": "Fried Rice",
+  "price": 170,
+  "description": "Vegetable fried rice",
+  "cuisine": "Chinese"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf688"
+  },
+  "restaurant_id": "r7",
+  "name": "Fruit Bowl",
+  "price": 180,
+  "description": "Mixed fruits",
+  "cuisine": "Healthy"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf68e"
+  },
+  "restaurant_id": "r9",
+  "name": "Margherita Pizza",
+  "price": 250,
+  "description": "Classic cheese pizza",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf694"
+  },
+  "restaurant_id": "r10",
+  "name": "Rasmalai",
+  "price": 110,
+  "description": "Milk-based dessert",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf676"
+  },
+  "restaurant_id": "r3",
+  "name": "Hakka Noodles",
+  "price": 180,
+  "description": "Stir-fried noodles",
+  "cuisine": "Chinese"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf678"
+  },
+  "restaurant_id": "r3",
+  "name": "Manchurian",
+  "price": 200,
+  "description": "Veg balls in sauce",
+  "cuisine": "Chinese"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf67c"
+  },
+  "restaurant_id": "r4",
+  "name": "Hot Dog",
+  "price": 130,
+  "description": "Classic hot dog",
+  "cuisine": "Fast Food"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf673"
+  },
+  "restaurant_id": "r2",
+  "name": "Lasagna",
+  "price": 350,
+  "description": "Layered pasta dish",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf67b"
+  },
+  "restaurant_id": "r4",
+  "name": "Fries",
+  "price": 100,
+  "description": "Crispy fries",
+  "cuisine": "Fast Food"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf68b"
+  },
+  "restaurant_id": "r8",
+  "name": "Dabeli",
+  "price": 80,
+  "description": "Sweet and spicy snack",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf66f"
+  },
+  "restaurant_id": "r1",
+  "name": "Dal Tadka",
+  "price": 150,
+  "description": "Tempered lentils",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf687"
+  },
+  "restaurant_id": "r7",
+  "name": "Quinoa Bowl",
+  "price": 250,
+  "description": "Protein-rich bowl",
+  "cuisine": "Healthy"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf66e"
+  },
+  "restaurant_id": "r1",
+  "name": "Paneer Butter Masala",
+  "price": 220,
+  "description": "Creamy tomato gravy paneer",
+  "cuisine": "Indian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf674"
+  },
+  "restaurant_id": "r2",
+  "name": "Bruschetta",
+  "price": 150,
+  "description": "Toasted bread with toppings",
+  "cuisine": "Italian"
+},
+{
+  "_id": {
+    "$oid": "69f07b097de83adf654cf695"
+  },
+  "restaurant_id": "r10",
+  "name": "Cheesecake",
+  "price": 200,
+  "description": "Creamy cheesecake",
+  "cuisine": "Desserts"
+}]

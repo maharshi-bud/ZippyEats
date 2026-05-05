@@ -7,11 +7,14 @@ const STATUS_FLOW = {
   out_for_delivery: "delivered"
 };
 
+// ⏱️ 1 hour in ms
+const ONE_HOUR = 60 * 60 * 1000;
+
 export const runOrderEngine = async () => {
   try {
     const now = new Date();
 
-    // 🔴 1. Handle timeout (placed → cancelled)
+    // 🔴 1. Timeout (keep small like 5–10 mins)
     await Order.updateMany(
       {
         status: "placed",
@@ -22,7 +25,7 @@ export const runOrderEngine = async () => {
       }
     );
 
-    // 🟡 2. Handle normal transitions
+    // 🟡 2. Lifecycle transitions
     const orders = await Order.find({
       status: { $in: Object.keys(STATUS_FLOW) }
     });
@@ -30,18 +33,20 @@ export const runOrderEngine = async () => {
     for (const order of orders) {
       const currentStatus = order.status;
 
-      // skip cancelled/delivered
       if (!STATUS_FLOW[currentStatus]) continue;
 
       const lastUpdate = order.updatedAt;
-      const diff = (now - lastUpdate) / 1; // seconds
 
-      let requiredTime = 10; // default seconds per stage
+      // ✅ diff in milliseconds
+      const diff = now - lastUpdate;
 
-      // ⏱️ customize timings
-      if (currentStatus === "accepted") requiredTime = 5;
-      if (currentStatus === "preparing") requiredTime = 5;
-      if (currentStatus === "out_for_delivery") requiredTime = 5;
+      let requiredTime = ONE_HOUR; // default 1 hour
+
+      // ⏱️ optional fine-tuning
+      if (currentStatus === "placed") requiredTime = 10 * 60 * 100; // 10 min to accept
+      if (currentStatus === "accepted") requiredTime = ONE_HOUR;
+      if (currentStatus === "preparing") requiredTime = ONE_HOUR;
+      if (currentStatus === "out_for_delivery") requiredTime = ONE_HOUR;
 
       if (diff >= requiredTime) {
         order.status = STATUS_FLOW[currentStatus];
