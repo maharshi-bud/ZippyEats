@@ -1,4 +1,5 @@
 import axios from "axios";
+import { startRouteLoader } from "./routeLoading";
 
 const instance = axios.create({
   baseURL: "http://localhost:5010/api",
@@ -33,6 +34,7 @@ instance.interceptors.response.use(
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
+        startRouteLoader();
         window.location.href = "/login";
       }
     }

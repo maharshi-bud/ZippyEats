@@ -8,6 +8,8 @@ import Footer from "../components/Footer";
 import { Provider } from "react-redux";
 import { store } from "../store/store";
 import CartDrawer from "../components/CartDrawer";
+import RouteLoader from "../components/RouteLoader";
+import { startRouteLoader } from "../lib/routeLoading";
 import { useDispatch } from "react-redux";
 import { replaceCart } from "../store/slices/cartSlice";
 
@@ -29,6 +31,7 @@ function AppShell({ children }) {
     const token = localStorage.getItem("token");
 
     if (!token) {
+      startRouteLoader();
       router.push("/login");
       return;
     }
@@ -37,9 +40,11 @@ function AppShell({ children }) {
       const payload = JSON.parse(atob(token.split(".")[1]));
       if (payload.exp * 1000 < Date.now()) {
         localStorage.removeItem("token");
+        startRouteLoader();
         router.push("/login");
       }
     } catch {
+      startRouteLoader();
       router.push("/login");
     }
   }, [pathname, router]);
@@ -70,6 +75,7 @@ function AppShell({ children }) {
   return (
     <>
       <Navbar />
+      <RouteLoader />
       <div className="container">{children}</div>
       <CartDrawer />
       <Footer />

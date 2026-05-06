@@ -6,9 +6,14 @@ import Link from "next/link";
 import CuisineBar from "../components/CuisineBar";
 import PromoCarousel from "../components/PromoCarousel";
 import PopularBar from "../components/PopularBar";
+import TopRated from "../components/TopRated";
+import People from "../components/People";
+import QuickBites from "../components/QuickBites";
+import Recently from "../components/Recently";
 import RushDeals from "../components/RushDeals";
 import { useRouter } from "next/navigation";
 import { getRestaurantCoverImage, handleImgError } from "../lib/imageUtils";
+import { startRouteLoader } from "../lib/routeLoading";
 
 export default function Home() {
   const [restaurants, setRestaurants] = useState([]);
@@ -48,7 +53,11 @@ export default function Home() {
       <CuisineBar selected={selectedCuisine} setSelected={setSelectedCuisine} />
       <PromoCarousel />
       <PopularBar />
+      <People />
+      <QuickBites />
       <RushDeals />
+      <Recently />
+      <TopRated />
 
       <div className="restaurant-section">
         <div className="section-header">
@@ -63,7 +72,10 @@ export default function Home() {
             <div key={r._id} className="rescard2">
               <div
                 className="rescard2-img"
-                onClick={() => router.push(`/restaurant/${r._id}`)}
+                onClick={() => {
+                  startRouteLoader();
+                  router.push(`/restaurant/${r._id}`);
+                }}
               >
                 <img
                   src={restaurantImages[r._id] || "/fallback.png"}
@@ -74,7 +86,10 @@ export default function Home() {
               </div>
               <div
                 className="rescard2-info"
-                onClick={() => router.push(`/restaurant/${r._id}`)}
+                onClick={() => {
+                  startRouteLoader();
+                  router.push(`/restaurant/${r._id}`);
+                }}
               >
                 <h3>{r.name}</h3>
                 <p>{r.cuisine?.join(", ")}</p>

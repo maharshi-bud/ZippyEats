@@ -17,7 +17,16 @@ export default function PopularBar() {
   const isPaused = useRef(false);
 
   useEffect(() => {
-    api.get("/menu/popular")
+    const ids = JSON.parse(localStorage.getItem("recentlyViewedItems") || "[]");
+
+    if (!ids.length) {
+      setItems([]);
+      return;
+    }
+
+    api.get("/menu/recently-viewed", {
+      params: { ids: ids.join(",") },
+    })
       .then((res) => setItems(res.data.data || []))
       .catch(console.error);
   }, []);
@@ -102,9 +111,8 @@ export default function PopularBar() {
       {/* header */}
       <div className="flex items-center justify-between ml-[2%] mb-2">
         <h2 className="text-2xl font-extrabold text-slate-900">
-          🔥 Popular Near You
-        </h2>
-        <div className="flex items-center gap-2">
+🕐 Recently Viewed       </h2>
+          <div className="flex items-center gap-2">
        <button
   onClick={() => manualScroll(-1)}
   className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm

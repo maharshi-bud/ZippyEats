@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import api from "../../lib/axios";
+import { startRouteLoader } from "../../lib/routeLoading";
 
 export default function CartPage() {
   const items = useSelector(selectCartItems);
@@ -102,6 +103,7 @@ export default function CartPage() {
 
     const orderId = res.data.data._id;
 
+    startRouteLoader();
     router.push(`/orders/${orderId}`);
   } catch (err) {
     console.error("ORDER ERROR:", err.response?.data || err.message);

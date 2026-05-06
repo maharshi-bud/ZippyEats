@@ -17,7 +17,7 @@ export default function PopularBar() {
   const isPaused = useRef(false);
 
   useEffect(() => {
-    api.get("/menu/popular")
+    api.get("/menu/people")
       .then((res) => setItems(res.data.data || []))
       .catch(console.error);
   }, []);
@@ -102,7 +102,7 @@ export default function PopularBar() {
       {/* header */}
       <div className="flex items-center justify-between ml-[2%] mb-2">
         <h2 className="text-2xl font-extrabold text-slate-900">
-          🔥 Popular Near You
+          💡 People Also Like
         </h2>
         <div className="flex items-center gap-2">
        <button

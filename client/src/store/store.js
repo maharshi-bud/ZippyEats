@@ -2,6 +2,13 @@ import { configureStore } from "@reduxjs/toolkit";
 import cartReducer from "./slices/cartSlice";
 import authReducer from "./slices/authSlice";
 
+
+
+// store/store.js (or wherever your configureStore is)
+import locationReducer from "./slices/locationSlice";
+
+
+
 // ✅ Load cart as object shape
 const loadCart = () => {
   if (typeof window === "undefined") return { items: [] };
@@ -25,7 +32,8 @@ const loadCart = () => {
 export const store = configureStore({
   reducer: {
     cart: cartReducer,
-    auth: authReducer
+    auth: authReducer,    location: locationReducer,
+
   },
   preloadedState: {
     cart: loadCart()
@@ -41,3 +49,12 @@ if (typeof window !== "undefined") {
     } catch {}
   });
 }
+
+
+
+
+
+
+
+
+

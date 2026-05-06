@@ -22,6 +22,19 @@ export default function RestaurantPage({ params }) {
   const getQty = (id) =>
     cartItems.find((i) => i.menu_item_id === id)?.quantity || 0;
 
+  const rememberViewedItem = (itemId) => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const key = "recentlyViewedItems";
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      const next = [itemId, ...existing.filter((id) => id !== itemId)].slice(0, 15);
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch (err) {
+      console.error("Failed to save recently viewed item", err);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const res = await api.get(`/restaurant/${params.id}`);
@@ -148,6 +161,7 @@ export default function RestaurantPage({ params }) {
   {items.map((item) => (
     <div
       key={item._id}
+      onClick={() => rememberViewedItem(item._id)}
       className="w-full bg-white flex flex-col rounded-2xl mb-[10px] shadow-md hover:shadow-xl transition border border-slate-200 overflow-hidden"
     >
       {/* IMAGE */}
@@ -182,15 +196,27 @@ export default function RestaurantPage({ params }) {
           {getQty(item._id) === 0 ? (
             <button
               className="w-full h-full bg-sky-800 hover:bg-sky-700 text-white text-sm rounded-lg transition pr-[15px] pl-[15px]"
-              onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }))}
+              onClick={(event) => {
+                event.stopPropagation();
+                rememberViewedItem(item._id);
+                dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }));
+              }}
             >
               Add to cart
             </button>
           ) : (
             <div className="w-full h-full bg-sky-800 text-white rounded-lg flex items-center justify-between px-4 ">
-              <button className="text-xl w-6 text-center mr-[10px] hover:opacity-70" onClick={() => dispatch(decreaseQty(item._id))}>−</button>
+              <button className="text-xl w-6 text-center mr-[10px] hover:opacity-70" onClick={(event) => {
+                event.stopPropagation();
+                rememberViewedItem(item._id);
+                dispatch(decreaseQty(item._id));
+              }}>−</button>
               <span className="font-semibold">{getQty(item._id)}</span>
-              <button className="text-xl w-6 text-center ml-[10px] hover:opacity-70" onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }))}>+</button>
+              <button className="text-xl w-6 text-center ml-[10px] hover:opacity-70" onClick={(event) => {
+                event.stopPropagation();
+                rememberViewedItem(item._id);
+                dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }));
+              }}>+</button>
             </div>
           )}
         </div>

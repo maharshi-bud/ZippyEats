@@ -1,4 +1,11 @@
+import mongoose from "mongoose";
 import MenuItem from "../models/MenuItem.js";
+import {
+  DEFAULT_SHELF_LIMIT,
+  filterQuickBites,
+  orderRecentlyViewed,
+  sortTopRatedItems,
+} from "../utils/menuShelfUtils.js";
 
 
 // 🔹 GET all
@@ -51,6 +58,79 @@ export const getPopularItems = async (req, res) => {
   }
 };
 
+export const getPeopleAlsoLikeItems = async (req, res) => {
+  try {
+    const items = await MenuItem.aggregate([
+      { $sample: { size: DEFAULT_SHELF_LIMIT } }
+    ]);
+
+    res.json({
+      success: true,
+      data: items
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getTopRatedItems = async (req, res) => {
+  try {
+    const items = await MenuItem.find().lean();
+
+    res.json({
+      success: true,
+      data: sortTopRatedItems(items).slice(0, DEFAULT_SHELF_LIMIT)
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getQuickBites = async (req, res) => {
+  try {
+    const items = await MenuItem.find({
+      price: { $lte: 200 }
+    })
+      .limit(DEFAULT_SHELF_LIMIT)
+      .lean();
+
+    res.json({
+      success: true,
+      data: filterQuickBites(items)
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getRecentlyViewedItems = async (req, res) => {
+  try {
+    const ids = String(req.query.ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, DEFAULT_SHELF_LIMIT);
+    const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    if (!validIds.length) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const items = await MenuItem.find({
+      _id: { $in: validIds }
+    }).lean();
+
+    res.json({
+      success: true,
+      data: orderRecentlyViewed(items, validIds)
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // 🔐 CREATE
 export const createMenuItem = async (req, res) => {

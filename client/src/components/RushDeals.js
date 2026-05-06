@@ -52,8 +52,8 @@ export default function RushDeals() {
       {/* LEFT */}
       <div className="rush-left">
         <div className="rush-content">
-          <span className="rush-tag">⚡ RUSH DEALS</span>
-          <h1>Hurry! Big savings</h1>
+          <span className="rush-tag">RUSH DEALS</span>
+          <h1>Hurry! Big Savings</h1>
 
           <div className="rush-timer">
             ⏱ Ends in <b>{formatTime()}</b>

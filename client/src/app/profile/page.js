@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "../../lib/axios";
 import { useRouter } from "next/navigation";
+import { startRouteLoader } from "../../lib/routeLoading";
 
 export default function ProfilePage() {
   const [orders, setOrders] = useState([]);
@@ -104,7 +105,10 @@ export default function ProfilePage() {
             orders.map((order) => (
               <div
                 key={order._id}
-                onClick={() => router.push(`/orders/${order._id}`)}
+                onClick={() => {
+                  startRouteLoader();
+                  router.push(`/orders/${order._id}`);
+                }}
                 className="bg-white rounded-2xl shadow hover:shadow-md transition overflow-hidden cursor-pointer"
               >
 
@@ -163,6 +167,7 @@ export default function ProfilePage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        startRouteLoader();
                         router.push(`/orders/${order._id}`);
                       }}
                       className="text-sm px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-700 transition"

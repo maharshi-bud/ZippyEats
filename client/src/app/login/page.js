@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, registerUser } from "../../store/slices/authSlice";
 import { useRouter } from "next/navigation";
+import { startRouteLoader } from "../../lib/routeLoading";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,7 +28,10 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (token) router.push("/");
+    if (token) {
+      startRouteLoader();
+      router.push("/");
+    }
   }, [token, router]);
 
   return (

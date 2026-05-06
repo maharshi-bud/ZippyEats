@@ -80,7 +80,7 @@ export default function PromoCarousel() {
   useEffect(() => {
     const interval = setInterval(() => {
       handleNext();
-    }, 3500000);
+    }, 3500);
 
     return () => clearInterval(interval);
   }, []);

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import api from "../lib/axios";
 import { getRestaurantCoverImage } from "../lib/imageUtils";
+import { startRouteLoader } from "../lib/routeLoading";
 
 export default function RestaurantList({ restaurants }) {
   const [showAll, setShowAll] = useState(false);
@@ -39,7 +40,10 @@ export default function RestaurantList({ restaurants }) {
           <div
             key={r._id}
             className="rescard2"
-            onClick={() => router.push(`/restaurant/${r._id}`)}
+            onClick={() => {
+              startRouteLoader();
+              router.push(`/restaurant/${r._id}`);
+            }}
           >
             <div
               className="rescard2-img"

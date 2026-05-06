@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/slices/authSlice";
+import { setLocation as setLocationRedux, selectLocation } from "../store/slices/locationSlice";
 import { useState, useEffect, useRef } from "react";
 import logo from "../lib/imgs/logoText.png";
 import CartDrawer from "./CartDrawer";
 import { selectCartItems } from "../store/slices/cartSlice";
 import { useRouter } from "next/navigation";
-// import "./Navbar.css";
+import { startRouteLoader } from "../lib/routeLoading";
 
 export default function Navbar() {
   const token = useSelector((state) => state.auth.token);
@@ -17,7 +18,6 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [location, setLocation] = useState("Ahmedabad");
   const [search, setSearch] = useState("");
   const [manualAddress, setManualAddress] = useState("");
   const [loadingLocation, setLoadingLocation] = useState(false);
@@ -29,7 +29,34 @@ export default function Navbar() {
   const router = useRouter();
   const cart = useSelector(selectCartItems);
 
+  const location = useSelector(selectLocation);
+
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // ✅ Helper: Build a readable address from Nominatim response
+  const buildReadableAddress = (address) => {
+    const parts = [];
+
+    // Area / Neighbourhood / Suburb
+    if (address.neighbourhood) parts.push(address.neighbourhood);
+    else if (address.suburb) parts.push(address.suburb);
+    else if (address.hamlet) parts.push(address.hamlet);
+    else if (address.village) parts.push(address.village);
+    else if (address.road) parts.push(address.road);
+
+    // City / Town
+    if (address.city) parts.push(address.city);
+    else if (address.town) parts.push(address.town);
+    else if (address.county) parts.push(address.county);
+
+    // State
+    if (address.state) parts.push(address.state);
+
+    // Pincode
+    if (address.postcode) parts.push(address.postcode);
+
+    return parts.join(", ") || "Unknown Location";
+  };
 
   // Close profile popup when clicking outside
   useEffect(() => {
@@ -55,13 +82,14 @@ export default function Navbar() {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             manualAddress
-          )}&limit=5&countrycodes=in`
+          )}&limit=5&countrycodes=in&addressdetails=1`
         );
         const data = await response.json();
 
         setSuggestions(
           data.map((item) => ({
             display_name: item.display_name,
+            short_name: buildReadableAddress(item.address),
             lat: item.lat,
             lon: item.lon,
           }))
@@ -76,6 +104,7 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, [manualAddress]);
 
+  // ✅ Get current location — now shows full area/city/state
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
@@ -90,17 +119,13 @@ export default function Navbar() {
 
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
           );
           const data = await response.json();
 
-          const city =
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            "Unknown";
+          const fullAddress = buildReadableAddress(data.address);
 
-          setLocation(city);
+          dispatch(setLocationRedux(fullAddress));
           setLocationOpen(false);
         } catch (error) {
           console.error("Error fetching location:", error);
@@ -117,19 +142,19 @@ export default function Navbar() {
     );
   };
 
+  // Set manual address
   const handleSetAddress = () => {
     if (manualAddress.trim()) {
-      setLocation(manualAddress.trim());
+      dispatch(setLocationRedux(manualAddress.trim()));
       setManualAddress("");
       setSuggestions([]);
       setLocationOpen(false);
     }
   };
 
+  // ✅ Select from suggestions — now shows full area/city/state
   const handleSelectSuggestion = (suggestion) => {
-    const shortName =
-      suggestion.display_name.split(",")[0] || suggestion.display_name;
-    setLocation(shortName);
+    dispatch(setLocationRedux(suggestion.short_name));
     setManualAddress("");
     setSuggestions([]);
     setLocationOpen(false);
@@ -150,12 +175,13 @@ export default function Navbar() {
             <img src={logo.src} alt="ZippyEats" className="h-10 w-auto" />
           </Link>
 
-          {/* 📍 LOCATION BUTTON */}
+          {/* 📍 LOCATION BUTTON — truncated if too long */}
           <button
             onClick={() => setLocationOpen(true)}
-            className="flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium transition hover:bg-white/20"
+            className="flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium transition hover:bg-white/20 max-w-[350px]"
           >
-            📍 {location}
+            <span>📍</span>
+            <span className="truncate">{location}</span>
           </button>
         </div>
 
@@ -186,9 +212,9 @@ export default function Navbar() {
           >
             🛒 Cart
             {totalItems > 0 && (
-              <span className="absolute -right-4 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-green-500 px-[2px] text-[11px] font-semibold text-white transition-transform active:scale-125">
-                {totalItems}
-              </span>
+              <span className="absolute -right-4 -top-1 grid place-items-center min-w-[16px] h-[16px] rounded-full bg-green-500 px-[2px] text-[11px] font-semibold text-white transition-transform active:scale-125">
+  <span className="block leading-none">{totalItems}</span>
+</span>
             )}
           </button>
 
@@ -221,6 +247,7 @@ export default function Navbar() {
                       <button
                         onClick={() => {
                           setProfileOpen(false);
+                          startRouteLoader();
                           router.push("/profile");
                         }}
                       >
@@ -269,6 +296,7 @@ export default function Navbar() {
                       <button
                         onClick={() => {
                           setProfileOpen(false);
+                          startRouteLoader();
                           router.push("/login");
                         }}
                       >
@@ -291,6 +319,7 @@ export default function Navbar() {
                       <button
                         onClick={() => {
                           setProfileOpen(false);
+                          startRouteLoader();
                           router.push("/signup");
                         }}
                       >
@@ -363,9 +392,7 @@ export default function Navbar() {
 
             <div className="relative mb-4 flex items-center">
               <div className="flex-grow border-t border-gray-300"></div>
-              <span className="mx-4 flex-shrink text-sm text-gray-500">
-                OR
-              </span>
+              <span className="mx-4 flex-shrink text-sm text-gray-500">OR</span>
               <div className="flex-grow border-t border-gray-300"></div>
             </div>
 
@@ -387,6 +414,7 @@ export default function Navbar() {
                 )}
               </div>
 
+              {/* ✅ Updated suggestions — shows area/city/state */}
               {suggestions.length > 0 && (
                 <div className="absolute z-10 w-full max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
                   {suggestions.map((suggestion, index) => (
@@ -396,9 +424,9 @@ export default function Navbar() {
                       className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-orange-50 transition border-b border-gray-100 last:border-b-0"
                     >
                       <div className="font-medium text-gray-900">
-                        {suggestion.display_name.split(",")[0]}
+                        {suggestion.short_name}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-xs text-gray-500 mt-0.5 truncate">
                         {suggestion.display_name}
                       </div>
                     </button>
@@ -423,7 +451,7 @@ export default function Navbar() {
                   <button
                     key={city}
                     onClick={() => {
-                      setLocation(city);
+                      dispatch(setLocationRedux(city));
                       setLocationOpen(false);
                       setSuggestions([]);
                       setManualAddress("");

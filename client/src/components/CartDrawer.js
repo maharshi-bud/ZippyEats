@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { addToCart, decreaseQty } from "../store/slices/cartSlice";
 import { resolveItemImage, handleImgError } from "../lib/imageUtils";
+import { startRouteLoader } from "../lib/routeLoading";
 
 export default function CartDrawer({ open, onClose }) {
   const items = useSelector(selectCartItems);
@@ -33,9 +34,9 @@ const dispatch = useDispatch();
 
 <button
   onClick={onClose}
-  className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200 transition leading-none"
+  className="grid place-items-center w-9 h-9 rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200 transition"
 >
-  X
+  <span className="block text-sm font-semibold">✕</span>
 </button>
   </div>
 
@@ -66,35 +67,35 @@ const dispatch = useDispatch();
     <p className="text-sm font-semibold">{item.name}</p>
 
     {/* 🔥 STEPPER */}
-    <div className="mt-2 flex items-center gap-2 bg-white border rounded-lg px-2 py-1 w-fit shadow-sm">
+   <div className="mt-2 flex items-center gap-2 bg-white border rounded-lg px-2 py-1 w-fit shadow-sm">
 
-      <button
-        onClick={() => dispatch(decreaseQty(item.menu_item_id))}
-        className="w-6 h-6 flex items-center justify-center text-lg font-bold text-slate-700 hover:bg-slate-100 rounded"
-      >
-        −
-      </button>
+  <button
+    onClick={() => dispatch(decreaseQty(item.menu_item_id))}
+    className="w-6 h-6 grid place-items-center text-lg font-bold text-slate-700 hover:bg-slate-100 rounded"
+  >
+    <span className="block -mt-px">−</span>
+  </button>
 
-      <span className="text-sm font-semibold w-5 text-center">
-        {item.quantity}
-      </span>
+  <span className="text-sm font-semibold w-5 text-center">
+    {item.quantity}
+  </span>
 
-      <button
-        onClick={() =>
-          dispatch(
-            addToCart({
-              menu_item_id: item.menu_item_id,
-              name: item.name,
-              price: item.price
-            })
-          )
-        }
-        className="w-6 h-6 flex items-center justify-center text-lg font-bold text-slate-700 hover:bg-slate-100 rounded"
-      >
-        +
-      </button>
+  <button
+    onClick={() =>
+      dispatch(
+        addToCart({
+          menu_item_id: item.menu_item_id,
+          name: item.name,
+          price: item.price
+        })
+      )
+    }
+    className="w-6 h-6 grid place-items-center text-lg font-bold text-slate-700 hover:bg-slate-100 rounded"
+  >
+    <span className="block -mt-px">+</span>
+  </button>
 
-    </div>
+</div>
   </div>
 
   {/* RIGHT */}
@@ -124,16 +125,18 @@ const dispatch = useDispatch();
       <button
         onClick={() => {
           onClose(); // Close the drawer
+          startRouteLoader();
           router.push("/checkout"); // Navigate to checkout page
         }}
-        className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition active:scale-95"
+        className="w-full py-3 px-3 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition active:scale-95"
       >
-        Checkout
+        Proceed to Checkout
       </button>
     ) : (
       <button
         onClick={() => {
           onClose(); // Also close the drawer when redirecting to login
+          startRouteLoader();
           router.push("/login");
         }}
         className="w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-base hover:bg-slate-800 transition active:scale-95"
