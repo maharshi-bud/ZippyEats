@@ -25,6 +25,7 @@ export default function PopularBar() {
           return (
             <div key={item._id} className="popular-card">
               <div className="popular-img">
+                <div className="popular-img2">
                 
                 <img
                   src={imgSrc}
@@ -32,6 +33,7 @@ export default function PopularBar() {
                   onError={handleImgError}       // ✅ fallback on broken URL
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
+              </div>
                 <div className="popular-action">
                   {!itemInCart ? (
                     <button

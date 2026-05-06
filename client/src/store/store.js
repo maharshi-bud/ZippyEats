@@ -2,13 +2,21 @@ import { configureStore } from "@reduxjs/toolkit";
 import cartReducer from "./slices/cartSlice";
 import authReducer from "./slices/authSlice";
 
-// 🔥 safe loader
+// ✅ Load cart as object shape
 const loadCart = () => {
   if (typeof window === "undefined") return { items: [] };
 
   try {
     const data = localStorage.getItem("cart");
-    return data ? JSON.parse(data) : { items: [] };
+    if (!data) return { items: [] };
+    
+    const parsed = JSON.parse(data);
+    
+    // ✅ Handle both shapes (for migration)
+    if (Array.isArray(parsed)) return { items: parsed };
+    if (parsed && Array.isArray(parsed.items)) return { items: parsed.items };
+    
+    return { items: [] };
   } catch {
     return { items: [] };
   }
@@ -20,11 +28,11 @@ export const store = configureStore({
     auth: authReducer
   },
   preloadedState: {
-    cart: loadCart() // ✅ clean
+    cart: loadCart()
   }
 });
 
-// 🔥 save only in browser
+// ✅ Save entire cart object
 if (typeof window !== "undefined") {
   store.subscribe(() => {
     try {

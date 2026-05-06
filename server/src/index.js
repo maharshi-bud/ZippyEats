@@ -19,8 +19,8 @@ import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import adminStatsRoutes from "./routes/admin/statsRoutes.js";
 import { runOrderEngine } from "./services/orderEngine.js";
-// import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
-// import { syncMenuImages } from "./utils/syncImages.js";
+import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
+import { syncMenuImages } from "./utils/syncImages.js";
 import userRoutes from "./routes/userRoutes.js";
 import { protect } from "./middleware/authMiddleware.js";
 import { adminOnly } from "./middleware/adminMiddleware.js";
@@ -67,7 +67,7 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`🚀 ZippyEats running on ${PORT}`);
   });
-  // await syncRestaurantCuisines();
+  await syncRestaurantCuisines();
   // await syncMenuImages();
 };
 

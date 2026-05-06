@@ -108,8 +108,8 @@ export default function PromoCarousel() {
               key={i}
               className="Promocard"
               style={{
-                minWidth: "650px",
-                height: "350px",
+                minWidth: "790px",
+                height: "290px",
                 borderRadius: "18px",
                 backgroundImage: `url(${b.img})`,
                 backgroundSize: "cover",
