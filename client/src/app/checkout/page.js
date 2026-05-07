@@ -114,20 +114,20 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="max-w-6xl mx-auto">
         {/* ✅ HEADER */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-0">
           <div className="text-Start">
-            <h1 className="text-2xl font-bold text-slate-800">Checkout</h1>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <h1 className="text-5xl font-bold text-slate-800 mb-0 text-shadow-xl">Checkout</h1>
+            <p className="text-sm text-slate-400 mt-0.5 mb-0 ml-1">
               Review your order and confirm
             </p>
           </div>
-          <span style={{ fontSize: 42 }}>🛒</span>
+          <span style={{ fontSize: 56 }}>🛒</span>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 ">
           {/* CART ITEMS */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <div className="lg:col-span-2 space-y-6 ">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 shadow-l">
               {/* Cart heading row */}
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* ✅ DELIVERY ADDRESS — Now reads from Redux */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 shadow-l">
               <div className="flex items-center gap-2 mb-4">
                 <span style={{ fontSize: 20 }}>📍</span>
                 <h2 className="text-lg font-semibold text-slate-800">
@@ -261,7 +261,35 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-500">Delivery Fee</span>
-                  <span className="font-semibold text-slate-800">₹40</span>
+                  {/* <span className="font-semibold text-slate-800">₹40</span> */}
+                  <div className="flex items-center gap-2">
+  {/* OLD PRICE */}
+  <span className="text-xs text-slate-400 line-through">
+    ₹60
+  </span>
+
+  {/* NEW PRICE */}
+  <span className="font-semibold text-slate-800">
+    ₹40
+  </span>
+</div>
+                </div>
+
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Platform Fee</span>
+                  {/* <span className="font-semibold text-slate-800">₹40</span> */}
+                  <div className="flex items-center gap-2">
+  {/* OLD PRICE */}
+  <span className="text-xs text-slate-400 line-through">
+    ₹20
+  </span>
+
+  {/* NEW PRICE */}
+  <span className="font-semibold text-slate-800">
+    ₹0
+  </span>
+</div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-500">Taxes & Charges</span>
@@ -281,20 +309,30 @@ export default function CheckoutPage() {
                   </span>
                 </p>
               </div>
+<div className="flex items-center justify-between mb-5">
+  {/* LEFT */}
+  <span className="text-base font-semibold text-slate-800">
+    Total
+  </span>
 
-              <div className="flex items-center justify-between mb-5">
-                <span className="text-base font-semibold text-slate-800">
-                  Total
-                </span>
-                <span className="text-2xl font-bold text-slate-800">
-                  ₹{total + 40}
-                </span>
-              </div>
+  {/* RIGHT */}
+  <div className="flex items-center gap-2">
+    {/* OLD PRICE */}
+    <span className="text-m  text-slate-400 line-through">
+      ₹{total + 80}
+    </span>
+
+    {/* NEW PRICE */}
+    <span className="text-2xl font-bold text-slate-800">
+      ₹{total + 40}
+    </span>
+  </div>
+</div>
 
               <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl mb-5">
                 <span style={{ fontSize: 18, flexShrink: 0 }}>🎉</span>
                 <p className="text-xs text-green-700 font-medium">
-                  You&apos;re saving ₹20 on this order!
+                  You&apos;re saving ₹40 on this order!
                 </p>
               </div>
 

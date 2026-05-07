@@ -17,6 +17,7 @@ import Order from "./models/Order.js";
 import authRoutes from "./routes/authRoutes.js"
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
 import adminStatsRoutes from "./routes/admin/statsRoutes.js";
 import { runOrderEngine } from "./services/orderEngine.js";
 import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
@@ -43,6 +44,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/menu", menuRoutes);
 app.use ("/api", restaurantRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/search",searchRoutes );
 
 app.use("/images", express.static(path.join(__dirname, "../../food_images")));
 

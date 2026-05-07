@@ -74,8 +74,8 @@ export default function OrderPage({ params }) {
         <div className="flex items-center gap-3">
           <span className="text-4xl">📦</span>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Order Tracking</h1>
-            <p className="text-sm text-slate-400 mt-0.5">Track your order in real-time</p>
+            <h1 className="text-4xl font-bold text-slate-800 mb-0">Order Tracking</h1>
+            <p className="text-sm text-slate-400 ">Track your order in real-time</p>
           </div>
         </div>
         <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm rounded-xl hover:bg-slate-700 transition">
@@ -117,120 +117,149 @@ export default function OrderPage({ params }) {
       </div>
 
       {/* 2 COL GRID */}
-      <div className="grid md:grid-cols-2 gap-6 mb-6">
+      
+{/* 2 COL GRID — Fixed height, scrollable items */}
+{/* <div className="grid md:grid-cols-2 gap-6 mb-6"> */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        {/* ORDER DETAILS */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left">
-          <div className="flex items-center gap-2 mb-5">
-            <span style={{ fontSize: 20 }}>🧾</span>
-            <h2 className="text-lg font-semibold text-slate-800">Order Details</h2>
-          </div>
-          <div className="space-y-3">
+  {/* ORDER DETAILS — fixed height */}
+  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left flex flex-col"
+       style={{ height: 500 }}>
 
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <IconCircle emoji="🟢" bg="bg-green-100" />
-              <span className="text-sm text-slate-500 flex-1">Status</span>
-              <span className="text-sm font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-lg capitalize">
-                {order.status.replaceAll("_", " ")}
-              </span>
-            </div>
+    <div className="flex items-center gap-2 mb-5">
+      <span className="text-4xl leading-none ml-[6px]">🧾</span>
+      <h2 className="text-3xl font-semibold text-slate-800 leading-none m-2 mr-[2px]">
+        Order Details
+      </h2>
+    </div>
 
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <IconCircle emoji="₹" bg="bg-blue-100" />
-              <span className="text-sm text-slate-500 flex-1">Total Amount</span>
-              <span className="text-sm font-bold text-slate-800">₹{order.total_amount}</span>
-            </div>
+    <div className="space-y-3 w-full flex-1">
+      <div className="flex items-center gap-3 w-full p-4 bg-slate-50 rounded-xl mx-1">
+        <IconCircle emoji="🟢" bg="bg-green-100" />
+        <span className="text-sm text-slate-500 flex-1">Status</span>
+        <span className="text-sm font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-lg capitalize">
+          {order.status.replaceAll("_", " ")}
+        </span>
+      </div>
 
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <IconCircle emoji="🕐" bg="bg-orange-100" />
-              <span className="text-sm text-slate-500 flex-1">ETA</span>
-              <span className="text-sm font-bold text-slate-800">
-                {new Date(order.eta).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            </div>
+      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
+        <IconCircle emoji="₹" bg="bg-blue-100" />
+        <span className="text-sm text-slate-500 flex-1">Total Amount</span>
+        <span className="text-sm font-bold text-slate-800">₹{order.total_amount}</span>
+      </div>
 
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <IconCircle emoji="#" bg="bg-purple-100" />
-              <span className="text-sm text-slate-500 flex-1">Order ID</span>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs text-slate-600 truncate max-w-[120px]">{params.id}</span>
-                <button onClick={copyId} className="text-slate-400 hover:text-slate-700 text-xs flex-shrink-0">
-                  {copied ? "✓" : "⧉"}
-                </button>
-              </div>
-            </div>
+      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
+        <IconCircle emoji="📦" bg="bg-indigo-100" />
+        <span className="text-sm text-slate-500 flex-1">Number of items</span>
+        <span className="text-sm font-bold text-slate-800">
+          {order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0}
+        </span>
+      </div>
 
-          </div>
+      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
+        <IconCircle emoji="🕐" bg="bg-orange-100" />
+        <span className="text-sm text-slate-500 flex-1">ETA</span>
+        <span className="text-sm font-bold text-slate-800">
+          {new Date(order.eta).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
+        <IconCircle emoji="#" bg="bg-purple-100" />
+        <span className="text-sm text-slate-500 flex-1">Order ID</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-mono text-xs text-slate-600 truncate max-w-[120px]">{params.id}</span>
+          <button onClick={copyId} className="text-slate-400 hover:text-slate-700 text-xs flex-shrink-0">
+            {copied ? "✓" : "⧉"}
+          </button>
         </div>
-
-        {/* ITEMS */}
-        {/* ITEMS */}
-<div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left">
-  <div className="flex items-center gap-2 mb-5">
-    <span style={{ fontSize: 20 }}>🛍️</span>
-    <h2 className="text-lg font-semibold text-slate-800">Items</h2>
+      </div>
+    </div>
   </div>
-  <div className="space-y-3">
-    {order.items.map((item) => {
-      // ✅ Handle both flattened AND populated formats
-      const itemId =
-        typeof item.menu_item_id === "object"
-          ? item.menu_item_id._id
-          : item.menu_item_id;
 
-      const itemName =
-        item.name ||
-        (typeof item.menu_item_id === "object"
-          ? item.menu_item_id.name
-          : "Unknown");
+  {/* ITEMS — same fixed height, scrollable content */}
+  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left flex flex-col"
+       style={{ height: 500 }}>
 
-      const itemPrice =
-        item.price ||
-        (typeof item.menu_item_id === "object"
-          ? item.menu_item_id.price
-          : 0);
+    <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center gap-2">
+        <span style={{ fontSize: 36 }}> 🍽️  </span>
+        {/* <h2 className="text-lg font-semibold text-slate-800"> */}
+      <h2 className="text-3xl font-semibold text-slate-800 leading-none m-2 mr-[2px]">
+Dishes</h2>
+      </div>
+      {/* <span className="text-xs font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-full">
+        {order.items?.length || 0} {order.items?.length === 1 ? "item" : "items"}
+      </span> */}
+    </div>
 
-      const itemImage =
-        item.image ||
-        (typeof item.menu_item_id === "object"
-          ? item.menu_item_id.image
-          : null);
+    {/* ✅ Scrollable items container */}
+    {/* <div className="flex-1 overflow-y-auto space-y-2 pr-1
+                    [&::-webkit-scrollbar]:w-1.5
+                    [&::-webkit-scrollbar-track]:bg-transparent
+                    [&::-webkit-scrollbar-thumb]:bg-slate-200
+                    [&::-webkit-scrollbar-thumb]:rounded-full
+                    hover:[&::-webkit-scrollbar-thumb]:bg-slate-300"> */}
+      <div className="flex-1 w-full overflow-y-auto max-h-[500px]">
 
-      return (
-        <div
-          key={itemId}
-          className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition"
-        >
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-            <img
-              src={resolveItemImage({
-                image: itemImage,
-                restaurant_id: restaurantId,
-                name: itemName,
-              })}
-              alt={itemName}
-              className="w-full h-full object-cover"
-              onError={handleImgError}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-slate-800 text-sm truncate">
-              {itemName}
+      {order.items.map((item) => {
+        const itemId =
+          typeof item.menu_item_id === "object"
+            ? item.menu_item_id._id
+            : item.menu_item_id;
+
+        const itemName =
+          item.name ||
+          (typeof item.menu_item_id === "object"
+            ? item.menu_item_id.name
+            : "Unknown");
+
+        const itemPrice =
+          item.price ||
+          (typeof item.menu_item_id === "object"
+            ? item.menu_item_id.price
+            : 0);
+
+        const itemImage =
+          item.image ||
+          (typeof item.menu_item_id === "object"
+            ? item.menu_item_id.image
+            : null);
+
+        return (
+          <div
+            key={itemId}
+            className="flex items-center gap-3 p-3 mx-1 rounded-xl bg-slate-50 hover:bg-slate-100 transition"
+          >
+            <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
+              <img
+                src={resolveItemImage({
+                  image: itemImage,
+                  restaurant_id: restaurantId,
+                  name: itemName,
+                })}
+                alt={itemName}
+                className="w-full h-full object-cover"
+                onError={handleImgError}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-slate-800 text-sm truncate">
+                {itemName}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Qty: {item.quantity}
+              </p>
+            </div>
+            <p className="font-semibold text-slate-800 text-sm flex-shrink-0">
+              ₹{itemPrice * item.quantity}
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Qty: {item.quantity}
-            </p>
           </div>
-          <p className="font-semibold text-slate-800 text-sm flex-shrink-0">
-            ₹{itemPrice * item.quantity}
-          </p>
-        </div>
-      );
-    })}
+        );
+      })}
+    </div>
   </div>
 </div>
-
-      </div>
 
       {/* STATUS BANNER */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
@@ -243,7 +272,7 @@ export default function OrderPage({ params }) {
             <p className="text-sm text-slate-400 mt-0.5">{msg.sub}</p>
           </div>
         </div>
-        <svg width="80" height="50" viewBox="0 0 80 50" fill="none" className="opacity-20 hidden sm:block">
+        <svg width="80" height="60" viewBox="0 0 80 50" fill="none" className="opacity-20 hidden sm:block">
           <ellipse cx="20" cy="40" rx="10" ry="10" stroke="#16a34a" strokeWidth="3"/>
           <ellipse cx="60" cy="40" rx="10" ry="10" stroke="#16a34a" strokeWidth="3"/>
           <path d="M10 40 L30 20 L50 20 L70 40" stroke="#16a34a" strokeWidth="3" strokeLinecap="round"/>

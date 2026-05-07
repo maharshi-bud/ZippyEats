@@ -27,16 +27,7 @@ h2 {
 h3 {
   margin-bottom: 6px;
 }
-input {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  margin: 8px 0;
-  outline: none;
-  padding: 10px;
-  transition: 0.2s;
-  width: 100%;
-}
+
 input:focus {
   border-color: #111827;
   box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.1);

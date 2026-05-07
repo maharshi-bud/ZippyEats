@@ -100,7 +100,7 @@ export default function PopularBar() {
     <div className="p-5 pb-3">
 
       {/* header */}
-      <div className="flex items-center justify-between ml-[2%] mb-2">
+      <div className="flex items-center justify-between  mb-1">
         <h2 className="text-2xl font-extrabold text-slate-900">
           🔥 Popular Near You
         </h2>
@@ -149,7 +149,7 @@ export default function PopularBar() {
                 </div>
 
                 {/* add / stepper */}
-                <div className="absolute -bottom-4 right-px">
+                <div className="absolute -bottom-[7px] right-[-7px]">
                   {!inCart ? (
                     <button
                       onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price , restaurant_id : item.restaurant_id      , image: item.image  }))}
@@ -159,22 +159,32 @@ export default function PopularBar() {
                       style={{ lineHeight: 1 }}
                     >Add</button>
                   ) : (
-                    <div className="h-[30px] min-w-[78px] bg-gray-900 text-white rounded-md
-                                    flex items-center justify-between px-2">
-                      <button
-                        onClick={() => dispatch(decreaseQty(item._id))}
-                        className="flex items-center justify-center text-white text-base
-                                   hover:opacity-70 cursor-pointer bg-transparent border-none"
-                        style={{ width: 20, height: 20, lineHeight: 1 }}
-                      >-</button>
-                      <span className="text-base text-center w-5">{inCart.quantity}</span>
-                      <button
-                        onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price, restaurant_id : item.restaurant_id      , image: item.image   }))}
-                        className="flex items-center justify-center text-white text-base
-                                   hover:opacity-70 cursor-pointer bg-transparent border-none"
-                        style={{ width: 20, height: 20, lineHeight: 1 }}
-                      >+</button>
-                    </div>
+<div className="h-[30px] min-w-[78px] bg-gray-900 text-white rounded-md
+                grid grid-cols-3 place-items-center px-2">
+  <button
+    onClick={() => dispatch(decreaseQty(item._id))}
+    className="w-5 h-5 grid place-items-center text-white text-base
+               hover:opacity-70 cursor-pointer bg-transparent border-none"
+  >
+    <span className="block leading-none">−</span>
+  </button>
+
+  <span className="text-base leading-none">{inCart.quantity}</span>
+
+  <button
+    onClick={() => dispatch(addToCart({
+      menu_item_id: item._id,
+      name: item.name,
+      price: item.price,
+      restaurant_id: item.restaurant_id,
+      image: item.image
+    }))}
+    className="w-5 h-5 grid place-items-center text-white text-base
+               hover:opacity-70 cursor-pointer bg-transparent border-none"
+  >
+    <span className="block leading-none">+</span>
+  </button>
+</div>
                   )}
                 </div>
               </div>
