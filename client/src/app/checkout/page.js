@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import api from "../../lib/axios";
 import { useEffect, useState } from "react";
 import { startRouteLoader } from "../../lib/routeLoading";
+import { resolveItemImage, handleImgError } from "../../lib/imageUtils";
 
 const BASE_URL = "http://localhost:5010";
 
@@ -64,7 +65,8 @@ export default function CheckoutPage() {
       const res = await api.post("/orders", {
         items: items.map((item) => ({
           menu_item_id: item.menu_item_id,
-          quantity: item.quantity,
+          quantity: item.quantity
+          , restaurant_id : item.restaurant_id      , image: item.image  
         })),
         total_amount: total + 40,
         delivery_address: deliveryAddress,
@@ -141,7 +143,8 @@ export default function CheckoutPage() {
 
               <div className="divide-y divide-slate-100">
                 {items.map((item) => {
-                  const imgSrc = getItemImg(item);
+                  console.log("CHECKOUT ITEM:", item);
+                  // const imgSrc = getItemImg(item);
                   return (
                     <div
                       key={item.menu_item_id}
@@ -149,30 +152,12 @@ export default function CheckoutPage() {
                     >
                       {/* IMAGE */}
                       <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                        {imgSrc ? (
-                          <img
-                            src={imgSrc}
-                            alt={item.name}
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.style.display = "none";
-                            }}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 24,
-                            }}
-                          >
-                            🍽️
-                          </div>
-                        )}
+                        <img
+  src={item.image}
+  alt={item.name}
+  className="w-full h-full object-cover"
+  onError={handleImgError}
+/>
                       </div>
 
                       {/* INFO */}

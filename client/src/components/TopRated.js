@@ -151,7 +151,7 @@ export default function PopularBar() {
                 <div className="absolute -bottom-4 right-px">
                   {!inCart ? (
                     <button
-                      onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }))}
+                      onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price, restaurant_id : item.restaurant_id      , image: item.image   }))}
                       className="h-[30px] px-3 bg-gray-900 text-white text-base rounded-md
                                  cursor-pointer hover:bg-gray-800 transition-colors duration-200
                                  flex items-center justify-center"
@@ -168,7 +168,7 @@ export default function PopularBar() {
                       >-</button>
                       <span className="text-base text-center w-5">{inCart.quantity}</span>
                       <button
-                        onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }))}
+                        onClick={() => dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price , restaurant_id : item.restaurant_id      , image: item.image  }))}
                         className="flex items-center justify-center text-white text-base
                                    hover:opacity-70 cursor-pointer bg-transparent border-none"
                         style={{ width: 20, height: 20, lineHeight: 1 }}

@@ -61,7 +61,7 @@ export default function Home() {
 
       <div className="restaurant-section">
         <div className="section-header">
-          <h2>Restaurants</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900">Restaurants</h2>
           <Link href="/restaurants">
             <button className="view-all-btn">View All →</button>
           </Link>

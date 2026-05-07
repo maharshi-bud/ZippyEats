@@ -15,12 +15,19 @@ const cartSlice = createSlice({
 
     addToCart: (state, action) => {
       const item = action.payload;
+      console.log(item)
       const existing = state.items.find(
         (i) => i.menu_item_id === item.menu_item_id
       );
       if (existing) {
         existing.quantity += 1;
-      } else {
+    //       if (!existing.restaurant_id) {
+    //   existing.restaurant_id = item.restaurant_id;
+    // }
+      
+      } 
+      
+      else {
         state.items.push({ ...item, quantity: 1 });
       }
       // ✅ No saveCart() — store.js subscriber handles it

@@ -123,7 +123,6 @@ export const getOrderById = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    // ❌ validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -131,9 +130,8 @@ export const getOrderById = async (req, res) => {
       });
     }
 
-    // 🔍 fetch order
     const order = await Order.findById(id)
-      .populate("items.menu_item_id", "name price")
+      .populate("items.menu_item_id", "name price image")  // ✅ added image
       .lean();
 
     if (!order) {
@@ -143,13 +141,21 @@ export const getOrderById = async (req, res) => {
       });
     }
 
-    // 🔒 ensure ownership
     if (order.user_id.toString() !== userId) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized access"
       });
     }
+
+    // ✅ Add image to response (not saved to DB)
+    order.items = order.items.map((item) => ({
+      menu_item_id: item.menu_item_id?._id || item.menu_item_id,
+      name: item.menu_item_id?.name || "Unknown",
+      price: item.price,
+      quantity: item.quantity,
+      image: item.menu_item_id?.image || null
+    }));
 
     res.json({
       success: true,
@@ -164,6 +170,20 @@ export const getOrderById = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 export const getMyOrders = async (req, res) => {
   try {

@@ -199,7 +199,7 @@ export default function RestaurantPage({ params }) {
               onClick={(event) => {
                 event.stopPropagation();
                 rememberViewedItem(item._id);
-                dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }));
+                dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price , restaurant_id : item.restaurant_id      , image: item.image  }));
               }}
             >
               Add to cart
@@ -215,7 +215,7 @@ export default function RestaurantPage({ params }) {
               <button className="text-xl w-6 text-center ml-[10px] hover:opacity-70" onClick={(event) => {
                 event.stopPropagation();
                 rememberViewedItem(item._id);
-                dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price }));
+                dispatch(addToCart({ menu_item_id: item._id, name: item.name, price: item.price , restaurant_id : item.restaurant_id      , image: item.image  }));
               }}>+</button>
             </div>
           )}

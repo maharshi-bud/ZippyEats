@@ -365,7 +365,7 @@ export default function Navbar() {
                 setLocationOpen(false);
                 setSuggestions([]);
                 setManualAddress("");
-              }}
+              }} 
               className="absolute right-4 top-4 text-2xl text-gray-400 hover:text-gray-600"
             >
               ✕
@@ -408,7 +408,7 @@ export default function Navbar() {
                 />
 
                 {loadingSuggestions && (
-                  <div className="absolute right-3 top-3.5">
+                  <div className="absolute right-3 top-5">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
                   </div>
                 )}

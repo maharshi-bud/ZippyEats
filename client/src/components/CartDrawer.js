@@ -14,6 +14,7 @@ export default function CartDrawer({ open, onClose }) {
   const token = useSelector((state) => state.auth.token);
   const router = useRouter();
 const dispatch = useDispatch();
+// console.log (items);
   return (
     <>
       <div
@@ -87,6 +88,7 @@ const dispatch = useDispatch();
           menu_item_id: item.menu_item_id,
           name: item.name,
           price: item.price
+          , restaurant_id : item.restaurant_id      , image: item.image  
         })
       )
     }

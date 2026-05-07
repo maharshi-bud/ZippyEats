@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "../../../lib/axios";
 import gsap from "gsap";
-
+import { resolveItemImage, handleImgError } from "../../../lib/imageUtils";
 const BASE_URL = "http://localhost:5010";
 
 const steps = [
@@ -29,12 +29,7 @@ const IconCircle = ({ emoji, bg }) => (
   </div>
 );
 
-// Build image URL from restaurantId + item name (same format as backend)
-const getItemImg = (restaurantId, name) => {
-  if (!restaurantId || !name) return null;
-  const formatted = name.trim().replace(/\s+/g, "_");
-  return `${BASE_URL}/images/${restaurantId}_${formatted}.jpg`;
-};
+
 
 export default function OrderPage({ params }) {
   const [order, setOrder] = useState(null);
@@ -99,7 +94,7 @@ export default function OrderPage({ params }) {
                 <div className="flex flex-col items-center w-16 flex-shrink-0">
                   <div
                     style={{ width: 48, height: 48, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}
-                    className={`rounded-full border-2 transition-all duration-500 ${done ? "bg-green-500 border-green-500 text-white shadow-md shadow-green-200" : "bg-white border-slate-200 text-slate-400"}`}
+                    className={`rounded-full border-2 transition-all duration-500 ${done ? "bg-green-500 border-green-500 text-white shadow-md shadow-black-200" : "bg-white border-slate-200 text-slate-400"}`}
                   >
                     {step.icon}
                   </div>
@@ -169,40 +164,71 @@ export default function OrderPage({ params }) {
         </div>
 
         {/* ITEMS */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left">
-          <div className="flex items-center gap-2 mb-5">
-            <span style={{ fontSize: 20 }}>🛍️</span>
-            <h2 className="text-lg font-semibold text-slate-800">Items</h2>
+        {/* ITEMS */}
+<div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left">
+  <div className="flex items-center gap-2 mb-5">
+    <span style={{ fontSize: 20 }}>🛍️</span>
+    <h2 className="text-lg font-semibold text-slate-800">Items</h2>
+  </div>
+  <div className="space-y-3">
+    {order.items.map((item) => {
+      // ✅ Handle both flattened AND populated formats
+      const itemId =
+        typeof item.menu_item_id === "object"
+          ? item.menu_item_id._id
+          : item.menu_item_id;
+
+      const itemName =
+        item.name ||
+        (typeof item.menu_item_id === "object"
+          ? item.menu_item_id.name
+          : "Unknown");
+
+      const itemPrice =
+        item.price ||
+        (typeof item.menu_item_id === "object"
+          ? item.menu_item_id.price
+          : 0);
+
+      const itemImage =
+        item.image ||
+        (typeof item.menu_item_id === "object"
+          ? item.menu_item_id.image
+          : null);
+
+      return (
+        <div
+          key={itemId}
+          className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition"
+        >
+          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+            <img
+              src={resolveItemImage({
+                image: itemImage,
+                restaurant_id: restaurantId,
+                name: itemName,
+              })}
+              alt={itemName}
+              className="w-full h-full object-cover"
+              onError={handleImgError}
+            />
           </div>
-          <div className="space-y-3">
-            {order.items.map((item) => {
-              const imgSrc = getItemImg(restaurantId, item.menu_item_id.name);
-              return (
-                <div key={item.menu_item_id._id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                    {imgSrc ? (
-                      <img
-                        src={imgSrc}
-                        alt={item.menu_item_id.name}
-                        onError={(e) => { e.target.onerror = null; e.target.style.display = "none"; }}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-xl">🍽️</div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-800 text-sm truncate">{item.menu_item_id.name}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Qty: {item.quantity}</p>
-                  </div>
-                  <p className="font-semibold text-slate-800 text-sm flex-shrink-0">
-                    ₹{item.menu_item_id.price * item.quantity}
-                  </p>
-                </div>
-              );
-            })}
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-slate-800 text-sm truncate">
+              {itemName}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Qty: {item.quantity}
+            </p>
           </div>
+          <p className="font-semibold text-slate-800 text-sm flex-shrink-0">
+            ₹{itemPrice * item.quantity}
+          </p>
         </div>
+      );
+    })}
+  </div>
+</div>
 
       </div>
 

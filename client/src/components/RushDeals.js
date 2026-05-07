@@ -96,7 +96,7 @@ export default function RushDeals() {
                         addToCart({
                           menu_item_id: item._id,
                           name: item.name,
-                          price: item.discountPrice
+                          price: item.discountPrice, restaurant_id : item.restaurant_id      , image: item.image  
                         })
                       )
                     }
@@ -122,6 +122,7 @@ export default function RushDeals() {
                             menu_item_id: item._id,
                             name: item.name,
                             price: item.discountPrice
+                            , restaurant_id : item.restaurant_id      , image: item.image  
                           })
                         )
                       }
