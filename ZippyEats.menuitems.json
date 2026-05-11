@@ -5,8 +5,15 @@
   "restaurant_id": "r8",
   "name": "Vada Pav",
   "price": 60,
-  "description": "Mumbai street burger",
-  "cuisine": "Street Food"
+  "description": "Mumbai’s iconic street-style burger made with spicy potato fritters tucked inside soft pav bread, served with chutneys and fried green chillies.",
+  "cuisine": "Street Food",
+  "image": "http://localhost:5010/images/r8_Vada_Pav.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:32.731Z"
+  },
+  "rating": 3.7,
+  "totalReviews": 136,
+  "veg": true
 },
 {
   "_id": {
@@ -15,8 +22,15 @@
   "restaurant_id": "r1",
   "name": "Butter Naan",
   "price": 40,
-  "description": "Soft butter naan",
-  "cuisine": "Indian"
+  "description": "Soft and fluffy tandoor-baked naan brushed generously with melted butter, perfect for pairing with rich Indian curries.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r1_Butter_Naan.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:32.781Z"
+  },
+  "rating": 5,
+  "totalReviews": 487,
+  "veg": true
 },
 {
   "_id": {
@@ -25,8 +39,15 @@
   "restaurant_id": "r3",
   "name": "Spring Rolls",
   "price": 160,
-  "description": "Crispy rolls",
-  "cuisine": "Chinese"
+  "description": "Crispy golden rolls stuffed with seasoned vegetables and aromatic spices, served hot with flavorful dipping sauce.",
+  "cuisine": "Chinese",
+  "image": "http://localhost:5010/images/r3_Spring_Rolls.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:32.862Z"
+  },
+  "rating": 3.9,
+  "totalReviews": 111,
+  "veg": true
 },
 {
   "_id": {
@@ -35,8 +56,15 @@
   "restaurant_id": "r6",
   "name": "Seekh Kebab",
   "price": 280,
-  "description": "Minced meat skewers",
-  "cuisine": "BBQ"
+  "description": "Juicy minced meat skewers marinated with traditional spices and grilled over open flames for a smoky BBQ flavor.",
+  "cuisine": "BBQ",
+  "image": "http://localhost:5010/images/r6_Seekh_Kebab.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:32.989Z"
+  },
+  "rating": 3.9,
+  "totalReviews": 391,
+  "veg": false
 },
 {
   "_id": {
@@ -45,8 +73,15 @@
   "restaurant_id": "r4",
   "name": "Chicken Wings",
   "price": 220,
-  "description": "Spicy wings",
-  "cuisine": "American"
+  "description": "Spicy and crispy chicken wings tossed in flavorful sauces, cooked until perfectly juicy and tender inside.",
+  "cuisine": "American",
+  "image": "http://localhost:5010/images/r4_Chicken_Wings.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:33.155Z"
+  },
+  "rating": 4.9,
+  "totalReviews": 218,
+  "veg": false
 },
 {
   "_id": {
@@ -55,8 +90,15 @@
   "restaurant_id": "r6",
   "name": "Paneer Tikka",
   "price": 260,
-  "description": "Grilled paneer cubes",
-  "cuisine": "Indian"
+  "description": "Chunks of paneer marinated in yogurt and spices, grilled to perfection with smoky flavors and charred edges.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r6_Paneer_Tikka.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:33.331Z"
+  },
+  "rating": 4.4,
+  "totalReviews": 188,
+  "veg": true
 },
 {
   "_id": {
@@ -65,8 +107,15 @@
   "restaurant_id": "r7",
   "name": "Veg Salad Bowl",
   "price": 200,
-  "description": "Fresh veggie salad",
-  "cuisine": "Healthy"
+  "description": "A refreshing bowl of crisp vegetables, leafy greens, and healthy toppings tossed with light house dressing.",
+  "cuisine": "Healthy",
+  "image": "http://localhost:5010/images/r7_Veg_Salad_Bowl.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:33.526Z"
+  },
+  "rating": 4.8,
+  "totalReviews": 241,
+  "veg": true
 },
 {
   "_id": {
@@ -75,8 +124,15 @@
   "restaurant_id": "r9",
   "name": "Farmhouse Pizza",
   "price": 320,
-  "description": "Loaded veggie pizza",
-  "cuisine": "Italian"
+  "description": "Loaded with fresh vegetables, rich mozzarella cheese, and savory sauces on a perfectly baked crispy crust.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r9_Farmhouse_Pizza.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:34.279Z"
+  },
+  "rating": 3.6,
+  "totalReviews": 343,
+  "veg": true
 },
 {
   "_id": {
@@ -85,8 +141,15 @@
   "restaurant_id": "r9",
   "name": "Pepperoni Pizza",
   "price": 400,
-  "description": "Pepperoni loaded pizza",
-  "cuisine": "Italian"
+  "description": "Classic pizza topped with spicy pepperoni slices, gooey cheese, and signature Italian herbs on a hand-tossed crust.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r9_Pepperoni_Pizza.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:35.196Z"
+  },
+  "rating": 3.6,
+  "totalReviews": 495,
+  "veg": false
 },
 {
   "_id": {
@@ -95,8 +158,15 @@
   "restaurant_id": "r5",
   "name": "Cappuccino",
   "price": 140,
-  "description": "Hot frothy coffee",
-  "cuisine": "Cafe"
+  "description": "Freshly brewed espresso blended with steamed milk and topped with creamy froth for a rich café-style experience.",
+  "cuisine": "Cafe",
+  "image": "http://localhost:5010/images/r5_Cappuccino.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:36.339Z"
+  },
+  "rating": 3.8,
+  "totalReviews": 493,
+  "veg": true
 },
 {
   "_id": {
@@ -105,8 +175,15 @@
   "restaurant_id": "r8",
   "name": "Pani Puri",
   "price": 50,
-  "description": "Crispy golgappa",
-  "cuisine": "Street Food"
+  "description": "Crispy puris filled with spicy tangy water, mashed potatoes, and chutneys delivering a burst of flavors in every bite.",
+  "cuisine": "Street Food",
+  "image": "http://localhost:5010/images/r8_Pani_Puri.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:38.195Z"
+  },
+  "rating": 4,
+  "totalReviews": 283,
+  "veg": true
 },
 {
   "_id": {
@@ -115,8 +192,15 @@
   "restaurant_id": "r5",
   "name": "Cold Coffee",
   "price": 120,
-  "description": "Chilled creamy coffee",
-  "cuisine": "Cafe"
+  "description": "Chilled creamy coffee blended with ice and milk, served refreshing and smooth with a rich coffee flavor.",
+  "cuisine": "Cafe",
+  "image": "http://localhost:5010/images/r5_Cold_Coffee.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:40.354Z"
+  },
+  "rating": 4,
+  "totalReviews": 148,
+  "veg": true
 },
 {
   "_id": {
@@ -125,8 +209,15 @@
   "restaurant_id": "r1",
   "name": "Biryani",
   "price": 250,
-  "description": "Spiced rice dish",
-  "cuisine": "Indian"
+  "description": "Fragrant basmati rice layered with aromatic spices and flavorful ingredients, slow-cooked for authentic taste and texture.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r1_Biryani.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:43.214Z"
+  },
+  "rating": 4.4,
+  "totalReviews": 346,
+  "veg": false
 },
 {
   "_id": {
@@ -135,8 +226,15 @@
   "restaurant_id": "r5",
   "name": "Chocolate Cake",
   "price": 180,
-  "description": "Rich chocolate dessert",
-  "cuisine": "Desserts"
+  "description": "Rich and moist chocolate cake layered with creamy frosting, perfect for every dessert lover.",
+  "cuisine": "Desserts",
+  "image": "http://localhost:5010/images/r5_Chocolate_Cake.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:47.329Z"
+  },
+  "rating": 4.6,
+  "totalReviews": 389,
+  "veg": true
 },
 {
   "_id": {
@@ -145,8 +243,15 @@
   "restaurant_id": "r9",
   "name": "Cheese Burst Pizza",
   "price": 350,
-  "description": "Extra cheesy pizza",
-  "cuisine": "Fast Food"
+  "description": "Extra cheesy pizza overflowing with molten cheese, flavorful toppings, and a soft golden crust.",
+  "cuisine": "Fast Food",
+  "image": "http://localhost:5010/images/r9_Cheese_Burst_Pizza.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:51.248Z"
+  },
+  "rating": 3.7,
+  "totalReviews": 266,
+  "veg": true
 },
 {
   "_id": {
@@ -155,8 +260,15 @@
   "restaurant_id": "r5",
   "name": "Brownie",
   "price": 160,
-  "description": "Chocolate brownie",
-  "cuisine": "Desserts"
+  "description": "Dense and fudgy chocolate brownie with a rich cocoa flavor and soft melt-in-mouth texture.",
+  "cuisine": "Desserts",
+  "image": "http://localhost:5010/images/r5_Brownie.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:55.274Z"
+  },
+  "rating": 3.7,
+  "totalReviews": 442,
+  "veg": true
 },
 {
   "_id": {
@@ -165,8 +277,15 @@
   "restaurant_id": "r10",
   "name": "Gulab Jamun",
   "price": 90,
-  "description": "Sweet syrup balls",
-  "cuisine": "Indian"
+  "description": "Soft milk-solid dumplings soaked in warm sugar syrup infused with cardamom and rose flavors.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r10_Gulab_Jamun.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:45:59.264Z"
+  },
+  "rating": 4.7,
+  "totalReviews": 47,
+  "veg": true
 },
 {
   "_id": {
@@ -175,8 +294,15 @@
   "restaurant_id": "r2",
   "name": "Pasta Alfredo",
   "price": 280,
-  "description": "Creamy white sauce pasta",
-  "cuisine": "Italian"
+  "description": "Creamy Alfredo pasta tossed with rich white sauce, herbs, and parmesan cheese for a comforting Italian delight.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r2_Pasta_Alfredo.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:03.227Z"
+  },
+  "rating": 3.8,
+  "totalReviews": 150,
+  "veg": true
 },
 {
   "_id": {
@@ -185,8 +311,15 @@
   "restaurant_id": "r6",
   "name": "Tandoori Chicken",
   "price": 300,
-  "description": "Grilled chicken",
-  "cuisine": "BBQ"
+  "description": "Tender chicken marinated with yogurt and spices, roasted in traditional tandoor style with smoky flavors.",
+  "cuisine": "BBQ",
+  "image": "http://localhost:5010/images/r6_Tandoori_Chicken.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:07.245Z"
+  },
+  "rating": 4.3,
+  "totalReviews": 486,
+  "veg": false
 },
 {
   "_id": {
@@ -195,8 +328,15 @@
   "restaurant_id": "r2",
   "name": "Garlic Bread",
   "price": 120,
-  "description": "Buttery garlic bread",
-  "cuisine": "Italian"
+  "description": "Toasted bread infused with garlic butter and herbs, baked crispy outside and soft inside.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r2_Garlic_Bread.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:12.183Z"
+  },
+  "rating": 4.7,
+  "totalReviews": 469,
+  "veg": true
 },
 {
   "_id": {
@@ -205,8 +345,15 @@
   "restaurant_id": "r7",
   "name": "Smoothie",
   "price": 150,
-  "description": "Healthy smoothie",
-  "cuisine": "Healthy"
+  "description": "Fresh fruit smoothie blended to perfection with creamy textures and refreshing natural flavors.",
+  "cuisine": "Healthy",
+  "image": "http://localhost:5010/images/r7_Smoothie.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:16.217Z"
+  },
+  "rating": 3.7,
+  "totalReviews": 188,
+  "veg": true
 },
 {
   "_id": {
@@ -215,8 +362,15 @@
   "restaurant_id": "r10",
   "name": "Ice Cream",
   "price": 120,
-  "description": "Chilled dessert",
-  "cuisine": "Desserts"
+  "description": "Creamy and chilled dessert available in delightful flavors with smooth texture and refreshing sweetness.",
+  "cuisine": "Desserts",
+  "image": "http://localhost:5010/images/r10_Ice_Cream.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:20.222Z"
+  },
+  "rating": 4.5,
+  "totalReviews": 266,
+  "veg": true
 },
 {
   "_id": {
@@ -225,8 +379,15 @@
   "restaurant_id": "r4",
   "name": "Cheese Burger",
   "price": 150,
-  "description": "Juicy cheese burger",
-  "cuisine": "Fast Food"
+  "description": "Juicy grilled burger layered with melted cheese, fresh veggies, and signature sauces inside toasted buns.",
+  "cuisine": "Fast Food",
+  "image": "http://localhost:5010/images/r4_Cheese_Burger.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:24.219Z"
+  },
+  "rating": 4.4,
+  "totalReviews": 125,
+  "veg": true
 },
 {
   "_id": {
@@ -235,8 +396,15 @@
   "restaurant_id": "r6",
   "name": "Butter Chicken",
   "price": 320,
-  "description": "Creamy chicken curry",
-  "cuisine": "Indian"
+  "description": "Classic North Indian curry made with tender chicken cooked in creamy buttery tomato gravy and aromatic spices.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r6_Butter_Chicken.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:28.188Z"
+  },
+  "rating": 3.7,
+  "totalReviews": 87,
+  "veg": false
 },
 {
   "_id": {
@@ -245,8 +413,15 @@
   "restaurant_id": "r8",
   "name": "Pav Bhaji",
   "price": 120,
-  "description": "Spicy mashed veggies with bread",
-  "cuisine": "Indian"
+  "description": "Spicy mashed vegetable curry served with buttery toasted pav bread, topped with onions and lemon.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r8_Pav_Bhaji.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:32.187Z"
+  },
+  "rating": 4,
+  "totalReviews": 68,
+  "veg": true
 },
 {
   "_id": {
@@ -255,8 +430,15 @@
   "restaurant_id": "r3",
   "name": "Fried Rice",
   "price": 170,
-  "description": "Vegetable fried rice",
-  "cuisine": "Chinese"
+  "description": "Flavorful stir-fried rice tossed with vegetables, sauces, and seasonings in authentic Asian style.",
+  "cuisine": "Chinese",
+  "image": "http://localhost:5010/images/r3_Fried_Rice.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:36.200Z"
+  },
+  "rating": 3.9,
+  "totalReviews": 409,
+  "veg": true
 },
 {
   "_id": {
@@ -265,8 +447,15 @@
   "restaurant_id": "r7",
   "name": "Fruit Bowl",
   "price": 180,
-  "description": "Mixed fruits",
-  "cuisine": "Healthy"
+  "description": "A healthy mix of fresh seasonal fruits served chilled for a naturally sweet and refreshing experience.",
+  "cuisine": "Healthy",
+  "image": "http://localhost:5010/images/r7_Fruit_Bowl.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:39.319Z"
+  },
+  "rating": 4.6,
+  "totalReviews": 140,
+  "veg": true
 },
 {
   "_id": {
@@ -275,8 +464,15 @@
   "restaurant_id": "r9",
   "name": "Margherita Pizza",
   "price": 250,
-  "description": "Classic cheese pizza",
-  "cuisine": "Italian"
+  "description": "Simple yet classic pizza topped with mozzarella cheese, tangy tomato sauce, and fresh herbs.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r9_Margherita_Pizza.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:43.206Z"
+  },
+  "rating": 4.9,
+  "totalReviews": 287,
+  "veg": true
 },
 {
   "_id": {
@@ -285,8 +481,15 @@
   "restaurant_id": "r10",
   "name": "Rasmalai",
   "price": 110,
-  "description": "Milk-based dessert",
-  "cuisine": "Indian"
+  "description": "Soft paneer dumplings soaked in chilled saffron-flavored milk, garnished with nuts and cardamom.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r10_Rasmalai.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:46.282Z"
+  },
+  "rating": 3.8,
+  "totalReviews": 116,
+  "veg": true
 },
 {
   "_id": {
@@ -295,8 +498,15 @@
   "restaurant_id": "r3",
   "name": "Hakka Noodles",
   "price": 180,
-  "description": "Stir-fried noodles",
-  "cuisine": "Chinese"
+  "description": "Street-style stir-fried noodles tossed with crunchy vegetables and savory sauces for bold Indo-Chinese flavors.",
+  "cuisine": "Chinese",
+  "image": "http://localhost:5010/images/r3_Hakka_Noodles.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:48.295Z"
+  },
+  "rating": 4.2,
+  "totalReviews": 138,
+  "veg": true
 },
 {
   "_id": {
@@ -305,8 +515,15 @@
   "restaurant_id": "r3",
   "name": "Manchurian",
   "price": 200,
-  "description": "Veg balls in sauce",
-  "cuisine": "Chinese"
+  "description": "Crispy vegetable balls cooked in spicy and tangy Indo-Chinese gravy packed with bold flavors.",
+  "cuisine": "Chinese",
+  "image": "http://localhost:5010/images/r3_Manchurian.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:51.241Z"
+  },
+  "rating": 3.9,
+  "totalReviews": 476,
+  "veg": true
 },
 {
   "_id": {
@@ -315,8 +532,15 @@
   "restaurant_id": "r4",
   "name": "Hot Dog",
   "price": 130,
-  "description": "Classic hot dog",
-  "cuisine": "Fast Food"
+  "description": "Classic hot dog loaded with sausages, sauces, and fresh toppings inside soft buns.",
+  "cuisine": "Fast Food",
+  "image": "http://localhost:5010/images/r4_Hot_Dog.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:53.199Z"
+  },
+  "rating": 3.7,
+  "totalReviews": 345,
+  "veg": false
 },
 {
   "_id": {
@@ -325,8 +549,15 @@
   "restaurant_id": "r2",
   "name": "Lasagna",
   "price": 350,
-  "description": "Layered pasta dish",
-  "cuisine": "Italian"
+  "description": "Layered Italian pasta baked with rich sauces, cheese, and flavorful fillings for a hearty meal.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r2_Lasagna.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:55.203Z"
+  },
+  "rating": 4,
+  "totalReviews": 34,
+  "veg": true
 },
 {
   "_id": {
@@ -335,8 +566,15 @@
   "restaurant_id": "r4",
   "name": "Fries",
   "price": 100,
-  "description": "Crispy fries",
-  "cuisine": "Fast Food"
+  "description": "Golden crispy potato fries seasoned perfectly and served hot with classic dipping sauces.",
+  "cuisine": "Fast Food",
+  "image": "http://localhost:5010/images/r4_Fries.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:57.204Z"
+  },
+  "rating": 3.8,
+  "totalReviews": 439,
+  "veg": true
 },
 {
   "_id": {
@@ -345,8 +583,15 @@
   "restaurant_id": "r8",
   "name": "Dabeli",
   "price": 80,
-  "description": "Sweet and spicy snack",
-  "cuisine": "Indian"
+  "description": "Popular Gujarati snack made with spicy mashed potato filling, chutneys, peanuts, and buttery pav bread.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r8_Dabeli.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:46:59.208Z"
+  },
+  "rating": 4.9,
+  "totalReviews": 244,
+  "veg": true
 },
 {
   "_id": {
@@ -355,8 +600,15 @@
   "restaurant_id": "r1",
   "name": "Dal Tadka",
   "price": 150,
-  "description": "Tempered lentils",
-  "cuisine": "Indian"
+  "description": "Comforting Indian lentils tempered with garlic, cumin, and aromatic spices for rich homestyle flavors.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r1_Dal_Tadka.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:47:01.201Z"
+  },
+  "rating": 4,
+  "totalReviews": 86,
+  "veg": true
 },
 {
   "_id": {
@@ -365,8 +617,15 @@
   "restaurant_id": "r7",
   "name": "Quinoa Bowl",
   "price": 250,
-  "description": "Protein-rich bowl",
-  "cuisine": "Healthy"
+  "description": "Protein-rich quinoa bowl packed with healthy vegetables, grains, and flavorful nutritious toppings.",
+  "cuisine": "Healthy",
+  "image": "http://localhost:5010/images/r7_Quinoa_Bowl.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:47:02.242Z"
+  },
+  "rating": 3.6,
+  "totalReviews": 146,
+  "veg": true
 },
 {
   "_id": {
@@ -375,8 +634,15 @@
   "restaurant_id": "r1",
   "name": "Paneer Butter Masala",
   "price": 220,
-  "description": "Creamy tomato gravy paneer",
-  "cuisine": "Indian"
+  "description": "Soft paneer cubes simmered in creamy tomato-butter gravy infused with aromatic Indian spices.",
+  "cuisine": "Indian",
+  "image": "http://localhost:5010/images/r1_Paneer_Butter_Masala.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:47:04.206Z"
+  },
+  "rating": 4.4,
+  "totalReviews": 165,
+  "veg": true
 },
 {
   "_id": {
@@ -385,8 +651,15 @@
   "restaurant_id": "r2",
   "name": "Bruschetta",
   "price": 150,
-  "description": "Toasted bread with toppings",
-  "cuisine": "Italian"
+  "description": "Crispy toasted bread topped with fresh tomatoes, herbs, olive oil, and flavorful seasonings.",
+  "cuisine": "Italian",
+  "image": "http://localhost:5010/images/r2_Bruschetta.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:47:05.323Z"
+  },
+  "rating": 4,
+  "totalReviews": 395,
+  "veg": true
 },
 {
   "_id": {
@@ -395,6 +668,533 @@
   "restaurant_id": "r10",
   "name": "Cheesecake",
   "price": 200,
-  "description": "Creamy cheesecake",
-  "cuisine": "Desserts"
+  "description": "Smooth and creamy cheesecake with a buttery biscuit base and rich indulgent flavors.",
+  "cuisine": "Desserts",
+  "image": "http://localhost:5010/images/r10_Cheesecake.jpg",
+  "updatedAt": {
+    "$date": "2026-05-05T06:47:07.219Z"
+  },
+  "rating": 3.8,
+  "totalReviews": 304,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919276"
+  },
+  "restaurant_id": "r1",
+  "name": "Chole Bhature",
+  "price": 220,
+  "description": "Fluffy deep-fried bhature served with spicy Punjabi-style chole, onions, and tangy pickles.",
+  "cuisine": "Punjabi",
+  "rating": 4.7,
+  "totalReviews": 321,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919277"
+  },
+  "restaurant_id": "r1",
+  "name": "Masala Dosa",
+  "price": 180,
+  "description": "Crispy South Indian dosa stuffed with flavorful potato masala and served with chutneys and sambar.",
+  "cuisine": "South Indian",
+  "rating": 4.6,
+  "totalReviews": 254,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919278"
+  },
+  "restaurant_id": "r2",
+  "name": "Mexican Burrito",
+  "price": 320,
+  "description": "Soft tortilla loaded with rice, beans, veggies, sauces, and cheese for a bold Mexican flavor.",
+  "cuisine": "Mexican",
+  "rating": 4.5,
+  "totalReviews": 210,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919279"
+  },
+  "restaurant_id": "r2",
+  "name": "Thai Green Curry",
+  "price": 340,
+  "description": "Authentic Thai curry cooked with coconut milk, herbs, vegetables, and aromatic spices.",
+  "cuisine": "Thai",
+  "rating": 4.4,
+  "totalReviews": 188,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb91927a"
+  },
+  "restaurant_id": "r3",
+  "name": "Schezwan Noodles",
+  "price": 240,
+  "description": "Spicy Indo-Chinese noodles tossed with vegetables and fiery schezwan sauce.",
+  "cuisine": "Chinese",
+  "rating": 4.3,
+  "totalReviews": 290,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb91927b"
+  },
+  "restaurant_id": "r3",
+  "name": "Dimsums",
+  "price": 260,
+  "description": "Soft steamed dumplings filled with delicious vegetable stuffing and served with spicy dip.",
+  "cuisine": "Chinese",
+  "rating": 4.6,
+  "totalReviews": 199,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb91927c"
+  },
+  "restaurant_id": "r4",
+  "name": "Loaded Nachos",
+  "price": 280,
+  "description": "Crunchy nachos layered with cheese sauce, jalapenos, salsa, and creamy toppings.",
+  "cuisine": "Mexican",
+  "rating": 4.5,
+  "totalReviews": 172,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb91927d"
+  },
+  "restaurant_id": "r4",
+  "name": "Chicken Popcorn",
+  "price": 260,
+  "description": "Crispy bite-sized chicken popcorn seasoned perfectly and served with spicy mayo.",
+  "cuisine": "Fast Food",
+  "rating": 4.8,
+  "totalReviews": 410,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb91927e"
+  },
+  "restaurant_id": "r5",
+  "name": "Mocha Frappe",
+  "price": 190,
+  "description": "Rich chilled mocha coffee blended with chocolate and topped with whipped cream.",
+  "cuisine": "Beverages",
+  "rating": 4.7,
+  "totalReviews": 301,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb91927f"
+  },
+  "restaurant_id": "r5",
+  "name": "Blueberry Muffin",
+  "price": 160,
+  "description": "Soft freshly baked muffin loaded with sweet blueberries and buttery flavors.",
+  "cuisine": "Desserts",
+  "rating": 4.4,
+  "totalReviews": 158,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919280"
+  },
+  "restaurant_id": "r6",
+  "name": "Afghani Chicken",
+  "price": 420,
+  "description": "Creamy and mildly spiced chicken grilled with rich Afghani-style marinade.",
+  "cuisine": "Arabian",
+  "rating": 4.8,
+  "totalReviews": 388,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919281"
+  },
+  "restaurant_id": "r6",
+  "name": "Mutton Rogan Josh",
+  "price": 480,
+  "description": "Tender mutton slow-cooked in aromatic Kashmiri spices and rich gravy.",
+  "cuisine": "Punjabi",
+  "rating": 4.9,
+  "totalReviews": 265,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919282"
+  },
+  "restaurant_id": "r7",
+  "name": "Acai Bowl",
+  "price": 290,
+  "description": "Healthy acai bowl topped with fruits, granola, seeds, and natural sweeteners.",
+  "cuisine": "Healthy",
+  "rating": 4.5,
+  "totalReviews": 133,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919283"
+  },
+  "restaurant_id": "r7",
+  "name": "Avocado Toast",
+  "price": 240,
+  "description": "Crunchy artisan toast layered with creamy avocado and healthy toppings.",
+  "cuisine": "Healthy",
+  "rating": 4.3,
+  "totalReviews": 145,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919284"
+  },
+  "restaurant_id": "r8",
+  "name": "Khaman Dhokla",
+  "price": 90,
+  "description": "Soft and fluffy Gujarati snack tempered with mustard seeds and green chillies.",
+  "cuisine": "Gujarati",
+  "rating": 4.7,
+  "totalReviews": 233,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919285"
+  },
+  "restaurant_id": "r8",
+  "name": "Fafda Jalebi",
+  "price": 140,
+  "description": "Classic Gujarati breakfast combo of crispy fafda served with hot sweet jalebi.",
+  "cuisine": "Gujarati",
+  "rating": 4.8,
+  "totalReviews": 412,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919286"
+  },
+  "restaurant_id": "r9",
+  "name": "Peri Peri Pizza",
+  "price": 390,
+  "description": "Spicy peri peri flavored pizza loaded with veggies and melted cheese.",
+  "cuisine": "Italian",
+  "rating": 4.6,
+  "totalReviews": 301,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919287"
+  },
+  "restaurant_id": "r9",
+  "name": "Japanese Ramen",
+  "price": 420,
+  "description": "Authentic Japanese ramen noodles served in rich flavorful broth with toppings.",
+  "cuisine": "Japanese",
+  "rating": 4.8,
+  "totalReviews": 245,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919288"
+  },
+  "restaurant_id": "r10",
+  "name": "Kunafa",
+  "price": 260,
+  "description": "Traditional Arabian dessert layered with cheese, crispy pastry, and sugar syrup.",
+  "cuisine": "Arabian",
+  "rating": 4.7,
+  "totalReviews": 185,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01810966d5b08ccb919289"
+  },
+  "restaurant_id": "r10",
+  "name": "Mochi Ice Cream",
+  "price": 240,
+  "description": "Soft Japanese mochi stuffed with creamy ice cream in delicious flavors.",
+  "cuisine": "Japanese",
+  "rating": 4.6,
+  "totalReviews": 144,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91928b"
+  },
+  "restaurant_id": "r1",
+  "name": "Rajma Chawal",
+  "price": 210,
+  "description": "Comforting North Indian meal featuring slow-cooked rajma curry served with steamed basmati rice.",
+  "cuisine": "Punjabi",
+  "rating": 4.5,
+  "totalReviews": 267,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91928c"
+  },
+  "restaurant_id": "r1",
+  "name": "Idli Sambar",
+  "price": 140,
+  "description": "Soft steamed idlis paired with flavorful sambar and fresh coconut chutney.",
+  "cuisine": "South Indian",
+  "rating": 4.6,
+  "totalReviews": 221,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91928d"
+  },
+  "restaurant_id": "r2",
+  "name": "Spaghetti Arrabiata",
+  "price": 310,
+  "description": "Classic Italian spaghetti tossed in spicy arrabiata sauce with herbs and parmesan cheese.",
+  "cuisine": "Italian",
+  "rating": 4.4,
+  "totalReviews": 196,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91928e"
+  },
+  "restaurant_id": "r2",
+  "name": "Tacos",
+  "price": 260,
+  "description": "Mexican-style crispy tacos loaded with veggies, sauces, cheese, and flavorful fillings.",
+  "cuisine": "Mexican",
+  "rating": 4.3,
+  "totalReviews": 187,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91928f"
+  },
+  "restaurant_id": "r3",
+  "name": "Kung Pao Chicken",
+  "price": 340,
+  "description": "Spicy Chinese chicken stir-fry tossed with peanuts, vegetables, and flavorful sauces.",
+  "cuisine": "Chinese",
+  "rating": 4.7,
+  "totalReviews": 311,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919290"
+  },
+  "restaurant_id": "r3",
+  "name": "Thai Basil Rice",
+  "price": 280,
+  "description": "Fragrant Thai-style rice stir-fried with basil, vegetables, and authentic sauces.",
+  "cuisine": "Thai",
+  "rating": 4.4,
+  "totalReviews": 152,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919291"
+  },
+  "restaurant_id": "r4",
+  "name": "Zinger Burger",
+  "price": 240,
+  "description": "Crunchy crispy chicken burger layered with lettuce, mayo, and spicy sauces.",
+  "cuisine": "Fast Food",
+  "rating": 4.8,
+  "totalReviews": 402,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919292"
+  },
+  "restaurant_id": "r4",
+  "name": "Cheesy Fries",
+  "price": 180,
+  "description": "Golden fries topped generously with molten cheese sauce and flavorful seasonings.",
+  "cuisine": "Fast Food",
+  "rating": 4.5,
+  "totalReviews": 264,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919293"
+  },
+  "restaurant_id": "r5",
+  "name": "Hazelnut Latte",
+  "price": 210,
+  "description": "Smooth espresso coffee blended with steamed milk and rich hazelnut flavors.",
+  "cuisine": "Beverages",
+  "rating": 4.7,
+  "totalReviews": 238,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919294"
+  },
+  "restaurant_id": "r5",
+  "name": "Red Velvet Pastry",
+  "price": 190,
+  "description": "Soft and moist red velvet pastry layered with creamy cheese frosting.",
+  "cuisine": "Desserts",
+  "rating": 4.6,
+  "totalReviews": 174,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919295"
+  },
+  "restaurant_id": "r6",
+  "name": "Chicken Shawarma",
+  "price": 260,
+  "description": "Arabian-style shawarma wrap stuffed with juicy chicken, veggies, and creamy garlic sauce.",
+  "cuisine": "Arabian",
+  "rating": 4.8,
+  "totalReviews": 437,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919296"
+  },
+  "restaurant_id": "r6",
+  "name": "Malai Tikka",
+  "price": 340,
+  "description": "Creamy and mildly spiced chicken tikka grilled perfectly with rich flavors.",
+  "cuisine": "Punjabi",
+  "rating": 4.7,
+  "totalReviews": 284,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919297"
+  },
+  "restaurant_id": "r7",
+  "name": "Protein Smoothie",
+  "price": 260,
+  "description": "Healthy protein-packed smoothie blended with fruits, milk, and nutritious ingredients.",
+  "cuisine": "Beverages",
+  "rating": 4.4,
+  "totalReviews": 127,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919298"
+  },
+  "restaurant_id": "r7",
+  "name": "Caesar Salad",
+  "price": 240,
+  "description": "Fresh crunchy lettuce tossed with creamy Caesar dressing, croutons, and parmesan cheese.",
+  "cuisine": "Healthy",
+  "rating": 4.3,
+  "totalReviews": 148,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb919299"
+  },
+  "restaurant_id": "r8",
+  "name": "Sev Usal",
+  "price": 120,
+  "description": "Traditional Gujarati street food made with spicy usal topped with crunchy sev and onions.",
+  "cuisine": "Gujarati",
+  "rating": 4.6,
+  "totalReviews": 215,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91929a"
+  },
+  "restaurant_id": "r8",
+  "name": "Kutchi Dabeli",
+  "price": 110,
+  "description": "Authentic Kutchi-style dabeli stuffed with spicy potato masala, chutneys, and peanuts.",
+  "cuisine": "Gujarati",
+  "rating": 4.7,
+  "totalReviews": 308,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91929b"
+  },
+  "restaurant_id": "r9",
+  "name": "Kimchi Fried Rice",
+  "price": 340,
+  "description": "Korean-style fried rice tossed with kimchi, vegetables, and spicy seasonings.",
+  "cuisine": "Korean",
+  "rating": 4.5,
+  "totalReviews": 192,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91929c"
+  },
+  "restaurant_id": "r9",
+  "name": "Sushi Platter",
+  "price": 520,
+  "description": "Fresh Japanese sushi platter featuring assorted rolls, rice, and flavorful fillings.",
+  "cuisine": "Japanese",
+  "rating": 4.8,
+  "totalReviews": 261,
+  "veg": false
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91929d"
+  },
+  "restaurant_id": "r10",
+  "name": "Baklava",
+  "price": 220,
+  "description": "Rich Middle Eastern dessert layered with nuts, crispy pastry sheets, and sweet syrup.",
+  "cuisine": "Arabian",
+  "rating": 4.6,
+  "totalReviews": 178,
+  "veg": true
+},
+{
+  "_id": {
+    "$oid": "6a01813766d5b08ccb91929e"
+  },
+  "restaurant_id": "r10",
+  "name": "Bingsu",
+  "price": 280,
+  "description": "Korean shaved ice dessert topped with fruits, syrups, and creamy sweet toppings.",
+  "cuisine": "Korean",
+  "rating": 4.5,
+  "totalReviews": 149,
+  "veg": true
 }]

@@ -5,7 +5,7 @@ import api from "../lib/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, decreaseQty } from "../store/slices/cartSlice";
 import { resolveItemImage, handleImgError } from "../lib/imageUtils";
-
+import Link from "next/link";
 const CARD_W = 200; // 180px card + 20px gap
 
 export default function PopularBar() {
@@ -134,6 +134,10 @@ export default function PopularBar() {
         {looped.map((item, i) => {
           const inCart = cart.find((c) => c.menu_item_id === item._id);
           return (
+            
+            <Link key={`${item._id}-${i}`} href={`/restaurant/${item.restaurant_id}`}>
+            
+
             <div key={`${item._id}-${i}`} className="flex-shrink-0 min-w-[180px] mb-2.5 bg-transparent">
 
               {/* image + floating button */}
@@ -197,6 +201,7 @@ export default function PopularBar() {
               </div>
 
             </div>
+            </Link>
           );
         })}
       </div>

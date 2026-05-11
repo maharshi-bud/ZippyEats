@@ -31,6 +31,20 @@ const menuItemSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    veg: {
+  type: Boolean,
+  default: true,
+},
+
+rating: {
+  type: Number,
+  default: 4.2,
+},
+
+totalReviews: {
+  type: Number,
+  default: 0,
+},
 
     // ✅ NEW IMAGE FIELD
     image: {

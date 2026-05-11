@@ -74,7 +74,9 @@ export default function UsersPage() {
       {/* FILTERS */}
       <div className="flex gap-4">
         <select
-          className="border px-3 py-2 rounded-lg"
+        //   className="border px-3 py-2 rounded-lg"
+          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
+
           onChange={(e) => setSortBy(e.target.value)}
         >
           <option value="totalSpent">Total Spent</option>
@@ -82,7 +84,9 @@ export default function UsersPage() {
         </select>
 
         <select
-          className="border px-3 py-2 rounded-lg"
+        //   className="border px-3 py-2 rounded-lg"
+          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
+
           onChange={(e) => setOrder(e.target.value)}
         >
           <option value="desc">High → Low</option>
@@ -90,7 +94,9 @@ export default function UsersPage() {
         </select>
 
         <select
-          className="border px-3 py-2 rounded-lg"
+          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
+
+        //   className="border px-3 py-2 rounded-lg"
           onChange={(e) => setActiveFilter(e.target.value)}
         >
           <option value="">All</option>

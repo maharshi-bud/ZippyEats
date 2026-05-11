@@ -1083,3 +1083,112 @@ height: 80px;
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Toggle Switch — Veg/Non-Veg */
+.veg-switch {
+  display: inline-block;
+  position: relative;
+  scale: 0.9;
+}
+
+.veg-switch .checkbox {
+  display: none;
+}
+
+.veg-switch .slider {
+  width: 50px;
+  height: 26px;
+  background-color: lightgray;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  border: 3px solid transparent;
+  transition: 0.3s;
+  box-shadow: 0 0 8px 0 rgb(0, 0, 0, 0.25) inset;
+  cursor: pointer;
+  position: relative;
+  /* left:5px; */
+}
+
+.veg-switch .slider::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  transform: translateX(-25px);
+  border-radius: 20px;
+  /* left:5px; */
+  transition: 0.3s;
+  box-shadow: 0 0 8px 2px rgb(0, 0, 0, 0.25);
+}
+
+.veg-switch .checkbox:checked ~ .slider::before {
+  transform: translateX(25px);
+  box-shadow: 0 0 8px 2px rgb(0, 0, 0, 0.25);
+}
+
+/* GREEN for VEG */
+.veg-switch.veg .checkbox:checked ~ .slider {
+  background-color: #16a34a;
+}
+
+/* RED for NON-VEG */
+.veg-switch.nonveg .checkbox:checked ~ .slider {
+  background-color: #dc2626;
+}
+
+.veg-switch .checkbox:active ~ .slider::before {
+  transform: translate(0);
+}
+
+
+
+
+
+
+/* ============================================
+   ICONS INSIDE THE THUMB (veg dot / nonveg triangle)
+   ============================================ */
+
+.veg-switch .slider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transition: 0.3s;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* VEG — green circle dot */
+.veg-switch.veg .slider::after {
+  width: 10px;
+  height: 10px;
+  left: 5px;                       /* centered horizontally over left thumb */
+  transform: translateY(-50%);
+  background-color: #16a34a;
+  border-radius: 50%;
+}
+
+
+
+
+.veg-switch.veg .checkbox:checked ~ .slider::after {
+  left: calc(100% - 17px);         /* centered horizontally over right thumb */
+}
+
+/* NON-VEG — red triangle */
+.veg-switch.nonveg .slider::after {
+  width: 11px;
+  height: 10px;
+   left: 5px;                    /* slightly adjusted for triangle width */
+  transform: translateY(-50%);
+  background-color: #dc2626;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.veg-switch.nonveg .checkbox:checked ~ .slider::after {
+  left: calc(100% - 17.5px);
+}
