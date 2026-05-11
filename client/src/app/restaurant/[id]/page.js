@@ -287,7 +287,7 @@ export default function RestaurantPage({ params }) {
           </div>
 
           {/* DEAL 2 */}
-          <div className="flex-shrink-0 w-[320px] h-[height107.85px] snap-start flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+          <div className="flex-shrink-0 w-[320px] h-[107.85px] snap-start flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
             <div className="grid place-items-center w-14 h-14 rounded-xl bg-orange-50 flex-shrink-0">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
@@ -517,16 +517,18 @@ export default function RestaurantPage({ params }) {
                                   ${!isLast ? "border-b border-slate-200" : ""}`}
                     >
                       {/* LEFT — DETAILS */}
-                      <div className="flex-1 min-w-0  text-left">
+                      {/* <div className="flex-start min-w-0  text-left"> */}
+                        <div className="flex-1 min-w-0 text-left self-start mt-[5px]">
+
 
                         {/* VEG/NON-VEG + BADGES */}
                         <div className="flex items-center gap-2 mb-2">
                           {item.veg ? (
-                            <div className="w-[18px] h-[18px] border-[1.5px] border-green-700 grid place-items-center rounded-sm flex-shrink-0">
+                            <div className="w-[18px] h-[18px] border-[2px] border-green-700 grid place-items-center rounded-[5px] flex-shrink-0">
                               <div className="w-2 h-2 rounded-full bg-green-700" />
                             </div>
                           ) : (
-                            <div className="w-[18px] h-[18px] border-[1.5px] border-red-700 grid place-items-center rounded-sm flex-shrink-0">
+                            <div className="w-[18px] h-[18px] border-[2px] border-red-700 grid place-items-center rounded-[5px] flex-shrink-0">
                               <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-l-transparent border-r-transparent border-b-red-700" />
                             </div>
                           )}
@@ -549,8 +551,8 @@ export default function RestaurantPage({ params }) {
                           )}
 
                           {isTopRated && (
-                            <div className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                            <div className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md ">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" >
                                 <path
                                   d="M12 15l-3.09 1.62.59-3.45L7 10.74l3.46-.5L12 7l1.54 3.24 3.46.5-2.5 2.43.59 3.45L12 15z"
                                   fill="#3b82f6"
@@ -568,7 +570,7 @@ export default function RestaurantPage({ params }) {
                         </div>
 
                         {/* NAME */}
-                        <h3 className="text-base font-bold text-slate-900 leading-tight mb-1">
+                        <h3 className="text-base text-[18px] font-bold text-slate-900 leading-tight mb-1">
                           {item.name}
                         </h3>
 
@@ -670,7 +672,7 @@ export default function RestaurantPage({ params }) {
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-slate-400 mt-1">Customisable</p>
+                        {/* <p className="text-[11px] text-slate-400 mt-1">Customisable</p> */}
                       </div>
                     </div>
                   );

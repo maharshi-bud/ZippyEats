@@ -45,16 +45,23 @@ export const getMenuItemsByRestaurant = async (req, res) => {
 // 🔥 GET popular (random)
 export const getPopularItems = async (req, res) => {
   try {
-    const items = await MenuItem.aggregate([
-      { $sample: { size: 7 } }
-    ]);
+    const items = await MenuItem.find({
+      totalReviews: { $gt: 0 }
+    })
+      .sort({ totalReviews: -1 })
+      .limit(14)
+      .lean();
 
     res.json({
       success: true,
       data: items
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error(err);
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 };
 
