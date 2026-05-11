@@ -62,7 +62,7 @@ export default function OrderDetailsPage() {
         status,
       }));
 
-      alert("Order updated successfully");
+      // alert("Order updated successfully");
     } catch (err) {
       console.error(err);
 
@@ -100,7 +100,10 @@ export default function OrderDetailsPage() {
           <p className="text-sm text-zinc-500 mt-2">
             #{order._id?.slice(-8)}
           </p>
+
+          
         </div>
+        
 
         {/* STATUS ACTION */}
         <div className="flex items-center gap-3">
@@ -136,87 +139,100 @@ export default function OrderDetailsPage() {
       </div>
 
       {/* TOP CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* CUSTOMER */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
-          <p className="text-sm text-zinc-500 mb-2">
-            Customer
-          </p>
+      {/* TOP CARDS */}
+<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-          <h3 className="font-semibold text-xl text-zinc-900">
-            {order.user?.name || "Unknown"}
-          </h3>
+  {/* CUSTOMER */}
+  <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
+    <p className="text-sm text-zinc-500 mb-2">
+      Customer
+    </p>
 
-          <p className="text-sm text-zinc-500 mt-2">
-            {order.user?.email ||
-              "No email"}
-          </p>
-        </div>
+    <h3 className="font-semibold text-xl text-zinc-900">
+      {order.user?.name || "Unknown"}
+    </h3>
 
-        {/* PAYMENT */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
-          <p className="text-sm text-zinc-500 mb-2">
-            Payment
-          </p>
+    <p className="text-sm text-zinc-500 mt-2">
+      {order.user?.email || "No email"}
+    </p>
+  </div>
 
-          <h3 className="font-bold text-3xl text-emerald-600">
-            ₹{order.total_amount || 0}
-          </h3>
+  {/* PAYMENT */}
+  <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
+    <p className="text-sm text-zinc-500 mb-2">
+      Payment
+    </p>
 
-          <p className="text-sm text-zinc-500 mt-2 capitalize">
-            {order.payment_method ||
-              "Online"}
-          </p>
-        </div>
+    <h3 className="font-bold text-3xl text-emerald-600">
+      ₹{order.total_amount || 0}
+    </h3>
 
-        {/* STATUS */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
-          <p className="text-sm text-zinc-500 mb-4">
-            Delivery Status
-          </p>
+    <p className="text-sm text-zinc-500 mt-2 capitalize">
+      {order.payment_method || "Online"}
+    </p>
+  </div>
 
-          <span
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-              order.status === "delivered"
-                ? "bg-emerald-100 text-emerald-700"
-                : order.status ===
-                  "cancelled"
-                ? "bg-red-100 text-red-700"
-                : order.status ===
-                  "out_for_delivery"
-                ? "bg-blue-100 text-blue-700"
-                : "bg-yellow-100 text-yellow-700"
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                order.status ===
-                "delivered"
-                  ? "bg-emerald-500"
-                  : order.status ===
-                    "cancelled"
-                  ? "bg-red-500"
-                  : order.status ===
-                    "out_for_delivery"
-                  ? "bg-blue-500"
-                  : "bg-yellow-500"
-              }`}
-            />
+  {/* ORDER TIME */}
+  <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
+    <p className="text-sm text-zinc-500 mb-2">
+      Ordered At
+    </p>
 
-            {order.status
-              ?.replaceAll("_", " ")
-              .replace(
-                /^\w/,
-                (c: string) =>
-                  c.toUpperCase()
-              )}
-          </span>
-        </div>
-      </div>
+    <h3 className="font-semibold text-xl text-zinc-900">
+      {new Date(order.createdAt).toLocaleDateString()}
+    </h3>
+
+    <p className="text-sm text-zinc-500 mt-2">
+      {new Date(order.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </p>
+  </div>
+
+  {/* STATUS */}
+  <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm">
+    <p className="text-sm text-zinc-500 mb-4">
+      Delivery Status
+    </p>
+
+    <span
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+        order.status === "delivered"
+          ? "bg-emerald-100 text-emerald-700"
+          : order.status === "cancelled"
+          ? "bg-red-100 text-red-700"
+          : order.status === "out_for_delivery"
+          ? "bg-blue-100 text-blue-700"
+          : "bg-yellow-100 text-yellow-700"
+      }`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${
+          order.status === "delivered"
+            ? "bg-emerald-500"
+            : order.status === "cancelled"
+            ? "bg-red-500"
+            : order.status === "out_for_delivery"
+            ? "bg-blue-500"
+            : "bg-yellow-500"
+        }`}
+      />
+
+      {order.status
+        ?.replaceAll("_", " ")
+        .replace(
+          /^\w/,
+          (c: string) => c.toUpperCase()
+        )}
+    </span>
+  </div>
+
+</div>
 
       {/* ITEMS */}
       <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-zinc-100">
+        <div className="p-4 border-b border-zinc-100">
           <h2 className="font-semibold text-lg text-zinc-900">
             Order Items
           </h2>
@@ -287,10 +303,35 @@ export default function OrderDetailsPage() {
           Delivery Address
         </h2>
 
-        <p className="text-zinc-600 leading-relaxed">
-          {order.address ||
-            "No address"}
-        </p>
+<div className="space-y-2 text-sm text-zinc-700">
+  <p className="font-semibold text-zinc-900">
+    {order.delivery_address?.full_name || "Customer"}
+  </p>
+
+  <p>
+    +91 {order.delivery_address?.phone || "No phone"}
+  </p>
+
+  <div className="leading-relaxed text-zinc-600">
+    <p>
+      {order.delivery_address?.address_line}
+    </p>
+
+    {/* <p>
+      {[
+        order.delivery_address?.city,
+        order.delivery_address?.state,
+        order.delivery_address?.pincode,
+      ]
+        .filter(Boolean)
+        .join(", ")}
+    </p> */}
+
+    <p>
+      {/* {order.delivery_address?.country} */}
+    </p>
+  </div>
+</div>
       </div>
     </div>
   );

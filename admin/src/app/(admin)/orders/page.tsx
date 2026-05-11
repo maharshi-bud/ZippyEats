@@ -203,6 +203,7 @@ const [updating, setUpdating] = useState(false);
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">Amount</th>
               <th className="p-3 text-left">Date</th>
+              <th className="p-3 text-left">Action</th>
             </tr>
           </thead>
 
@@ -210,10 +211,7 @@ const [updating, setUpdating] = useState(false);
             {orders.map((o) => (
               <tr
                 key={o._id}
-                onClick={() =>
-                  router.push(`/order/${o._id}`)
-                }
-                className="border-t hover:bg-zinc-50 cursor-pointer transition"
+                className="border-t transition hover:bg-zinc-50"
               >
                 <td className="p-3 font-medium">
                   #{o._id.slice(-6)}
@@ -256,6 +254,18 @@ const [updating, setUpdating] = useState(false);
                   {new Date(
                     o.createdAt
                   ).toLocaleDateString()}
+                </td>
+
+                <td className="p-3 text-left">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(`/order/${o._id}`)
+                    }
+                    className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  >
+                    Details
+                  </button>
                 </td>
               </tr>
             ))}

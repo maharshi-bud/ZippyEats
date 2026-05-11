@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import axios from "../../../lib/axios";
 import gsap from "gsap";
 import { resolveItemImage, handleImgError } from "../../../lib/imageUtils";
+import { getSocket } from "../../../lib/socket";
 const BASE_URL = "http://localhost:5010";
 
 const steps = [
@@ -41,9 +42,40 @@ export default function OrderPage({ params }) {
       const res = await axios.get(`/orders/${params.id}`);
       setOrder(res.data.data);
     };
+
     fetchOrder();
-    const interval = setInterval(fetchOrder, 4000);
-    return () => clearInterval(interval);
+
+    const token = localStorage.getItem("token");
+    const socket = getSocket();
+
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        socket.emit("join", { userId: payload.id, role: payload.role });
+      } catch (err) {
+        console.error("Socket join failed:", err.message);
+      }
+    }
+
+    const handleStatusUpdate = (payload) => {
+      if (String(payload.orderId) !== params.id) return;
+
+      setOrder((current) =>
+        current
+          ? {
+              ...current,
+              status: payload.status,
+              updatedAt: payload.updatedAt,
+            }
+          : current
+      );
+    };
+
+    socket.on("orderStatusUpdate", handleStatusUpdate);
+
+    return () => {
+      socket.off("orderStatusUpdate", handleStatusUpdate);
+    };
   }, [params.id]);
 
   useEffect(() => {

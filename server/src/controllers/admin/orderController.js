@@ -4,6 +4,7 @@ import Order from "../../models/Order.js";
 import User from "../../models/User.js";
 import MenuItem from "../../models/MenuItem.js";
 import Restaurant from "../../models/Restaurant.js";
+import { updateOrderStatus as updateScheduledOrderStatus } from "../../services/orderEngine.js";
 
 export const getOrderById = async (req, res) => {
   try {
@@ -100,6 +101,7 @@ export const getOrderById = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
+
     const { id } = req.params;
     const { status } = req.body;
 
@@ -112,37 +114,45 @@ export const updateOrderStatus = async (req, res) => {
       "cancelled",
     ];
 
+    // ❌ Invalid status
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         message: "Invalid status",
       });
     }
 
-    const updatedOrder = await Order.findByIdAndUpdate(
-      id,
-      {
+    // 🔥 ADMIN OVERRIDE ENABLED HERE
+    const updatedOrder =
+      await updateScheduledOrderStatus(
+        id,
         status,
-      },
-      {
-        new: true,
-      }
-    );
-
-    if (!updatedOrder) {
-      return res.status(404).json({
-        message: "Order not found",
-      });
-    }
+        "admin"
+      );
 
     res.json({
       success: true,
       order: updatedOrder,
     });
+
   } catch (err) {
+
     console.error(err);
+
+    if (err.message === "Order not found") {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    if (err.message === "Invalid status transition") {
+      return res.status(400).json({
+        message: err.message,
+      });
+    }
 
     res.status(500).json({
       message: "Failed to update order",
     });
+
   }
 };

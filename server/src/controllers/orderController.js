@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import MenuItem from "../models/MenuItem.js";
+import {
+  emitNewOrder,
+  scheduleNextTransition,
+} from "../services/orderEngine.js";
 
 
 
@@ -12,7 +16,12 @@ export const createOrder = async (req, res) => {
     session.startTransaction();
 
     const userId = req.user?.id;
-    const { items } = req.body || {};
+    const {
+      items,
+      restaurant_id: restaurantIdFromBody,
+      restaurant_name: restaurantNameFromBody,
+      delivery_address: deliveryAddressFromBody,
+    } = req.body || {};
 
     // ❌ Validate user
     if (!userId) {
@@ -68,9 +77,19 @@ export const createOrder = async (req, res) => {
       return {
         menu_item_id: menu._id,
         quantity: item.quantity,
-        price
+        name: menu.name,
+        image: menu.image || null,
+        veg: menu.veg ?? true,
+        price,
       };
     });
+
+    const restaurantId =
+      restaurantIdFromBody || menuItems[0]?.restaurant_id || null;
+    const restaurantName =
+      restaurantNameFromBody || menuItems[0]?.restaurant_name || "Restaurant";
+    const deliveryAddress =
+      deliveryAddressFromBody || items[0]?.delivery_address || null;
 
     // ⏱️ Time logic
     const now = new Date();
@@ -84,18 +103,39 @@ export const createOrder = async (req, res) => {
       [
         {
           user_id: userId,
+          restaurant_id: restaurantId,
+          restaurant_name: restaurantName,
           items: orderItems,
-          total_amount: total,
+          total_amount: total + 40,
+          delivery_fee: 40,
+          subtotal: total,
           status: "placed",
           timeout_at,
-          eta
-        }
+          eta,
+          delivery_address: {
+            full_name:
+              deliveryAddress?.full_name || "Customer",
+            phone:
+              deliveryAddress?.phone || "0000000000",
+            address_line:
+              deliveryAddress?.address_line ||
+              (typeof deliveryAddress === "string"
+                ? deliveryAddress
+                : "Default"),
+            city: deliveryAddress?.city || "Ahmedabad",
+            state: deliveryAddress?.state || "Gujarat",
+            country: deliveryAddress?.country || "India",
+          },
+        },
       ],
       { session }
     );
 
     await session.commitTransaction();
     session.endSession();
+
+    emitNewOrder(order[0]);
+    scheduleNextTransition(order[0]);
 
     return res.status(201).json({
       success: true,

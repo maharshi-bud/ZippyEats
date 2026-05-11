@@ -59,26 +59,124 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
-  const handleCheckout = async () => {
-    try {
-      setLoading(true);
-      const res = await api.post("/orders", {
-        items: items.map((item) => ({
-          menu_item_id: item.menu_item_id,
-          quantity: item.quantity
-          , restaurant_id : item.restaurant_id      , image: item.image  
-        })),
-        total_amount: total + 40,
-        delivery_address: deliveryAddress,
-      });
-      dispatch(clearCart());
-      startRouteLoader();
-      router.push(`/orders/${res.data.data._id}`);
-    } catch (err) {
-      console.error("ORDER ERROR:", err.response?.data || err.message);
-      setLoading(false);
-    }
-  };
+const handleCheckout = async () => {
+  try {
+    setLoading(true);
+
+    if (!items.length) return;
+
+    const firstItem = items[0];
+
+    const subtotal = total;
+    const deliveryFee = 40;
+    const taxAmount = 0;
+
+    const finalTotal =
+      subtotal + deliveryFee + taxAmount;
+
+    // ✅ ETA = 35 mins
+    const eta = new Date(
+      Date.now() + 35 * 60 * 1000
+    );
+
+    // ✅ Auto timeout after 1 hour
+    const timeoutAt = new Date(
+      Date.now() + 60 * 60 * 1000
+    );
+
+    const payload = {
+      // RESTAURANT
+      restaurant_id:
+        firstItem.restaurant_id,
+
+      restaurant_name:
+        firstItem.restaurant_name ||
+        "Restaurant",
+
+      // ITEMS SNAPSHOT
+      items: items.map((item) => ({
+        menu_item_id:
+          item.menu_item_id,
+
+        name: item.name,
+
+        image: item.image,
+
+        quantity: item.quantity,
+
+        price: item.price,
+
+        veg: item.veg ?? true,
+      })),
+
+      // PAYMENT
+      payment_method: "cod",
+
+      payment_status: "pending",
+
+      // PRICE
+      subtotal: subtotal,
+
+      delivery_fee: deliveryFee,
+
+      tax_amount: taxAmount,
+
+      total_amount: finalTotal,
+
+      // ADDRESS
+      delivery_address: {
+        full_name: "Customer",
+
+        phone: "0000000000",
+
+        address_line:
+          deliveryAddress,
+
+        city: "Ahmedabad",
+
+        state: "Gujarat",
+
+        country: "India",
+
+        pincode: "380001",
+      },
+
+      // EXTRA
+      instructions: "",
+
+      // ETA
+      eta,
+
+      timeout_at: timeoutAt,
+    };
+
+    console.log(
+      "ORDER PAYLOAD:",
+      payload
+    );
+
+    const res = await api.post(
+      "/orders",
+      payload
+    );
+
+    dispatch(clearCart());
+
+    startRouteLoader();
+
+    router.push(
+      `/orders/${res.data.data._id}`
+    );
+
+  } catch (err) {
+    console.error(
+      "ORDER ERROR:",
+      err.response?.data || err.message
+    );
+
+    setLoading(false);
+  }
+};
 
   if (!mounted) return null;
 

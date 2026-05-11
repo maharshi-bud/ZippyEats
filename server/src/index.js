@@ -19,7 +19,7 @@ import restaurantRoutes from "./routes/restaurantRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import adminStatsRoutes from "./routes/admin/statsRoutes.js";
-import { runOrderEngine } from "./services/orderEngine.js";
+import { reloadActiveOrders } from "./services/orderEngine.js";
 import { syncRestaurantCuisines } from "./utils/syncCuisines.js";
 import { syncMenuImages } from "./utils/syncImages.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -27,9 +27,15 @@ import { protect } from "./middleware/authMiddleware.js";
 import { adminOnly } from "./middleware/adminMiddleware.js";
 import adminOrderRoutes from "./routes/admin/orderRoutes.js";
 dotenv.config();
+import http from "http";
+import { initSocket } from "./lib/socket.js";
+
+
 const app = express();
+const httpServer = http.createServer(app);
 
-
+// Initialize Socket.IO
+initSocket(httpServer);
 
 app.use(cors());
 app.use(express.json());
@@ -64,10 +70,10 @@ const startServer = async () => {
     
   ]);
   
-  setInterval(runOrderEngine, 5); // every 5 sec
+  await reloadActiveOrders();
   
-  app.listen(PORT, () => {
-    console.log(`🚀 ZippyEats running on ${PORT}`);
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 ZippyEats + Socket.IO running on ${PORT}`);
   });
   await syncRestaurantCuisines();
   // await syncMenuImages();
