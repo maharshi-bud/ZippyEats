@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
 import Loader from "../../../components/ui/Loader";
-
 
 type ApiErrorBody = {
   message?: string;
@@ -16,7 +17,9 @@ type OrderStats = {
   placed: number;
   delivered: number;
   cancelled: number;
-  [status: string]: number;
+  accepted: number;
+  preparing: number;
+  out_for_delivery: number;
 };
 
 type OrderRow = {
@@ -33,15 +36,23 @@ type OrderRow = {
 };
 
 export default function OrdersPage() {
+  const router = useRouter();
+
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("desc");
+
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+
+  const [selectedStatus, setSelectedStatus] = useState("");
+const [updating, setUpdating] = useState(false);
 
   const limit = 10;
 
@@ -49,21 +60,7 @@ export default function OrdersPage() {
     try {
       setLoading(true);
       setError("");
-
-      console.log("Checking server connectivity...");
-        try {
-          const healthRes = await api.get("/health");
-          console.log("✓ Server is running:", healthRes.data);
-        } catch (healthErr) {
-          console.error("✗ Server not responding:", healthErr);
-          throw new Error(
-            "Server not responding. Make sure backend is running on http://localhost:5010"
-          );
-        }
-      
-
-  
-      console.log("Fetching orders-summary stats...");
+      // setSelectedStatus(data.status);
       const statsRes = await api.get("/admin/stats/orders-summary");
 
       const ordersRes = await api.get("/admin/stats/get-orderData", {
@@ -76,26 +73,30 @@ export default function OrdersPage() {
       });
 
       setStats(statsRes.data);
+
       setOrders(ordersRes.data.orders || []);
       setTotal(ordersRes.data.total || 0);
     } catch (err: unknown) {
       const apiError = err as AxiosError<ApiErrorBody>;
+
       const message =
         apiError.response?.data?.message ||
-        (err instanceof Error ? err.message : "Failed to load orders");
+        (err instanceof Error
+          ? err.message
+          : "Failed to load orders");
 
       setError(message);
+
       setStats({
         total: 0,
         placed: 0,
         delivered: 0,
         cancelled: 0,
-        outfordelivery: 0,
-        preparing: 0,
         accepted: 0,
-
-
+        preparing: 0,
+        out_for_delivery: 0,
       });
+
       setOrders([]);
     } finally {
       setLoading(false);
@@ -103,29 +104,24 @@ export default function OrdersPage() {
   }, [status, sort, page]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void fetchData();
-    }, 0);
-
-    return () => window.clearTimeout(timer);
+    void fetchData();
   }, [fetchData]);
 
-  if (loading){
-    return( 
-
-      <div className="min-h-screen flex items-center justify-center">
-  <Loader />
-</div>
-
-
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center pt-[30vh]">
+        <Loader />
+      </div>
     );
-  
   }
 
   if (error) {
     return (
-      <div className="space-y-4 ">
-        <h1 className="text-2xl font-bold text-zinc-900">Orders</h1>
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-zinc-900">
+          Orders
+        </h1>
+
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
@@ -136,19 +132,33 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <h1 className="text-2xl font-bold text-zinc-950">Orders</h1>
+      <h1 className="text-2xl font-bold text-zinc-950">
+        Orders
+      </h1>
 
-      {/* CARDS */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-4 w-[100%]">
+      {/* STATS */}
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <Card title="Total Orders" value={stats?.total || 0} />
-        <Card title="In Process" value={
-    (stats?.placed ?? 0) +
-    (stats?.accepted ?? 0) +
-    (stats?.preparing ?? 0) +
-    (stats?.out_for_delivery ?? 0)
-  } />
-        <Card title="Delivered" value={stats?.delivered || 0} />
-        <Card title="Cancelled" value={stats?.cancelled || 0} />
+
+        <Card
+          title="In Process"
+          value={
+            (stats?.placed ?? 0) +
+            (stats?.accepted ?? 0) +
+            (stats?.preparing ?? 0) +
+            (stats?.out_for_delivery ?? 0)
+          }
+        />
+
+        <Card
+          title="Delivered"
+          value={stats?.delivered || 0}
+        />
+
+        <Card
+          title="Cancelled"
+          value={stats?.cancelled || 0}
+        />
       </div>
 
       {/* FILTERS */}
@@ -165,7 +175,9 @@ export default function OrdersPage() {
           <option value="placed">Placed</option>
           <option value="accepted">Accepted</option>
           <option value="preparing">Preparing</option>
-          <option value="out_for_delivery">Out for delivery</option>
+          <option value="out_for_delivery">
+            Out for delivery
+          </option>
           <option value="delivered">Delivered</option>
           <option value="cancelled">Cancelled</option>
         </select>
@@ -196,39 +208,60 @@ export default function OrdersPage() {
 
           <tbody>
             {orders.map((o) => (
-              <tr key={o._id} className="border-t hover:bg-zinc-50">
-                <td className="p-3">{o._id.slice(-6)}</td>
-                <td className="p-3">{o.user_id?.name || "-"}</td>
-                <td className="p-3">{o.restaurant?.name || "-"}</td>
+              <tr
+                key={o._id}
+                onClick={() =>
+                  router.push(`/order/${o._id}`)
+                }
+                className="border-t hover:bg-zinc-50 cursor-pointer transition"
+              >
+                <td className="p-3 font-medium">
+                  #{o._id.slice(-6)}
+                </td>
+
+                <td className="p-3">
+                  {o.user_id?.name || "-"}
+                </td>
+
+                <td className="p-3">
+                  {o.restaurant?.name || "-"}
+                </td>
 
                 <td className="p-3">
                   <span
-  className={`px-2 py-1 rounded text-xs font-medium ${
-    o.status === "delivered"
-      ? "bg-emerald-100 text-emerald-700"
-      : o.status === "cancelled"
-      ? "bg-red-100 text-red-700"
-      : o.status === "out_for_delivery"
-      ? "bg-blue-100 text-blue-700"
-      : "bg-yellow-100 text-yellow-700"
-  }`}
->
-                    {/* {o.status[0].toUpperCase()+o.slice(1)} */}
-                    {o.status?.charAt(0).toUpperCase() + o.status?.slice(1)}
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      o.status === "delivered"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : o.status === "cancelled"
+                        ? "bg-red-100 text-red-700"
+                        : o.status === "out_for_delivery"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {o.status
+                      ?.replaceAll("_", " ")
+                      .replace(
+                        /^\w/,
+                        (c) => c.toUpperCase()
+                      )}
                   </span>
                 </td>
 
-                <td className="p-3 font-semibold text-emerald-600">₹{o.total_amount}</td>
+                <td className="p-3 font-semibold text-emerald-600">
+                  ₹{o.total_amount}
+                </td>
 
                 <td className="p-3 text-zinc-500">
-                  {new Date(o.createdAt).toLocaleDateString()}
+                  {new Date(
+                    o.createdAt
+                  ).toLocaleDateString()}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* EMPTY STATE */}
         {orders.length === 0 && (
           <div className="p-6 text-center text-zinc-500">
             No orders found
@@ -239,13 +272,16 @@ export default function OrdersPage() {
       {/* PAGINATION */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-zinc-500">
-          Page {page} of {Math.ceil(total / limit) || 1}
+          Page {page} of{" "}
+          {Math.ceil(total / limit) || 1}
         </p>
 
         <div className="flex gap-2">
           <button
             disabled={page === 1}
-            onClick={() => setPage((currentPage) => currentPage - 1)}
+            onClick={() =>
+              setPage((prev) => prev - 1)
+            }
             className="px-3 py-1 border rounded hover:bg-zinc-100 disabled:opacity-50"
           >
             Prev
@@ -253,7 +289,9 @@ export default function OrdersPage() {
 
           <button
             disabled={page >= total / limit}
-            onClick={() => setPage((currentPage) => currentPage + 1)}
+            onClick={() =>
+              setPage((prev) => prev + 1)
+            }
             className="px-3 py-1 border rounded hover:bg-zinc-100 disabled:opacity-50"
           >
             Next

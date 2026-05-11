@@ -123,20 +123,20 @@ export default function PeopleAlsoLikeBar() {
       </div>
 
       {/* track */}
-      <div
-        ref={trackRef}
-        onMouseEnter={() => (isPaused.current = true)}
-        onMouseLeave={() => (isPaused.current = false)}
-        className="flex gap-5 overflow-x-auto pt-2.5
-                   [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-      >
+  <div
+  ref={trackRef}
+  onMouseEnter={() => (isPaused.current = true)}
+  onMouseLeave={() => (isPaused.current = false)}
+  className="flex gap-5 overflow-x-auto pt-2.5 snap-x snap-mandatory scroll-smooth
+             [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+>
         {looped.map((item, i) => {
           const inCart = cart.find((c) => c.menu_item_id === item._id);
           return (
-            <div
-              key={`${item._id}-${i}`}
-              className="flex-shrink-0 min-w-[180px] mb-2.5 bg-transparent"
-            >
+           <div
+  key={`${item._id}-${i}`}
+  className="flex-shrink-0 min-w-[180px] mb-2.5 bg-transparent snap-start"
+>
 
               {/* IMAGE + BUTTONS — no navigation */}
               <div className="h-40 relative rounded-xl">

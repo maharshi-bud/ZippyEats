@@ -25,7 +25,7 @@ import { syncMenuImages } from "./utils/syncImages.js";
 import userRoutes from "./routes/userRoutes.js";
 import { protect } from "./middleware/authMiddleware.js";
 import { adminOnly } from "./middleware/adminMiddleware.js";
-
+import adminOrderRoutes from "./routes/admin/orderRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -45,7 +45,7 @@ app.use("/api/menu", menuRoutes);
 app.use ("/api", restaurantRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/search",searchRoutes );
-
+app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/images", express.static(path.join(__dirname, "../../food_images")));
 
 app.use(errorHandler);
