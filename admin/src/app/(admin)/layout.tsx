@@ -17,9 +17,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-      if (payload.role !== "admin") {
+      if (  payload.role !== "admin" &&
+payload.role !== "restaurant") {
         router.push("/login");
       }
+      
     } catch {
       router.push("/login");
     }

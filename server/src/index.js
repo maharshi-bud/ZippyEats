@@ -32,6 +32,10 @@ import { initSocket } from "./lib/socket.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
 
+// import {createRestaurantOwners} from "./utils/createRestaurantOwner.js"
+
+
+
 const app = express();
 const httpServer = http.createServer(app);
 
@@ -79,6 +83,8 @@ const startServer = async () => {
   });
   await syncRestaurantCuisines();
   // await syncMenuImages();
+
+  // await createRestaurantOwners();
 };
 
 startServer();

@@ -44,7 +44,7 @@ export default function RootLayout({
       }
 
       // check admin role
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "restaurant") {
         router.push("/login");
         return;
       }

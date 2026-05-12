@@ -36,13 +36,17 @@ export default function LoginPage() {
       // decode role
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-      if (payload.role !== "admin") {
-        alert("Access denied (not admin)");
-        localStorage.removeItem("token");
-        return;
-      }
-
-      router.push("/");
+   if (payload.role === "admin") {
+  router.push("/");
+}
+else if (payload.role === "restaurant") {
+  router.push("/restaurant");
+  console.log("Pushed")
+}
+else {
+  alert("Access denied");
+  localStorage.removeItem("token");
+}
     } catch (err: unknown) {
       const message =
         typeof err === "object" && err !== null && "response" in err
@@ -130,13 +134,13 @@ export default function LoginPage() {
           {/* EMAIL */}
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-zinc-700">
-              Email
+              Login ID
             </span>
             <input
-              type="email"
+                type="text"
               value={email}
               required
-              placeholder="admin@zippyeats.com"
+              placeholder="admin@zippyeats.com / r99"
               className="h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
               onChange={(e) => setEmail(e.target.value)}
             />
