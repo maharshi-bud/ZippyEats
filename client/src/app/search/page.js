@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import api from "../../lib/api";
-
+import Head from "next/head";
 export default function SearchPage() {
   const params = useSearchParams();
   const q = params.get("q");
@@ -20,6 +20,9 @@ export default function SearchPage() {
 
   return (
     <div className="p-6">
+            <Head>
+        <title>Search — ZippyEats</title>
+      </Head>
       <h1 className="text-xl font-bold mb-4">
         Results for "{q}"
       </h1>

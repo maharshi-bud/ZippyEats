@@ -2,9 +2,11 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-const generateToken = (userId, role) => {
-  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
-    expiresIn: "30m"
+
+
+const generateToken = (userId, role, restaurantId = null) => {
+  return jwt.sign({ id: userId, role, restaurant_id: restaurantId }, process.env.JWT_SECRET, {
+    expiresIn: "2h" , 
   });
 };
 
@@ -44,7 +46,7 @@ export const register = async (req, res, next) => {
 // LOGIN
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password  } = req.body;
 
     const user = await User.findOne({ email });
 
@@ -58,7 +60,8 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id, user.role);
+
+    const token = generateToken(user._id, user.role,user.restaurant_Id || null);
 
     res.json({
       success: true,

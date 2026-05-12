@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import api from "../../lib/axios";
 import { startRouteLoader } from "../../lib/routeLoading";
-
+import Head from "next/head";
 export default function CartPage() {
   const items = useSelector(selectCartItems);
   const total = useSelector(selectCartTotal);
@@ -29,7 +29,9 @@ export default function CartPage() {
 
   return (
     <div className="cart1-container">
-
+<Head>
+  <title>Your Cart — ZippyEats</title>
+</Head>
       {/* 🛒 CART */}
       <div className="cart1-card cart1-cart">
         <label className="cart1-title">Your cart</label>

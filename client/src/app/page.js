@@ -14,7 +14,7 @@ import RushDeals from "../components/RushDeals";
 import { useRouter } from "next/navigation";
 import { getRestaurantCoverImage, handleImgError } from "../lib/imageUtils";
 import { startRouteLoader } from "../lib/routeLoading";
-
+import Head from "next/head";
 export default function Home() {
   const [restaurants, setRestaurants] = useState([]);
   const [selectedCuisine, setSelectedCuisine] = useState("All");
@@ -49,7 +49,12 @@ export default function Home() {
   const visibleRestaurants = restaurants.slice(0, 6);
 
   return (
+    
     <div className="container">
+    <Head>
+  <title>ZippyEats — Fast Food Delivery</title>
+</Head>
+    
       <CuisineBar selected={selectedCuisine} setSelected={setSelectedCuisine} />
       <PromoCarousel />
       <PopularBar />

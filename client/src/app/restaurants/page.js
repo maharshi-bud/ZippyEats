@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "../../lib/axios";
+import axios from "../../lib/axios";import Head from "next/head";
 import Link from "next/link";
 import { getRestaurantCoverImage, handleImgError } from "../../lib/imageUtils";
 
@@ -30,12 +30,14 @@ export default function AllRestaurants() {
         })
       );
       setRestaurantImages(images);
-    };
+    };  
     fetchImages();
   }, [restaurants]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">    <Head>
+      <title>All Restaurants — ZippyEats</title>
+    </Head>
       <h1 className="text-3xl font-bold text-slate-800 mb-6">All Restaurants</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

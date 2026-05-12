@@ -29,7 +29,8 @@ import adminOrderRoutes from "./routes/admin/orderRoutes.js";
 dotenv.config();
 import http from "http";
 import { initSocket } from "./lib/socket.js";
-
+import reviewRoutes from "./routes/reviewRoutes.js";
+import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -53,7 +54,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/search",searchRoutes );
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/images", express.static(path.join(__dirname, "../../food_images")));
-
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/restaurant-owner", restaurantOwnerRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5010;

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser, registerUser } from "../../store/slices/authSlice";
 import { useRouter } from "next/navigation";
 import { startRouteLoader } from "../../lib/routeLoading";
-
+import Head from "next/head";
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({
@@ -36,7 +36,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-4 ml-[33vw]">
-
+<Head>
+  <title>Login — ZippyEats</title>
+</Head>
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border">
 
         {/* TITLE */}

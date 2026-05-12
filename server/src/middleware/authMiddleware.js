@@ -15,11 +15,12 @@ export const protect = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // ✅ attach everything needed
-    req.user = {
-      id: decoded.id,
-      role: decoded.role, // IMPORTANT
-    };
 
+req.user = {
+  id: decoded.id,
+  role: decoded.role,
+  restaurant_id: decoded.restaurant_id || null
+};
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });

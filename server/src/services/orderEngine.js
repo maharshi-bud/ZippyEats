@@ -267,10 +267,7 @@ export const reloadActiveOrders = async () => {
   console.log(
     `🔄 Reloading ${activeOrders.length} active orders into scheduler`
   );
-
   for (const order of activeOrders) {
-
     scheduleNextTransition(order);
-
   }
 };
