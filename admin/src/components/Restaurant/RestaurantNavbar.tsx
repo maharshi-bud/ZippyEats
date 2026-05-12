@@ -4,15 +4,15 @@ import { Bell, Search } from "lucide-react";
 
 export default function RestaurantNavbar() {
   return (
-    <header className="h-20 border-b border-white/10 bg-[#151924] px-6 flex items-center justify-between">
-      <div>
-        <h1 className="text-xl font-semibold">
+    <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-[#151924] px-4 sm:px-6">
+      <div className="min-w-0">
+        <h1 className="truncate text-xl font-semibold">
           Restaurant Panel
         </h1>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative hidden sm:block">
           <Search
             className="absolute left-3 top-3 text-gray-400"
             size={18}
@@ -21,15 +21,15 @@ export default function RestaurantNavbar() {
           <input
             type="text"
             placeholder="Search..."
-            className="bg-[#0f1117] border border-white/10 rounded-xl pl-10 pr-4 py-2 outline-none"
+            className="w-56 rounded-xl border border-white/10 bg-[#0f1117] py-2 pl-10 pr-4 outline-none"
           />
         </div>
 
-        <button className="w-11 h-11 rounded-xl bg-[#0f1117] flex items-center justify-center">
+        <button className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0f1117]">
           <Bell size={20} />
         </button>
 
-        <div className="w-11 h-11 rounded-full bg-orange-500 flex items-center justify-center font-bold">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-500 font-bold">
           R
         </div>
       </div>

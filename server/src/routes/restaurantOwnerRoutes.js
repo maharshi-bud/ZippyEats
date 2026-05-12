@@ -16,7 +16,9 @@ import {
   getRestaurantDashboard,
 } from "../controllers/restaurantOwnerController.js";
 
-import restaurantMiddleware from "../middleware/restaurantMiddleware.js";
+// import restaurantMiddleware from "../middleware/restaurantMiddleware.js";
+
+
 
 const router = express.Router();
 
@@ -35,7 +37,11 @@ router.delete("/menu/:itemId", deleteMenuItem);
 router.get(
   "/dashboard",
   protect,
-  restaurantMiddleware,
+  restaurantOnly ,
   getRestaurantDashboard
 );
+
+
+
+
 export default router;

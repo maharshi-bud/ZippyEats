@@ -1,31 +1,26 @@
-// admin/src/app/(admin)/layout.tsx
-
 "use client";
 
-import { useEffect } from "react";
 import type { ReactNode } from "react";
-import { useRouter } from "next/navigation";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
+import Sidebar from "../../components/layout/Sidebar";
+import Navbar from "../../components/layout/Navbar";
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+export default function AdminLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen overflow-hidden bg-[#0B1020] text-slate-950">
+      <Sidebar />
 
-    if (!token) return router.push("/login");
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Navbar />
 
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-
-      if (  payload.role !== "admin" &&
-payload.role !== "restaurant") {
-        router.push("/login");
-      }
-      
-    } catch {
-      router.push("/login");
-    }
-  }, [router]);
-
-  return children;
+        <main className="min-h-[calc(100vh-4rem)] flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </main>
+      </div>
+    </div>
+  );
 }

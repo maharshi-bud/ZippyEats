@@ -60,13 +60,12 @@ app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/images", express.static(path.join(__dirname, "../../food_images")));
 app.use("/api/reviews", reviewRoutes);
 
-app.use("/api/restaurant-owner", restaurantOwnerRoutes);
 // app.use("/api/restaurant-owner",  restaurantOwnerRoutes);
 
 
 app.use(errorHandler);
+app.use("/api/restaurant-owner", restaurantOwnerRoutes);
 
-import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
 
 const PORT = process.env.PORT || 5010;
 

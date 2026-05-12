@@ -1,9 +1,23 @@
-// server/src/middleware/restaurantMiddleware.js
-// Allows access only to users with role "restaurant"
+export const restaurantOnly = (
+  req,
+  res,
+  next
+) => {
+  console.log(req.user);
 
-export const restaurantOnly = (req, res, next) => {
-  if (req.user?.role !== "restaurant") {
-    return res.status(403).json({ message: "Restaurant access only" });
+  const allowedRoles = [
+    "restaurant",
+    "restaurant_owner",
+    "owner",
+  ];
+
+  if (
+    !allowedRoles.includes(req.user?.role)
+  ) {
+    return res.status(403).json({
+      message: "Restaurant access only",
+    });
   }
+
   next();
 };

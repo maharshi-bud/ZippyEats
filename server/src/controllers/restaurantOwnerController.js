@@ -293,10 +293,16 @@ export const deleteMenuItem = async (req, res) => {
 export const getRestaurantDashboard =
   async (req, res) => {
     try {
-      const restaurantId =
-        req.user.restaurant_id;
+      
 
-      const range =
+const user = await User.findById(
+  req.user.id
+);
+
+const restaurantId = user.email;
+        console.log(req.user);
+
+        const range =
         req.query.range || "daily";
 
       const now = new Date();

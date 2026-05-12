@@ -13,18 +13,21 @@ export default function Navbar() {
   };
 
   return (
-<header className="sticky top-0 z-50 h-17 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">      <h1 className="text-lg font-semibold text-slate-900">
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
+      <h1 className="truncate text-lg font-semibold text-slate-900">
         Admin Dashboard
       </h1>
 
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-slate-500">Admin</span>
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="hidden text-sm text-slate-500 sm:inline">Admin</span>
 
-        <div className="w-8 h-8 rounded-full bg-slate-300" />
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">
+          A
+        </div>
 
         <button
           onClick={handleLogout}
-          className="text-sm bg-black text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition"
+          className="rounded-lg bg-slate-950 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-800"
         >
           Logout
         </button>
