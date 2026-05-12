@@ -293,56 +293,61 @@ export const deleteMenuItem = async (req, res) => {
 export const getRestaurantDashboard =
   async (req, res) => {
     try {
-      
+      const user = await User.findById(
+        req.user.id
+      );
 
-const user = await User.findById(
-  req.user.id
-);
+      const restaurantId = user.email;
 
-const restaurantId = user.email;
-        console.log(req.user);
-
-        const range =
+      const range =
         req.query.range || "daily";
 
       const now = new Date();
 
-      let startDate = new Date();
+      let dateFilter = {};
 
-      // --------------------------------------
+      // =====================================
       // DATE FILTER
-      // --------------------------------------
+      // =====================================
 
       if (range === "daily") {
-        startDate.setHours(0, 0, 0, 0);
+        const start = new Date();
+
+        start.setHours(0, 0, 0, 0);
+
+        dateFilter = {
+          createdAt: {
+            $gte: start,
+          },
+        };
       }
 
       if (range === "monthly") {
-        startDate = new Date(
+        const start = new Date(
           now.getFullYear(),
           now.getMonth(),
           1
         );
+
+        dateFilter = {
+          createdAt: {
+            $gte: start,
+          },
+        };
       }
 
-      if (range === "all") {
-        startDate = new Date("2020-01-01");
-      }
-
-      // --------------------------------------
+      // =====================================
       // FETCH ORDERS
-      // --------------------------------------
+      // =====================================
 
       const orders = await Order.find({
         restaurant_id: restaurantId,
-        createdAt: {
-          $gte: startDate,
-        },
+        ...dateFilter,
       }).populate("items.menu_item_id");
 
-      // --------------------------------------
+      // =====================================
       // BASIC STATS
-      // --------------------------------------
+      // =====================================
 
       const totalOrders = orders.length;
 
@@ -354,25 +359,29 @@ const restaurantId = user.email;
 
       const avgOrderAmount =
         totalOrders > 0
-          ? Math.round(revenue / totalOrders)
+          ? Math.round(
+              revenue / totalOrders
+            )
           : 0;
 
-      // --------------------------------------
+      // =====================================
       // BEST SELLER
-      // --------------------------------------
+      // =====================================
 
       const itemMap = {};
 
       orders.forEach((order) => {
         order.items.forEach((item) => {
-          if (!item.menu_item_id) return;
+          if (!item.menu_item_id)
+            return;
 
           const id =
             item.menu_item_id._id.toString();
 
           if (!itemMap[id]) {
             itemMap[id] = {
-              name: item.menu_item_id.name,
+              name:
+                item.menu_item_id.name,
               quantity: 0,
             };
           }
@@ -396,9 +405,9 @@ const restaurantId = user.email;
         }
       );
 
-      // --------------------------------------
+      // =====================================
       // ORDER STATUS
-      // --------------------------------------
+      // =====================================
 
       const statusCounts = {
         accepted: 0,
@@ -413,18 +422,22 @@ const restaurantId = user.email;
           statusCounts[order.status] !==
           undefined
         ) {
-          statusCounts[order.status]++;
+          statusCounts[
+            order.status
+          ]++;
         }
       });
 
       const orderStatus = [
         {
           name: "Accepted",
-          value: statusCounts.accepted,
+          value:
+            statusCounts.accepted,
         },
         {
           name: "Preparing",
-          value: statusCounts.preparing,
+          value:
+            statusCounts.preparing,
         },
         {
           name: "Out",
@@ -433,19 +446,23 @@ const restaurantId = user.email;
         },
         {
           name: "Delivered",
-          value: statusCounts.delivered,
+          value:
+            statusCounts.delivered,
         },
         {
           name: "Cancelled",
-          value: statusCounts.cancelled,
+          value:
+            statusCounts.cancelled,
         },
       ];
 
-      // --------------------------------------
+      // =====================================
       // REVENUE TREND
-      // --------------------------------------
+      // =====================================
 
       let revenueTrend = [];
+
+      // DAILY → HOURS
 
       if (range === "daily") {
         revenueTrend =
@@ -454,18 +471,18 @@ const restaurantId = user.email;
               $match: {
                 restaurant_id:
                   restaurantId,
-                createdAt: {
-                  $gte: startDate,
-                },
+                ...dateFilter,
               },
             },
             {
               $group: {
                 _id: {
-                  $hour: "$createdAt",
+                  $hour:
+                    "$createdAt",
                 },
                 revenue: {
-                  $sum: "$total_amount",
+                  $sum:
+                    "$total_amount",
                 },
               },
             },
@@ -477,10 +494,13 @@ const restaurantId = user.email;
         revenueTrend = revenueTrend.map(
           (item) => ({
             label: `${item._id}:00`,
-            revenue: item.revenue,
+            revenue:
+              item.revenue,
           })
         );
       }
+
+      // MONTHLY → DAYS
 
       if (range === "monthly") {
         revenueTrend =
@@ -489,9 +509,7 @@ const restaurantId = user.email;
               $match: {
                 restaurant_id:
                   restaurantId,
-                createdAt: {
-                  $gte: startDate,
-                },
+                ...dateFilter,
               },
             },
             {
@@ -501,7 +519,8 @@ const restaurantId = user.email;
                     "$createdAt",
                 },
                 revenue: {
-                  $sum: "$total_amount",
+                  $sum:
+                    "$total_amount",
                 },
               },
             },
@@ -513,10 +532,13 @@ const restaurantId = user.email;
         revenueTrend = revenueTrend.map(
           (item) => ({
             label: `Day ${item._id}`,
-            revenue: item.revenue,
+            revenue:
+              item.revenue,
           })
         );
       }
+
+      // ALL → MONTHS
 
       if (range === "all") {
         revenueTrend =
@@ -530,10 +552,12 @@ const restaurantId = user.email;
             {
               $group: {
                 _id: {
-                  $month: "$createdAt",
+                  $month:
+                    "$createdAt",
                 },
                 revenue: {
-                  $sum: "$total_amount",
+                  $sum:
+                    "$total_amount",
                 },
               },
             },
@@ -545,29 +569,30 @@ const restaurantId = user.email;
         revenueTrend = revenueTrend.map(
           (item) => ({
             label: `Month ${item._id}`,
-            revenue: item.revenue,
+            revenue:
+              item.revenue,
           })
         );
       }
 
-      // --------------------------------------
+      // =====================================
       // PEAK HOURS
-      // --------------------------------------
+      // =====================================
 
       const peakHours =
         await Order.aggregate([
           {
             $match: {
-              restaurant_id: restaurantId,
-              createdAt: {
-                $gte: startDate,
-              },
+              restaurant_id:
+                restaurantId,
+              ...dateFilter,
             },
           },
           {
             $group: {
               _id: {
-                $hour: "$createdAt",
+                $hour:
+                  "$createdAt",
               },
               orders: {
                 $sum: 1,
@@ -585,13 +610,15 @@ const restaurantId = user.email;
           orders: item.orders,
         }));
 
-      // --------------------------------------
+      // =====================================
       // RATINGS
-      // --------------------------------------
+      // =====================================
 
-      const reviews = await Review.find({
-        restaurant_id: restaurantId,
-      });
+      const reviews =
+        await Review.find({
+          restaurant_id:
+            restaurantId,
+        });
 
       const ratingMap = {
         1: 0,
@@ -628,19 +655,21 @@ const restaurantId = user.email;
         },
       ];
 
-      const avgRating = reviews.length
-        ? (
-            reviews.reduce(
-              (acc, review) =>
-                acc + review.rating,
-              0
-            ) / reviews.length
-          ).toFixed(1)
-        : 0;
+      const avgRating =
+        reviews.length
+          ? (
+              reviews.reduce(
+                (acc, review) =>
+                  acc +
+                  review.rating,
+                0
+              ) / reviews.length
+            ).toFixed(1)
+          : 0;
 
-      // --------------------------------------
+      // =====================================
       // RESPONSE
-      // --------------------------------------
+      // =====================================
 
       res.json({
         success: true,
