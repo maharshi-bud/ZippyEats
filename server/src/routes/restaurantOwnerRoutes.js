@@ -10,6 +10,14 @@ import {
   deleteMenuItem,
 } from "../controllers/restaurantOwnerController.js";
 
+
+
+import {
+  getRestaurantDashboard,
+} from "../controllers/restaurantOwnerController.js";
+
+import restaurantMiddleware from "../middleware/restaurantMiddleware.js";
+
 const router = express.Router();
 
 // All routes require a logged-in restaurant owner
@@ -24,5 +32,10 @@ router.get("/menu", getMyMenu);
 router.post("/menu", createMenuItem);
 router.put("/menu/:itemId", updateMenuItem);
 router.delete("/menu/:itemId", deleteMenuItem);
-
+router.get(
+  "/dashboard",
+  protect,
+  restaurantMiddleware,
+  getRestaurantDashboard
+);
 export default router;
