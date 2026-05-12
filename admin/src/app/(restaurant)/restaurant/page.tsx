@@ -25,21 +25,28 @@ export default function RestaurantDashboard() {
   const [loading, setLoading] =
     useState(true);
 
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
+const fetchDashboard = async () => {
+  try {
+    setLoading(true);
 
-      const res = await api.get(
-        `/restaurant-owner/dashboard?range=${range}`
-      );
+    const res = await api.get(
+      `/restaurant-owner/dashboard?range=${range}`
+    );
 
-      setDashboard(res.data.data);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log(
+      "Dashboard Range:",
+      range
+    );
+
+    console.log(res.data);
+
+    setDashboard(res.data.data);
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchDashboard();

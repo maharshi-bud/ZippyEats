@@ -11,102 +11,194 @@ import { updateOrderStatus } from "../services/orderEngine.js";
 // GET MY ORDERS
 // ======================================================
 
-export const getMyOrders = async (req, res) => {
-  try {
-    const restaurantId = req.user.restaurant_id;
+export const getMyOrders =
+  async (req, res) => {
+    try {
+      const user =
+        await User.findById(
+          req.user.id
+        );
 
-    if (!restaurantId) {
-      return res.status(400).json({
+      const restaurantId =
+        user.email;
+
+      const allOrders =
+        await Order.find()
+          .sort({
+            createdAt: -1,
+          })
+          .populate(
+            "items.menu_item_id"
+          );
+
+      const restaurantOrders =
+        allOrders.filter(
+          (order) => {
+            if (
+              !order.items ||
+              order.items.length === 0
+            ) {
+              return false;
+            }
+
+            return order.items.some(
+              (item) => {
+                return (
+                  item.menu_item_id &&
+                  item
+                    .menu_item_id
+                    .restaurant_id ===
+                    restaurantId
+                );
+              }
+            );
+          }
+        );
+
+      res.json({
+        success: true,
+        data: restaurantOrders,
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
         success: false,
-        message: "No restaurant linked to this account",
+        message:
+          err.message ||
+          "Failed to fetch orders",
       });
     }
-
-    const orders = await Order.find({
-      restaurant_id: restaurantId,
-    })
-      .populate("user_id", "name email")
-      .populate("items.menu_item_id")
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean();
-
-    res.json({
-      success: true,
-      data: orders,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-};
+  };
 
 // ======================================================
 // UPDATE ORDER STATUS
 // ======================================================
 
-export const updateMyOrderStatus = async (req, res) => {
-  try {
-    const restaurantId = req.user.restaurant_id;
+export const updateMyOrderStatus =
+  async (req, res) => {
+    try {
+      const user =
+        await User.findById(
+          req.user.id
+        );
 
-    const { id } = req.params;
+      const restaurantId =
+        user.email;
 
-    const { status } = req.body;
+      const { id } =
+        req.params;
 
-    const validStatuses = [
-      "accepted",
-      "preparing",
-      "out_for_delivery",
-      "delivered",
-      "cancelled",
-    ];
+      const { status } =
+        req.body;
 
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
+      const validStatuses =
+        [
+          "accepted",
+          "preparing",
+          "out_for_delivery",
+          "delivered",
+          "cancelled",
+        ];
+
+      if (
+        !validStatuses.includes(
+          status
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            "Invalid status",
+        });
+      }
+
+      // =================================
+      // FIND ORDER
+      // =================================
+
+      const order =
+        await Order.findById(
+          id
+        ).populate(
+          "items.menu_item_id"
+        );
+
+      if (!order) {
+        return res.status(404).json({
+          message:
+            "Order not found",
+        });
+      }
+
+      // =================================
+      // CHECK RESTAURANT ACCESS
+      // =================================
+console.log(
+  JSON.stringify(
+    order.items,
+    null,
+    2
+  )
+);
+      const belongsToRestaurant =
+  order.items.some(
+    (item) => {
+      if (
+        !item ||
+        !item.menu_item_id
+      ) {
+        return false;
+      }
+
+      // populated object
+      if (
+        typeof item.menu_item_id ===
+        "object"
+      ) {
+        return (
+          item.menu_item_id
+            .restaurant_id ===
+          restaurantId
+        );
+      }
+
+      return false;
+    }
+  );
+
+      if (
+        !belongsToRestaurant
+      ) {
+        return res.status(403).json({
+          message:
+            "Unauthorized",
+        });
+      }
+
+      // =================================
+      // UPDATE STATUS
+      // =================================
+
+     const updatedOrder =
+        await updateOrderStatus(
+          id,
+          status,
+          "restaurant"
+        );
+
+      res.json({
+        success: true,
+        order: updatedOrder,
+      });    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
         success: false,
-        message: "Invalid status",
+        message:
+          err.message,
       });
     }
-
-    const order = await Order.findById(id);
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
-    }
-
-    if (order.restaurant_id !== restaurantId) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const updated = await updateOrderStatus(
-      id,
-      status,
-      "restaurant"
-    );
-
-    res.json({
-      success: true,
-      order: updated,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      success: false,
-      message: err.message || "Server error",
-    });
-  }
-};
+  };
 
 // ======================================================
 // GET MENU
@@ -289,125 +381,185 @@ export const deleteMenuItem = async (req, res) => {
 // ======================================================
 // RESTAURANT DASHBOARD
 // ======================================================
-
 export const getRestaurantDashboard =
   async (req, res) => {
     try {
-      const user = await User.findById(
-        req.user.id
-      );
+      const user =
+        await User.findById(
+          req.user.id
+        );
 
-      const restaurantId = user.email;
+      const restaurantId =
+        user.email;
 
       const range =
         req.query.range || "daily";
 
       const now = new Date();
 
-      let dateFilter = {};
+      // =================================
+      // FETCH ALL ORDERS
+      // =================================
 
-      // =====================================
+      const allOrders =
+        await Order.find().populate(
+          "items.menu_item_id"
+        );
+
+      // =================================
+      // FILTER ORDERS BY RESTAURANT
+      // =================================
+
+      const restaurantOrders =
+        allOrders.filter(
+          (order) => {
+            if (
+              !order.items ||
+              order.items.length === 0
+            ) {
+              return false;
+            }
+
+            const firstItem =
+              order.items[0];
+
+            if (
+              !firstItem.menu_item_id
+            ) {
+              return false;
+            }
+
+            return (
+              firstItem
+                .menu_item_id
+                .restaurant_id ===
+              restaurantId
+            );
+          }
+        );
+
+      // =================================
       // DATE FILTER
-      // =====================================
+      // =================================
+
+      let filteredOrders =
+        restaurantOrders;
 
       if (range === "daily") {
-        const start = new Date();
+        const start =
+          new Date();
 
-        start.setHours(0, 0, 0, 0);
+        start.setHours(
+          0,
+          0,
+          0,
+          0
+        );
 
-        dateFilter = {
-          createdAt: {
-            $gte: start,
-          },
-        };
+        filteredOrders =
+          restaurantOrders.filter(
+            (order) =>
+              new Date(
+                order.createdAt
+              ) >= start
+          );
       }
 
       if (range === "monthly") {
-        const start = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          1
-        );
+        const start =
+          new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            1
+          );
 
-        dateFilter = {
-          createdAt: {
-            $gte: start,
-          },
-        };
+        filteredOrders =
+          restaurantOrders.filter(
+            (order) =>
+              new Date(
+                order.createdAt
+              ) >= start
+          );
       }
 
-      // =====================================
-      // FETCH ORDERS
-      // =====================================
+      // =================================
+      // STATS
+      // =================================
 
-      const orders = await Order.find({
-        restaurant_id: restaurantId,
-        ...dateFilter,
-      }).populate("items.menu_item_id");
+      const totalOrders =
+        filteredOrders.length;
 
-      // =====================================
-      // BASIC STATS
-      // =====================================
-
-      const totalOrders = orders.length;
-
-      const revenue = orders.reduce(
-        (acc, order) =>
-          acc + (order.total_amount || 0),
-        0
-      );
+      const revenue =
+        filteredOrders.reduce(
+          (acc, order) =>
+            acc +
+            (order.total_amount ||
+              0),
+          0
+        );
 
       const avgOrderAmount =
         totalOrders > 0
           ? Math.round(
-              revenue / totalOrders
+              revenue /
+                totalOrders
             )
           : 0;
 
-      // =====================================
+      // =================================
       // BEST SELLER
-      // =====================================
+      // =================================
 
       const itemMap = {};
 
-      orders.forEach((order) => {
-        order.items.forEach((item) => {
-          if (!item.menu_item_id)
-            return;
+      filteredOrders.forEach(
+        (order) => {
+          order.items.forEach(
+            (item) => {
+              if (
+                !item.menu_item_id
+              )
+                return;
 
-          const id =
-            item.menu_item_id._id.toString();
+              const id =
+                item.menu_item_id._id.toString();
 
-          if (!itemMap[id]) {
-            itemMap[id] = {
-              name:
-                item.menu_item_id.name,
-              quantity: 0,
-            };
-          }
+              if (!itemMap[id]) {
+                itemMap[id] = {
+                  name:
+                    item
+                      .menu_item_id
+                      .name,
+                  quantity: 0,
+                };
+              }
 
-          itemMap[id].quantity +=
-            item.quantity;
-        });
-      });
-
-      let bestSeller = null;
-
-      Object.values(itemMap).forEach(
-        (item) => {
-          if (
-            !bestSeller ||
-            item.quantity >
-              bestSeller.quantity
-          ) {
-            bestSeller = item;
-          }
+              itemMap[id]
+                .quantity +=
+                item.quantity;
+            }
+          );
         }
       );
 
-      // =====================================
+      let bestSeller =
+        null;
+
+      Object.values(
+        itemMap
+      ).forEach((item) => {
+        if (
+          !bestSeller ||
+          item.quantity >
+            bestSeller.quantity
+        ) {
+          bestSeller = item;
+        }
+      });
+
+      // =================================
       // ORDER STATUS
-      // =====================================
+      // =================================
 
       const statusCounts = {
         accepted: 0,
@@ -417,16 +569,19 @@ export const getRestaurantDashboard =
         cancelled: 0,
       };
 
-      orders.forEach((order) => {
-        if (
-          statusCounts[order.status] !==
-          undefined
-        ) {
-          statusCounts[
-            order.status
-          ]++;
+      filteredOrders.forEach(
+        (order) => {
+          if (
+            statusCounts[
+              order.status
+            ] !== undefined
+          ) {
+            statusCounts[
+              order.status
+            ]++;
+          }
         }
-      });
+      );
 
       const orderStatus = [
         {
@@ -456,163 +611,99 @@ export const getRestaurantDashboard =
         },
       ];
 
-      // =====================================
+      // =================================
       // REVENUE TREND
-      // =====================================
+      // =================================
 
-      let revenueTrend = [];
+      const revenueMap = {};
 
-      // DAILY → HOURS
+      filteredOrders.forEach(
+        (order) => {
+          const date =
+            new Date(
+              order.createdAt
+            );
 
-      if (range === "daily") {
-        revenueTrend =
-          await Order.aggregate([
-            {
-              $match: {
-                restaurant_id:
-                  restaurantId,
-                ...dateFilter,
-              },
-            },
-            {
-              $group: {
-                _id: {
-                  $hour:
-                    "$createdAt",
-                },
-                revenue: {
-                  $sum:
-                    "$total_amount",
-                },
-              },
-            },
-            {
-              $sort: { _id: 1 },
-            },
-          ]);
+          let key = "";
 
-        revenueTrend = revenueTrend.map(
-          (item) => ({
-            label: `${item._id}:00`,
-            revenue:
-              item.revenue,
+          if (
+            range === "daily"
+          ) {
+            key = `${date.getHours()}:00`;
+          }
+
+          if (
+            range === "monthly"
+          ) {
+            key = `Day ${date.getDate()}`;
+          }
+
+          if (
+            range === "all"
+          ) {
+            key = `Month ${
+              date.getMonth() + 1
+            }`;
+          }
+
+          if (
+            !revenueMap[key]
+          ) {
+            revenueMap[key] = 0;
+          }
+
+          revenueMap[key] +=
+            order.total_amount ||
+            0;
+        }
+      );
+
+      const revenueTrend =
+        Object.entries(
+          revenueMap
+        ).map(
+          ([label, revenue]) => ({
+            label,
+            revenue,
           })
         );
-      }
 
-      // MONTHLY → DAYS
-
-      if (range === "monthly") {
-        revenueTrend =
-          await Order.aggregate([
-            {
-              $match: {
-                restaurant_id:
-                  restaurantId,
-                ...dateFilter,
-              },
-            },
-            {
-              $group: {
-                _id: {
-                  $dayOfMonth:
-                    "$createdAt",
-                },
-                revenue: {
-                  $sum:
-                    "$total_amount",
-                },
-              },
-            },
-            {
-              $sort: { _id: 1 },
-            },
-          ]);
-
-        revenueTrend = revenueTrend.map(
-          (item) => ({
-            label: `Day ${item._id}`,
-            revenue:
-              item.revenue,
-          })
-        );
-      }
-
-      // ALL → MONTHS
-
-      if (range === "all") {
-        revenueTrend =
-          await Order.aggregate([
-            {
-              $match: {
-                restaurant_id:
-                  restaurantId,
-              },
-            },
-            {
-              $group: {
-                _id: {
-                  $month:
-                    "$createdAt",
-                },
-                revenue: {
-                  $sum:
-                    "$total_amount",
-                },
-              },
-            },
-            {
-              $sort: { _id: 1 },
-            },
-          ]);
-
-        revenueTrend = revenueTrend.map(
-          (item) => ({
-            label: `Month ${item._id}`,
-            revenue:
-              item.revenue,
-          })
-        );
-      }
-
-      // =====================================
+      // =================================
       // PEAK HOURS
-      // =====================================
+      // =================================
 
-      const peakHours =
-        await Order.aggregate([
-          {
-            $match: {
-              restaurant_id:
-                restaurantId,
-              ...dateFilter,
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $hour:
-                  "$createdAt",
-              },
-              orders: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $sort: { _id: 1 },
-          },
-        ]);
+      const peakMap = {};
+
+      filteredOrders.forEach(
+        (order) => {
+          const hour =
+            new Date(
+              order.createdAt
+            ).getHours();
+
+          const key = `${hour}:00`;
+
+          if (!peakMap[key]) {
+            peakMap[key] = 0;
+          }
+
+          peakMap[key]++;
+        }
+      );
 
       const formattedPeakHours =
-        peakHours.map((item) => ({
-          time: `${item._id}:00`,
-          orders: item.orders,
-        }));
+        Object.entries(
+          peakMap
+        ).map(
+          ([time, orders]) => ({
+            time,
+            orders,
+          })
+        );
 
-      // =====================================
+      // =================================
       // RATINGS
-      // =====================================
+      // =================================
 
       const reviews =
         await Review.find({
@@ -628,48 +719,62 @@ export const getRestaurantDashboard =
         5: 0,
       };
 
-      reviews.forEach((review) => {
-        ratingMap[review.rating]++;
-      });
+      reviews.forEach(
+        (review) => {
+          ratingMap[
+            review.rating
+          ]++;
+        }
+      );
 
-      const ratingsDistribution = [
-        {
-          stars: "5★",
-          count: ratingMap[5],
-        },
-        {
-          stars: "4★",
-          count: ratingMap[4],
-        },
-        {
-          stars: "3★",
-          count: ratingMap[3],
-        },
-        {
-          stars: "2★",
-          count: ratingMap[2],
-        },
-        {
-          stars: "1★",
-          count: ratingMap[1],
-        },
-      ];
+      const ratingsDistribution =
+        [
+          {
+            stars: "5★",
+            count:
+              ratingMap[5],
+          },
+          {
+            stars: "4★",
+            count:
+              ratingMap[4],
+          },
+          {
+            stars: "3★",
+            count:
+              ratingMap[3],
+          },
+          {
+            stars: "2★",
+            count:
+              ratingMap[2],
+          },
+          {
+            stars: "1★",
+            count:
+              ratingMap[1],
+          },
+        ];
 
       const avgRating =
         reviews.length
           ? (
               reviews.reduce(
-                (acc, review) =>
+                (
+                  acc,
+                  review
+                ) =>
                   acc +
                   review.rating,
                 0
-              ) / reviews.length
+              ) /
+              reviews.length
             ).toFixed(1)
           : 0;
 
-      // =====================================
+      // =================================
       // RESPONSE
-      // =====================================
+      // =================================
 
       res.json({
         success: true,
@@ -699,8 +804,7 @@ export const getRestaurantDashboard =
       res.status(500).json({
         success: false,
         message:
-          err.message ||
-          "Dashboard fetch failed",
+          err.message,
       });
     }
   };

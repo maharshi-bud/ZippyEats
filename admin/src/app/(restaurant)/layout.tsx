@@ -11,10 +11,10 @@ export default function RestaurantLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen overflow-hidden bg-[#0B1020] text-white">
+    <div className="flex min-h-screen overflow-hidden bg-[#0B1020] text-white sticky top-0 h-screen" >
       <RestaurantSidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col  sticky top-0 z-50">
         <RestaurantNavbar />
 
         <main className="min-h-[calc(100vh-5rem)] flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6">

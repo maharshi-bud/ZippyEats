@@ -37,7 +37,7 @@ export default function RestaurantSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 h-screen w-72 shrink-0 overflow-y-auto border-r border-white/10 bg-[#151924] p-5">
+    <aside className="sticky top-0 h-screen w-56 shrink-0 overflow-y-auto border-r border-white/10 bg-[#151924] p-5">
       <div className="mb-10 text-2xl font-bold">
         ZippyEats
       </div>
