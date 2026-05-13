@@ -3,17 +3,21 @@
 // ============================================================
 
 import { systemPrompt } from "./prompts/systemPrompt.js";
-import { toolRegistry } from "../../../../temp/toolRegistry.js";
+import { toolRegistry } from "./toolRegistry.js";
+import "dotenv/config";
 
 // 🔁 Provider auto-switch based on environment
 // Development → Ollama (local, free)
 // Production  → OpenRouter (hosted, paid)
 const isDev = process.env.NODE_ENV === "development";
 
-const { chatCompletion } = isDev
+// const { chatCompletion } = isDev
+//   ? await import("./providers/ollama.provider.js")
+//   : await import("./providers/openrouter.provider.js");
+// console.log("API KEY:", process.env.OPENROUTER_API_KEY?.slice(0, 10));
+  const { chatCompletion } = isDev
   ? await import("./providers/ollama.provider.js")
   : await import("./providers/openrouter.provider.js");
-
 const MAX_ITERATIONS = 5; // safety cap on agent loop
 
 /**

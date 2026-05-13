@@ -1,16 +1,9 @@
 // ============================================================
 // FILE: server/src/modules/ai/tools/orders.tools.js
 // ============================================================
-// ⚠️  Adjust the import path to match YOUR Order model location
-// ============================================================
 
-import Order from "../../orders/order.model.js";
+import Order from "../../../models/Order.js"; // ← adjust if needed
 
-/**
- * Get total revenue + daily breakdown for a given range
- * @param {Object} args
- * @param {"7d"|"30d"|"90d"} args.range
- */
 export async function getRevenueStats({ range = "30d" } = {}) {
   const days = parseInt(range);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -20,7 +13,7 @@ export async function getRevenueStats({ range = "30d" } = {}) {
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        revenue: { $sum: "$totalAmount" },
+        revenue: { $sum: "$total_amount" },
         orders: { $sum: 1 },
       },
     },
@@ -34,11 +27,6 @@ export async function getRevenueStats({ range = "30d" } = {}) {
   return { period: range, totalRevenue, totalOrders, avgOrderValue, dailyBreakdown: daily };
 }
 
-/**
- * Get peak order hours (busiest times of day)
- * @param {Object} args
- * @param {number} args.days
- */
 export async function getPeakHours({ days = 7 } = {}) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -48,7 +36,7 @@ export async function getPeakHours({ days = 7 } = {}) {
       $group: {
         _id: { $hour: "$createdAt" },
         orderCount: { $sum: 1 },
-        revenue: { $sum: "$totalAmount" },
+        revenue: { $sum: "$total_amount" },
       },
     },
     { $sort: { orderCount: -1 } },
@@ -57,24 +45,14 @@ export async function getPeakHours({ days = 7 } = {}) {
         hour: "$_id",
         orderCount: 1,
         revenue: 1,
-        label: {
-          $concat: [
-            { $toString: "$_id" },
-            ":00"
-          ]
-        }
-      }
-    }
+        label: { $concat: [{ $toString: "$_id" }, ":00"] },
+      },
+    },
   ]);
 
   return { days, peakHours: result };
 }
 
-/**
- * Get cancellation count + rate
- * @param {Object} args
- * @param {"7d"|"30d"} args.range
- */
 export async function getCancellationStats({ range = "30d" } = {}) {
   const days = parseInt(range);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -85,15 +63,9 @@ export async function getCancellationStats({ range = "30d" } = {}) {
   ]);
 
   const rate = total > 0 ? ((cancelled / total) * 100).toFixed(2) : "0.00";
-
   return { period: range, cancelled, total, cancellationRate: `${rate}%` };
 }
 
-/**
- * Get order status breakdown (delivered / cancelled / pending / processing)
- * @param {Object} args
- * @param {"7d"|"30d"} args.range
- */
 export async function getOrderStatusBreakdown({ range = "30d" } = {}) {
   const days = parseInt(range);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -104,7 +76,7 @@ export async function getOrderStatusBreakdown({ range = "30d" } = {}) {
       $group: {
         _id: "$status",
         count: { $sum: 1 },
-        revenue: { $sum: "$totalAmount" },
+        revenue: { $sum: "$total_amount" },
       },
     },
   ]);

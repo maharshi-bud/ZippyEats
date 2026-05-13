@@ -31,7 +31,7 @@ import http from "http";
 import { initSocket } from "./lib/socket.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
-
+import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
 // import {createRestaurantOwners} from "./utils/createRestaurantOwner.js"
 
 
@@ -42,7 +42,11 @@ const httpServer = http.createServer(app);
 // Initialize Socket.IO
 initSocket(httpServer);
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3010",
+  credentials: true,
+}));
 app.use(express.json());
 app.use("/api", orderRoutes);
 app.use("/api/test", testRoutes);
@@ -59,7 +63,7 @@ app.use("/api/search",searchRoutes );
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/images", express.static(path.join(__dirname, "../../food_images")));
 app.use("/api/reviews", reviewRoutes);
-
+app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
 // app.use("/api/restaurant-owner",  restaurantOwnerRoutes);
 
 

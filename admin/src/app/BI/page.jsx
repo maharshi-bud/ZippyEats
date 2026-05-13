@@ -1,3 +1,4 @@
+"use client";
 // ============================================================
 // FILE: admin/src/pages/AIAnalytics.jsx
 //   OR: admin/src/pages/AIAnalytics/index.jsx
@@ -7,7 +8,6 @@
 // And add a tab link in your sidebar/navbar alongside
 //   Restaurants, Orders, etc.
 // ============================================================
-
 import { useState, useRef, useEffect } from "react";
 
 const SUGGESTED_QUERIES = [
@@ -85,12 +85,23 @@ export default function AIAnalytics() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/ai/query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ query: q }),
-      });
+      // const res = await fetch("/api/ai/query", {
+      //  const res = await fetch("http://localhost:5010/api/ai/query", { 
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   credentials: "include",
+      //   body: JSON.stringify({ query: q }),
+      // });
+
+      const res = await fetch("http://localhost:5010/api/ai/query", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+  },
+  credentials: "include",
+  body: JSON.stringify({ query: q }),
+});
 
       const data = await res.json();
       const reply = data.response || data.error || "No response received.";
