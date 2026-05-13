@@ -8,22 +8,15 @@ import {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
-} from "../controllers/restaurantOwnerController.js";
-
-
-
-import {
   getRestaurantDashboard,
 } from "../controllers/restaurantOwnerController.js";
 
-// import restaurantMiddleware from "../middleware/restaurantMiddleware.js";
-
-
-
 const router = express.Router();
 
-// All routes require a logged-in restaurant owner
 router.use(protect, restaurantOnly);
+
+// Dashboard
+router.get("/dashboard", getRestaurantDashboard);
 
 // Orders
 router.get("/orders", getMyOrders);
@@ -34,14 +27,5 @@ router.get("/menu", getMyMenu);
 router.post("/menu", createMenuItem);
 router.put("/menu/:itemId", updateMenuItem);
 router.delete("/menu/:itemId", deleteMenuItem);
-router.get(
-  "/dashboard",
-  protect,
-  restaurantOnly ,
-  getRestaurantDashboard
-);
-
-
-
 
 export default router;

@@ -32,7 +32,7 @@ export const register = async (req, res, next) => {
       password: hashed
     });
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.restaurant_id || null) ;
 
     res.status(201).json({
       success: true,
