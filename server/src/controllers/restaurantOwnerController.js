@@ -290,7 +290,18 @@ export const getRestaurantDashboard = async (req, res) => {
     if (range === "daily") {
       const raw = await Order.aggregate([
         { $match: { restaurant_id: restaurantId, ...dateFilter } },
-        { $group: { _id: { $hour: "$createdAt" }, revenue: { $sum: "$total_amount" } } },
+        // { $group: { _id: { $hour: "$createdAt" }, revenue: { $sum: "$total_amount" } } },
+{
+  $group: {
+    _id: {
+      $hour: {
+        date: "$createdAt",
+        timezone: "Asia/Kolkata",
+      },
+    },
+    revenue: { $sum: "$total_amount" },
+  },
+},
         { $sort: { _id: 1 } },
       ]);
       revenueTrend = raw.map((i) => ({ label: `${i._id}:00`, revenue: i.revenue }));
@@ -323,7 +334,18 @@ export const getRestaurantDashboard = async (req, res) => {
     if (range === "daily") {
       const raw = await Order.aggregate([
         { $match: { restaurant_id: restaurantId, ...dateFilter } },
-        { $group: { _id: { $hour: "$createdAt" }, orders: { $sum: 1 } } },
+        // { $group: { _id: { $hour: "$createdAt" }, orders: { $sum: 1 } } },
+        {
+  $group: {
+    _id: {
+      $hour: {
+        date: "$createdAt",
+        timezone: "Asia/Kolkata",
+      },
+    },
+    orders: { $sum: 1 },
+  },
+},  
         { $sort: { _id: 1 } },
       ]);
       formattedPeakHours = raw.map((i) => ({ time: `${i._id}:00`, orders: i.orders }));
