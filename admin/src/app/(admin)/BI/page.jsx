@@ -1,13 +1,5 @@
 "use client";
-// ============================================================
-// FILE: admin/src/pages/AIAnalytics.jsx
-//   OR: admin/src/pages/AIAnalytics/index.jsx
-// ============================================================
-// Add to your admin router like:
-//   <Route path="/ai-analytics" element={<AIAnalytics />} />
-// And add a tab link in your sidebar/navbar alongside
-//   Restaurants, Orders, etc.
-// ============================================================
+
 import { useState, useRef, useEffect } from "react";
 
 const SUGGESTED_QUERIES = [
@@ -34,22 +26,19 @@ function Message({ msg }) {
   return (
     <div style={{ ...styles.msgRow, justifyContent: isUser ? "flex-end" : "flex-start" }}>
       {!isUser && (
-        <div style={styles.avatar}>
-          <span style={{ fontSize: 16 }}>🤖</span>
+        <div style={styles.avatarAi}>
+          <span style={{ fontSize: 15 }}>🤖</span>
         </div>
       )}
-      <div
-        style={{
-          ...styles.bubble,
-          ...(isUser ? styles.userBubble : styles.aiBubble),
-        }}
-      >
-        <p style={styles.bubbleText}>{msg.text}</p>
-        <span style={styles.timestamp}>{msg.time}</span>
+      <div style={{ ...styles.bubble, ...(isUser ? styles.userBubble : styles.aiBubble) }}>
+        <p style={{ ...styles.bubbleText, color: isUser ? "#fff" : "#1e293b" }}>{msg.text}</p>
+        <span style={{ ...styles.timestamp, color: isUser ? "rgba(255,255,255,0.6)" : "#94a3b8" }}>
+          {msg.time}
+        </span>
       </div>
       {isUser && (
-        <div style={{ ...styles.avatar, background: "#4f46e5" }}>
-          <span style={{ fontSize: 14 }}>👤</span>
+        <div style={styles.avatarUser}>
+          <span style={{ fontSize: 13 }}>👤</span>
         </div>
       )}
     </div>
@@ -61,7 +50,7 @@ export default function AIAnalytics() {
     {
       role: "ai",
       text: "Hello! I'm your AI analytics assistant. Ask me anything about your platform — revenue, restaurants, users, orders, and more.",
-      time: now(),
+      time: getTime(),
     },
   ]);
   const [input, setInput] = useState("");
@@ -72,7 +61,7 @@ export default function AIAnalytics() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  function now() {
+  function getTime() {
     return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
@@ -81,35 +70,28 @@ export default function AIAnalytics() {
     if (!q || loading) return;
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", text: q, time: now() }]);
+    setMessages((prev) => [...prev, { role: "user", text: q, time: getTime() }]);
     setLoading(true);
 
     try {
-      // const res = await fetch("/api/ai/query", {
-      //  const res = await fetch("http://localhost:5010/api/ai/query", { 
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   credentials: "include",
-      //   body: JSON.stringify({ query: q }),
-      // });
-
+      const token = localStorage.getItem("token") || localStorage.getItem("adminToken") || "";
       const res = await fetch("http://localhost:5010/api/ai/query", {
-  method: "POST",
-  headers: { 
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${localStorage.getItem("token")}`,
-  },
-  credentials: "include",
-  body: JSON.stringify({ query: q }),
-});
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ query: q }),
+      });
 
       const data = await res.json();
       const reply = data.response || data.error || "No response received.";
-      setMessages((prev) => [...prev, { role: "ai", text: reply, time: now() }]);
+      setMessages((prev) => [...prev, { role: "ai", text: reply, time: getTime() }]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "ai", text: "⚠️ Could not reach the AI service. Check your server.", time: now() },
+        { role: "ai", text: "⚠️ Could not reach the AI service. Check your server.", time: getTime() },
       ]);
     } finally {
       setLoading(false);
@@ -118,228 +100,233 @@ export default function AIAnalytics() {
 
   return (
     <div style={styles.page}>
-      {/* ── Header ─────────────────────────────────── */}
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={styles.headerIcon}>🤖</div>
+
+      {/* ── Page Title ── */}
+      <div style={styles.pageHeader}>
+        <div style={styles.pageHeaderLeft}>
+          <div style={styles.iconBox}>🤖</div>
           <div>
-            <h1 style={styles.headerTitle}>AI Analytics Assistant</h1>
-            <p style={styles.headerSub}>Powered by Qwen 2.5 · Tool-Augmented Intelligence</p>
+            <h1 style={styles.pageTitle}>AI Analytics Assistant</h1>
+            <p style={styles.pageSubtitle}>Tool-augmented intelligence · Powered by OpenRouter</p>
           </div>
         </div>
-        <div style={styles.statusBadge}>
-          <span style={styles.statusDot} />
+        <div style={styles.onlineBadge}>
+          <span style={styles.onlineDot} />
           Online
         </div>
       </div>
 
-      <div style={styles.body}>
-        {/* ── Suggestions ────────────────────────────── */}
-        <div style={styles.suggestions}>
-          <p style={styles.suggestLabel}>Try asking:</p>
-          <div style={styles.chips}>
-            {SUGGESTED_QUERIES.map((q) => (
-              <button
-                key={q}
-                style={styles.chip}
-                onClick={() => sendQuery(q)}
-                onMouseEnter={(e) => (e.target.style.background = "#4f46e5", e.target.style.color = "#fff")}
-                onMouseLeave={(e) => (e.target.style.background = "#f1f5f9", e.target.style.color = "#475569")}
-              >
-                {q}
-              </button>
-            ))}
-          </div>
+      {/* ── Suggestion Chips ── */}
+      <div style={styles.chipsRow}>
+        {SUGGESTED_QUERIES.map((q) => (
+          <button
+            key={q}
+            style={styles.chip}
+            onClick={() => sendQuery(q)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#4f46e5";
+              e.currentTarget.style.color = "#fff";
+              e.currentTarget.style.borderColor = "#4f46e5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#fff";
+              e.currentTarget.style.color = "#475569";
+              e.currentTarget.style.borderColor = "#e2e8f0";
+            }}
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Chat Window ── */}
+      <div style={styles.chatCard}>
+
+        {/* Messages */}
+        <div style={styles.messages}>
+          {messages.map((m, i) => (
+            <Message key={i} msg={m} />
+          ))}
+          {loading && (
+            <div style={{ ...styles.msgRow, justifyContent: "flex-start" }}>
+              <div style={styles.avatarAi}>🤖</div>
+              <TypingIndicator />
+            </div>
+          )}
+          <div ref={bottomRef} />
         </div>
 
-        {/* ── Chat window ────────────────────────────── */}
-        <div style={styles.chatWindow}>
-          <div style={styles.messages}>
-            {messages.map((m, i) => (
-              <Message key={i} msg={m} />
-            ))}
-            {loading && (
-              <div style={{ ...styles.msgRow, justifyContent: "flex-start" }}>
-                <div style={styles.avatar}>🤖</div>
-                <TypingIndicator />
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
-
-          {/* ── Input bar ──────────────────────────────── */}
-          <div style={styles.inputBar}>
-            <input
-              style={styles.input}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendQuery()}
-              placeholder="Ask about revenue, restaurants, users, orders..."
-              disabled={loading}
-            />
-            <button
-              style={{
-                ...styles.sendBtn,
-                opacity: loading || !input.trim() ? 0.5 : 1,
-                cursor: loading || !input.trim() ? "not-allowed" : "pointer",
-              }}
-              onClick={() => sendQuery()}
-              disabled={loading || !input.trim()}
-            >
-              {loading ? "..." : "Send"}
-            </button>
-          </div>
+        {/* Input */}
+        <div style={styles.inputBar}>
+          <input
+            style={styles.input}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendQuery()}
+            placeholder="Ask about revenue, restaurants, users, orders..."
+            disabled={loading}
+            onFocus={(e) => (e.target.style.borderColor = "#4f46e5")}
+            onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+          />
+          <button
+            style={{
+              ...styles.sendBtn,
+              opacity: loading || !input.trim() ? 0.45 : 1,
+              cursor: loading || !input.trim() ? "not-allowed" : "pointer",
+            }}
+            onClick={() => sendQuery()}
+            disabled={loading || !input.trim()}
+          >
+            {loading ? "···" : "Send →"}
+          </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes bounce {
+          0%, 60%, 100% { transform: translateY(0); }
+          30% { transform: translateY(-5px); }
+        }
+      `}</style>
     </div>
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────
 const styles = {
   page: {
-    minHeight: "100vh",
-    background: "#f8fafc",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    // padding: "28px 32px",
     display: "flex",
     flexDirection: "column",
+    gap: 18,
+    // height: "60vh",
+      height: "100%",
+
+    boxSizing: "border-box",
+    background: "#f8fafc00",
+    minHeight: "0vh",
   },
-  header: {
-    background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%)",
-    padding: "24px 32px",
+  pageHeader: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    boxShadow: "0 4px 20px rgba(79,70,229,0.3)",
   },
-  headerLeft: {
+  pageHeaderLeft: {
     display: "flex",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
   },
-  headerIcon: {
-    fontSize: 36,
-    background: "rgba(255,255,255,0.15)",
-    borderRadius: 16,
-    width: 60,
-    height: 60,
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    background: "linear-gradient(135deg, #4f46e5, #6366f1)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-  },
-  headerTitle: {
-    margin: 0,
     fontSize: 22,
+    flexShrink: 0,
+    boxShadow: "0 4px 12px rgba(79,70,229,0.3)",
+  },
+  pageTitle: {
+    margin: 0,
+    fontSize: 20,
     fontWeight: 700,
-    color: "#fff",
+    color: "#0f172a",
     letterSpacing: "-0.3px",
   },
-  headerSub: {
-    margin: "4px 0 0",
-    fontSize: 13,
-    color: "rgba(255,255,255,0.65)",
+  pageSubtitle: {
+    margin: "2px 0 0",
+    fontSize: 12.5,
+    color: "#94a3b8",
   },
-  statusBadge: {
-    background: "rgba(255,255,255,0.15)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    borderRadius: 20,
-    padding: "6px 14px",
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: 500,
+  onlineBadge: {
     display: "flex",
     alignItems: "center",
-    gap: 8,
+    gap: 7,
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: 20,
+    padding: "6px 14px",
+    fontSize: 13,
+    fontWeight: 500,
+    color: "#16a34a",
   },
-  statusDot: {
-    width: 8,
-    height: 8,
+  onlineDot: {
+    width: 7,
+    height: 7,
     borderRadius: "50%",
-    background: "#4ade80",
+    background: "#22c55e",
     display: "inline-block",
-    boxShadow: "0 0 6px #4ade80",
+    boxShadow: "0 0 5px #22c55e",
   },
-  body: {
-    flex: 1,
-    maxWidth: 900,
-    width: "100%",
-    margin: "0 auto",
-    padding: "24px 20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 20,
-  },
-  suggestions: {
-    background: "#fff",
-    borderRadius: 16,
-    padding: "18px 20px",
-    boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
-    border: "1px solid #e2e8f0",
-  },
-  suggestLabel: {
-    margin: "0 0 12px",
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#94a3b8",
-    textTransform: "uppercase",
-    letterSpacing: "0.8px",
-  },
-  chips: {
+  chipsRow: {
     display: "flex",
     flexWrap: "wrap",
     gap: 8,
   },
   chip: {
-    background: "#f1f5f9",
+    background: "#fff",
     color: "#475569",
     border: "1px solid #e2e8f0",
     borderRadius: 20,
-    padding: "7px 14px",
-    fontSize: 13,
+    padding: "6px 14px",
+    fontSize: 12.5,
     cursor: "pointer",
-    transition: "background 0.15s, color 0.15s",
+    transition: "all 0.15s",
     fontFamily: "inherit",
+    fontWeight: 500,
   },
-  chatWindow: {
+  chatCard: {
     flex: 1,
     background: "#fff",
-    borderRadius: 20,
-    boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+    borderRadius: 16,
     border: "1px solid #e2e8f0",
+    boxShadow: "0 2px 16px rgba(0,0,0,0.06)",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
-    minHeight: 500,
+    minHeight: 400,
   },
   messages: {
     flex: 1,
     overflowY: "auto",
-    padding: "24px 20px",
+    padding: "20px",
     display: "flex",
     flexDirection: "column",
-    gap: 16,
+    gap: 14,
   },
   msgRow: {
     display: "flex",
     alignItems: "flex-end",
-    gap: 10,
+    gap: 9,
   },
-  avatar: {
-    width: 36,
-    height: 36,
+  avatarAi: {
+    width: 32,
+    height: 32,
     borderRadius: "50%",
-    background: "#f1f5f9",
+    background: "#ede9fe",
+    border: "1px solid #ddd6fe",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    border: "2px solid #e2e8f0",
+    fontSize: 14,
+  },
+  avatarUser: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: "#4f46e5",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    fontSize: 13,
   },
   bubble: {
-    maxWidth: "72%",
-    borderRadius: 18,
-    padding: "12px 16px",
-    position: "relative",
+    maxWidth: "70%",
+    borderRadius: 16,
+    padding: "10px 14px",
   },
   userBubble: {
     background: "linear-gradient(135deg, #4f46e5, #6366f1)",
@@ -351,79 +338,64 @@ const styles = {
     borderBottomLeftRadius: 4,
   },
   bubbleText: {
-    margin: "0 0 4px",
-    fontSize: 14.5,
+    margin: "0 0 3px",
+    fontSize: 14,
     lineHeight: 1.6,
-    color: "inherit",
     whiteSpace: "pre-wrap",
   },
   timestamp: {
-    fontSize: 11,
-    opacity: 0.5,
+    fontSize: 10.5,
     display: "block",
     textAlign: "right",
   },
   typingBubble: {
     background: "#f1f5f9",
     border: "1px solid #e2e8f0",
-    borderRadius: 18,
+    borderRadius: 16,
     borderBottomLeftRadius: 4,
-    padding: "14px 18px",
+    padding: "12px 16px",
     display: "flex",
     gap: 5,
     alignItems: "center",
   },
   dot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: "50%",
     background: "#94a3b8",
     display: "inline-block",
     animation: "bounce 1s infinite",
   },
   inputBar: {
-    borderTop: "1px solid #e2e8f0",
-    padding: "16px 20px",
+    borderTop: "1px solid #f1f5f9",
+    padding: "14px 20px",
     display: "flex",
-    gap: 12,
+    gap: 10,
     background: "#fff",
   },
   input: {
     flex: 1,
-    border: "2px solid #e2e8f0",
-    borderRadius: 12,
-    padding: "11px 16px",
+    border: "1.5px solid #e2e8f0",
+    borderRadius: 10,
+    padding: "10px 14px",
     fontSize: 14,
     fontFamily: "inherit",
     outline: "none",
-    transition: "border-color 0.2s",
     color: "#1e293b",
     background: "#f8fafc",
+    transition: "border-color 0.2s",
   },
   sendBtn: {
     background: "linear-gradient(135deg, #4f46e5, #6366f1)",
     color: "#fff",
     border: "none",
-    borderRadius: 12,
-    padding: "11px 24px",
-    fontSize: 14,
+    borderRadius: 10,
+    padding: "10px 20px",
+    fontSize: 13.5,
     fontWeight: 600,
     cursor: "pointer",
-    transition: "opacity 0.2s",
     fontFamily: "inherit",
-    letterSpacing: "0.3px",
+    transition: "opacity 0.2s",
+    letterSpacing: "0.2px",
   },
 };
-
-// Inject bounce keyframes once
-if (typeof document !== "undefined" && !document.getElementById("ai-bounce-style")) {
-  const style = document.createElement("style");
-  style.id = "ai-bounce-style";
-  style.textContent = `
-    @keyframes bounce {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-6px); }
-    }
-  `;
-  document.head.appendChild(style);
-}
