@@ -197,17 +197,21 @@ export default function QueriesPage() {
   }
 
   // ── Open ticket (join + set active) ─────────────────────
-  async function handleOpenTicket(ticket) {
-    setSelectedTicket(ticket);
-    socketRef.current.emit("support:join", ticket._id);
-    if (ticket.status === "open") {
-      await handleStatusChange(ticket._id, "active");
-    }
-    // Mark read
-    setTickets((prev) =>
-      prev.map((t) => (t._id === ticket._id ? { ...t, unreadAdmin: 0 } : t))
-    );
+async function handleOpenTicket(ticket) {
+  setSelectedTicket(ticket);
+
+  const socket = socketRef.current;
+  if (socket) {
+    socket.emit("support:join", ticket._id);
   }
+
+  if (ticket.status === "open" || ticket.status === "pending") {
+    await handleStatusChange(ticket._id, "active");
+  }
+
+  setTickets((prev) =>prev.map((t) => (t._id === ticket._id ? { ...t, unreadAdmin: 0 } : t))
+  );
+}
 
   const openTickets = tickets.filter((t) => t.status !== "resolved");
   const closedTickets = tickets.filter((t) => t.status === "resolved");

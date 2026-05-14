@@ -4,6 +4,15 @@
 // ============================================================
 
 import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
+// import SupportMessage from "../../../../server/src/models/SupportMessage";
+
+export const getIO = () => {
+  if (!io) throw new Error("Socket.IO not initialized");
+  return io;
+};
+// ── Helper: emit to admin room + ticket room ──────────────
+
 
 const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
 
@@ -21,7 +30,7 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
   const [ticket, setTicket] = useState(initialTicket);
   const [orderDetails, setOrderDetails] = useState(null);
   const [userStats, setUserStats] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
@@ -52,17 +61,39 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
       if (senderType === "user") setTyping(false);
     });
 
-    socket?.on("ticket:updated", (updated) => {
-      if (updated._id === ticket._id) setTicket(updated);
-    });
+    // socket?.on("ticket:updated", (updated) => {
+    //   if (updated._id === ticket._id) setTicket(updated);
+    // });
+const handleTicketUpdate = (updated) => {
+
+  setTicket((prev) => {
+
+    if (!prev) return prev;
+
+    if (
+      prev._id?.toString() !==
+      updated._id?.toString()
+    ) {
+      return prev;
+    }
+
+    return updated;
+  });
+};
+
+socket?.on(
+  "ticket:updated",
+  handleTicketUpdate
+);
+
 
     return () => {
       socket?.off("message:new");
       socket?.off("support:typing");
       socket?.off("support:stop_typing");
-      socket?.off("ticket:updated");
+      socket?.off("ticket:updated",handleTicketUpdate);
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,6 +114,45 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
       setLoading(false);
     }
   }
+
+async function handleBack() {
+  try {
+    if  (ticket.status != "resolved"){
+    await handleStatusChange("pending");
+    }
+    await fetch(
+      `${SERVER}/api/support/tickets/${ticket._id}/message`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify({
+          message:
+            "Support agent has left the chat. You can continue messaging and another agent will assist you.",
+
+          senderType: "system",
+        }),
+      }
+    );
+
+    socket?.emit("support:admin_left", {
+      ticketId: ticket._id,
+    });
+
+    onBack();
+
+  } catch (err) {
+
+    console.error(
+      "[AdminPanel] handleBack:",
+      err
+    );
+  }
+}
 
   async function fetchMessages() {
     try {
@@ -131,6 +201,7 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
   // ── Resolve ──────────────────────────────────────────────
   async function handleResolve() {
     try {
+
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/resolve`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -140,6 +211,8 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
     } catch (err) {
       console.error("[AdminPanel] resolve:", err);
     }
+    // handleStatusChange("resolved");
+
   }
 
   // ── Refund ───────────────────────────────────────────────
@@ -191,7 +264,7 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
     <div style={s.page}>
       {/* ── Top Bar ── */}
       <div style={s.topBar}>
-        <button style={s.backBtn} onClick={onBack}>← Back</button>
+        <button style={s.backBtn} onClick={handleBack}>← Back</button>
         <div style={s.topCenter}>
           <span style={s.ticketIdLabel}>{ticket.ticketId}</span>
           <span style={s.statusLabel}>{ticket.status?.toUpperCase()}</span>

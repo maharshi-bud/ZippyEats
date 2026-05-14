@@ -26,10 +26,27 @@ export default function SupportWidget({ orderId, userId, token }) {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [waitTime, setWaitTime] = useState(0);
+      const isResolved =
+  ticket?.status === "resolved" ||
+  ticket?.status === "refund_completed";
   const socketRef = useRef(null);
+  const ticketRef = useRef(null);
   const bottomRef = useRef(null);
   const timerRef = useRef(null);
   const typingTimer = useRef(null);
+
+  function appendMessage(msg) {
+    if (!msg) return;
+    setMessages((prev) => {
+      const id = msg._id?.toString();
+      if (id && prev.some((m) => m._id?.toString() === id)) return prev;
+      return [...prev, msg];
+    });
+  }
+
+  useEffect(() => {
+    ticketRef.current = ticket;
+  }, [ticket]);
 
   // ── Connect socket ──────────────────────────────────────
   useEffect(() => {
@@ -44,6 +61,9 @@ export default function SupportWidget({ orderId, userId, token }) {
       console.log("[SupportWidget] Socket connected");
       // ✅ FIX: Join personal user room using SAME event as main socket.js
       socketRef.current.emit("join", { userId, role: "user" });
+      if (ticketRef.current?._id) {
+        socketRef.current.emit("support:join", ticketRef.current._id);
+      }
     });
 
     // ✅ FIX: Listen for admin joining — this triggers chat open
@@ -61,8 +81,17 @@ export default function SupportWidget({ orderId, userId, token }) {
     // ✅ FIX: Only add message if it's NOT from us (avoid duplicate with optimistic)
     socketRef.current.on("message:new", (msg) => {
       if (msg.senderType !== "user") {
-        setMessages((prev) => [...prev, msg]);
+        appendMessage(msg);
       }
+      setTyping(false);
+    });
+
+    socketRef.current.on("ticket:refund", ({ ticketId, ticket: updatedTicket, message }) => {
+      if (updatedTicket) setTicket(updatedTicket);
+      if (ticketId) socketRef.current?.emit("support:join", ticketId);
+      appendMessage(message);
+      setStep("chat");
+      setOpen(true);
       setTyping(false);
     });
 
@@ -74,16 +103,65 @@ export default function SupportWidget({ orderId, userId, token }) {
       if (senderType === "admin") setTyping(false);
     });
 
-    socketRef.current.on("ticket:resolved", ({ resolutionSummary }) => {
-      setMessages((prev) => [
+   socketRef.current.on(
+  "ticket:resolved",
+  ({
+    ticketId,
+    resolutionSummary,
+    resolutionType,
+  }) => {
+
+    setTicket((prev) => {
+
+      if (!prev) return prev;
+
+      if (
+        prev._id?.toString() !==
+        ticketId?.toString()
+      ) {
+        return prev;
+      }
+
+      return {
         ...prev,
-        {
-          senderType: "system",
-          message: `✅ Ticket resolved: ${resolutionSummary}`,
-          createdAt: new Date(),
-        },
-      ]);
+
+        status: "resolved",
+
+        resolutionSummary,
+
+        resolutionType,
+
+        resolvedAt:
+          new Date().toISOString(),
+      };
     });
+
+    appendMessage({
+      _id: `resolved-${Date.now()}`,
+
+      senderType: "system",
+
+      message:
+        `✅ Ticket resolved: ${resolutionSummary}`,
+
+      createdAt:
+        new Date().toISOString(),
+    });
+
+    setTyping(false);
+  }
+); 
+
+// socketRef.current.on("ticket:resolved", ({ resolutionSummary }) => {
+//       setMessages((prev) => [
+//         ...prev,
+//         {
+//           senderType: "system",
+//           message: `✅ Ticket resolved: ${resolutionSummary}`,
+//           createdAt: new Date(),
+//         },
+//       ]);
+//     });
 
     socketRef.current.on("connect_error", (err) => {
       console.error("[SupportWidget] Socket error:", err.message);
@@ -94,18 +172,81 @@ export default function SupportWidget({ orderId, userId, token }) {
     };
   }, [userId, token]);
 
+  useEffect(() => {
+    if (!token || !orderId) return;
+
+    async function loadExistingTicket() {
+      try {
+        const res = await fetch(`${SERVER}/api/support/tickets`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const tickets = await res.json();
+        if (!Array.isArray(tickets)) return;
+
+       const existing = tickets.find((t) => {
+
+  const ticketOrderId =
+    t.orderId?._id || t.orderId;
+
+  return (
+    ticketOrderId?.toString() ===
+      orderId?.toString() &&
+    ![
+      "resolved",
+      "refund_completed",
+    ].includes(t.status)
+  );
+});
+        if (!existing) return;
+
+        setTicket(existing);
+        setStep(existing.status === "active" ? "chat" : "waiting");
+
+        const msgRes = await fetch(
+          `${SERVER}/api/support/tickets/${existing._id}/messages`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const msgs = await msgRes.json();
+        setMessages(Array.isArray(msgs) ? msgs : []);
+      } catch (err) {
+        console.error("[SupportWidget] loadExistingTicket error:", err);
+      }
+    }
+
+    loadExistingTicket();
+  }, [orderId, token]);
+
+  useEffect(() => {
+    if (!ticket?._id || !socketRef.current?.connected) return;
+    socketRef.current.emit("support:join", ticket._id);
+  }, [ticket?._id]);
+
   // ── Auto scroll ─────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
   // ── Wait timer ──────────────────────────────────────────
-  useEffect(() => {
-    if (step === "waiting") {
-      timerRef.current = setInterval(() => setWaitTime((t) => t + 1), 1000);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [step]);
+useEffect(() => {
+
+  if (
+    step === "waiting" &&
+    !isResolved
+  ) {
+
+    timerRef.current = setInterval(
+      () => {
+        setWaitTime((t) => t + 1);
+      },
+      1000
+    );
+  }
+
+  return () => {
+    clearInterval(timerRef.current);
+  };
+
+}, [step, isResolved]);
 
   function formatTime(s) {
     const m = Math.floor(s / 60).toString().padStart(2, "0");
@@ -156,36 +297,70 @@ export default function SupportWidget({ orderId, userId, token }) {
 }
 
   // ── Send message ─────────────────────────────────────────
-  async function sendMessage() {
-    if (!input.trim() || !ticket) return;
-    const text = input.trim();
-    setInput("");
+async function sendMessage() {
 
-    clearTimeout(typingTimer.current);
-    socketRef.current?.emit("support:stop_typing", {
+  if (!input.trim() || !ticket) return;
+
+  if (
+    ticket.status === "resolved" ||
+    ticket.status === "refund_completed"
+  ) {
+    return;
+  }
+
+  const text = input.trim();
+
+  setInput("");
+
+  clearTimeout(typingTimer.current);
+
+  socketRef.current?.emit(
+    "support:stop_typing",
+    {
       ticketId: ticket._id,
       senderType: "user",
-    });
-
-    // Optimistic update
-    setMessages((prev) => [
-      ...prev,
-      { senderType: "user", message: text, createdAt: new Date(), _optimistic: true },
-    ]);
-
-    try {
-      await fetch(`${SERVER}/api/support/tickets/${ticket._id}/message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ message: text }),
-      });
-    } catch (err) {
-      console.error("[SupportWidget] sendMessage error:", err);
     }
+  );
+
+  try {
+
+    const res = await fetch(
+      `${SERVER}/api/support/tickets/${ticket._id}/message`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body: JSON.stringify({
+          message: text,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+
+      const err = await res.json();
+
+      console.error(
+        "[SupportWidget] send failed:",
+        err
+      );
+    }
+
+  } catch (err) {
+
+    console.error(
+      "[SupportWidget] sendMessage error:",
+      err
+    );
   }
+}
 
   function handleInputChange(e) {
     setInput(e.target.value);
@@ -324,15 +499,34 @@ export default function SupportWidget({ orderId, userId, token }) {
                 )}
                 <div ref={bottomRef} />
               </div>
+              
               <div style={s.inputBar}>
                 <input
                   style={s.input}
                   value={input}
+                    disabled={isResolved}
                   onChange={handleInputChange}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder="Type a message..."
+                    placeholder={
+    isResolved
+      ? "Ticket closed"
+      : "Type a message..."
+  }
                 />
-                <button style={s.sendBtn} onClick={sendMessage}>➤</button>
+                {/* <button   disabled={isResolved} style={s.sendBtn} onClick={sendMessage}>➤</button> */}
+                <button
+  disabled={isResolved}
+  style={{
+    ...s.sendBtn,
+    opacity: isResolved ? 0.5 : 1,
+    cursor: isResolved
+      ? "not-allowed"
+      : "pointer",
+  }}
+  onClick={sendMessage}
+>
+  ➤
+</button>
               </div>
             </>
           )}
@@ -348,6 +542,7 @@ export default function SupportWidget({ orderId, userId, token }) {
     </>
   );
 }
+
 
 const s = {
   trigger: {

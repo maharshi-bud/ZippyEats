@@ -15,6 +15,7 @@ import {
   resolveTicket,
   processRefund,
   addNote,
+  sendSystemMessage,
 } from "../controllers/supportController.js";
 
 const router = express.Router();
@@ -31,5 +32,7 @@ router.patch("/tickets/:id/status", protect, adminOnly, updateStatus);
 router.patch("/tickets/:id/resolve", protect, adminOnly, resolveTicket);
 router.post("/tickets/:id/refund", protect, adminOnly, processRefund);
 router.patch("/tickets/:id/note", protect, adminOnly, addNote);
+router.post("/tickets/:id/system-message", protect, adminOnly, sendSystemMessage);
+
 
 export default router;
