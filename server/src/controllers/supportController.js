@@ -161,6 +161,11 @@ export async function sendMessage(req, res) {
   }
 }
 
+// ============================================================
+// FILE: server/src/controllers/supportController.js
+// CHANGE: Only the updateStatus function — replace it
+// ============================================================
+
 // ── PATCH /api/support/tickets/:id/status ─────────────────
 export async function updateStatus(req, res) {
   try {
@@ -169,17 +174,13 @@ export async function updateStatus(req, res) {
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
 
     ticket.status = status;
-
-    // If admin joins → active
     if (status === "active" && !ticket.assignedAdmin) {
       ticket.assignedAdmin = req.user._id;
     }
-
     ticket.actionLog.push({
       action: `Status changed to ${status}`,
       performedBy: req.user._id,
     });
-
     await ticket.save();
 
     const populated = await SupportTicket.findById(ticket._id)
@@ -188,19 +189,23 @@ export async function updateStatus(req, res) {
 
     emitTicketUpdate(populated);
 
-    // Notify user
     const io = getIO();
-    io.to(`user:${ticket.userId}`).emit("ticket:status", {
-      ticketId: ticket._id,
+    console.log("[Support] Emitting to room:", `user:${ticket.userId.toString()}`);
+    io.to(`user:${ticket.userId.toString()}`).emit("ticket:status", {
+      ticketId: ticket._id.toString(),
       status,
-      message: status === "active" ? "Support staff joined the chat" : `Ticket status: ${status}`,
+      message:
+        status === "active"
+          ? "Support staff joined the chat"
+          : `Ticket status updated: ${status}`,
     });
 
     res.json(populated);
   } catch (err) {
+    console.error("[Support] updateStatus error:", err);
     res.status(500).json({ message: "Server error" });
   }
-}
+} 
 
 // ── PATCH /api/support/tickets/:id/resolve ────────────────
 export async function resolveTicket(req, res) {

@@ -7,6 +7,7 @@ import { resolveItemImage, handleImgError } from "../../../lib/imageUtils";
 import { getSocket } from "../../../lib/socket";
   import SupportWidget from "../../../components/SupportWidget";
 
+import { useSelector } from "react-redux";
 
 const BASE_URL = "http://localhost:5010";
 
@@ -25,7 +26,7 @@ const statusMessages = {
   out_for_delivery: { text: "Your order is out for delivery!",      sub: "Your rider is on the way." },
   delivered:        { text: "Order delivered! Enjoy your meal 🎉",  sub: "Thanks for ordering with ZippyEats." },
 };
-
+// const { user, token } = useSelector((state) => state.auth);
 // Icon circle — consistent padding approach so emoji always centers
 const IconCircle = ({ emoji, bg }) => (
   <div className={`${bg} rounded-xl flex-shrink-0`} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
@@ -36,10 +37,12 @@ const IconCircle = ({ emoji, bg }) => (
 
 
 export default function OrderPage({ params }) {
+const { user, token } = useSelector((state) => state.auth);
+
   const [order, setOrder] = useState(null);
   const [copied, setCopied] = useState(false);
   const lineRefs = useRef([]);
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -315,11 +318,18 @@ Dishes</h2>
           <circle cx="38" cy="12" r="8" stroke="#16a34a" strokeWidth="2"/>
         </svg>
       </div>
-          <SupportWidget
+          {/* <SupportWidget
     orderId={params.id}
-    userId={params.user_id}// user_id
+    // userId={params.user_id}// user_id
+    userId={user._id}
     token={token}
   />
+  */}
+<SupportWidget
+  orderId={params.id}
+  userId={user?._id || JSON.parse(atob((token || localStorage.getItem("token")).split(".")[1])).id}
+  token={token || localStorage.getItem("token")}
+/>
     </div>
   );
 }

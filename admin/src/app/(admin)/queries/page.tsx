@@ -155,7 +155,7 @@ export default function QueriesPage() {
     socketRef.current.on("ticket:new", (ticket) => {
       setTickets((prev) => [ticket, ...prev]);
       // Sound notification
-      try { new Audio("/sounds/notify.mp3").play(); } catch {}
+      // try { new Audio("/sounds/notify.mp3").play(); } catch {}
     });
 
     socketRef.current.on("ticket:updated", (updated) => {
