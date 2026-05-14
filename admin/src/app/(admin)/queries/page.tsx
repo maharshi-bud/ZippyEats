@@ -34,36 +34,225 @@ const CATEGORY_LABELS = {
   other: "💬 Other",
 };
 
-function ElapsedTimer({ createdAt }) {
+function calculatePriority(ticket) {
+
+  let score = 0;
+
+const start =
+  new Date(ticket.createdAt).getTime();
+
+const end =
+  ticket.status === "resolved" &&
+  ticket.resolvedAt
+    ? new Date(
+        ticket.resolvedAt
+      ).getTime()
+    : Date.now();
+
+const elapsedSeconds =
+  Math.floor(
+    (end - start) / 1000
+  );
+
+const waitMinutes =
+  Math.floor(elapsedSeconds / 60);
+
+  // ─────────────────────────────
+  // CATEGORY
+  // ─────────────────────────────
+
+  switch (ticket.category) {
+
+    case "payment_issue":
+      score += 6;
+      break;
+
+    case "refund_issue":
+      score += 6;
+      break;
+
+    case "wrong_order":
+      score += 5;
+      break;
+
+    case "missing_items":
+      score += 4;
+      break;
+
+    case "order_not_received":
+      score += 5;
+      break;
+
+    case "delivery_issue":
+      score += 3;
+      break;
+
+    default:
+      score += 1;
+  }
+
+  // ─────────────────────────────
+  // WAIT TIME
+  // ─────────────────────────────
+
+  if (waitMinutes > 1) {
+    score += 3;
+  }
+
+  if (waitMinutes > 3) {
+    score += 4;
+  }
+
+  if (waitMinutes > 5) {
+    score += 5;
+  }
+
+  // ─────────────────────────────
+  // HIGH VALUE USER
+  // ─────────────────────────────
+
+  const totalSpent =
+    ticket.userId?.totalSpent || 0;
+
+  if (totalSpent > 5000) {
+    score += 2;
+  }
+
+  if (totalSpent > 10000) {
+    score += 3;
+  }
+
+  // ─────────────────────────────
+  // ESCALATED
+  // ─────────────────────────────
+
+  if (ticket.isEscalated) {
+    score += 10;
+  }
+
+  // ─────────────────────────────
+  // FINAL
+  // ─────────────────────────────
+
+  if (score >= 17) {
+    return "urgent";
+  }
+
+  if (score >= 12) {
+    return "high";
+  }
+
+  if (score >= 8) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+
+function ElapsedTimer({
+  createdAt,
+  resolvedAt,
+  status,
+}) {
+
   const [elapsed, setElapsed] = useState(0);
 
+  const isResolved =
+    status === "resolved" ||
+    status === "refund_completed";
+
   useEffect(() => {
-    const start = new Date(createdAt).getTime();
-    const tick = () => setElapsed(Math.floor((Date.now() - start) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
+
+    const start =
+      new Date(createdAt).getTime();
+
+    const end = isResolved && resolvedAt
+      ? new Date(resolvedAt).getTime()
+      : Date.now();
+
+    const initial =
+      Math.floor((end - start) / 1000);
+
+    setElapsed(initial);
+
+    // STOP TIMER IF RESOLVED
+    if (isResolved) return;
+
+    const tick = () => {
+
+      setElapsed(
+        Math.floor(
+          (Date.now() - start) / 1000
+        )
+      );
+    };
+
+    const id = setInterval(
+      tick,
+      1000
+    );
+
     return () => clearInterval(id);
-  }, [createdAt]);
 
-  const h = Math.floor(elapsed / 3600);
-  const m = Math.floor((elapsed % 3600) / 60);
+  }, [
+    createdAt,
+    resolvedAt,
+    isResolved,
+  ]);
+
+  const h =
+    Math.floor(elapsed / 3600);
+
+  const m =
+    Math.floor(
+      (elapsed % 3600) / 60
+    );
+
   const s = elapsed % 60;
-  const str = h > 0
-    ? `${h}h ${m}m`
-    : m > 0
-    ? `${m}m ${s}s`
-    : `${s}s`;
 
-  const isUrgent = elapsed > 300;
+  const str =
+    h > 0
+      ? `${h}h ${m}m`
+      : m > 0
+      ? `${m}m ${s}s`
+      : `${s}s`;
+
+  const isUrgent =
+    (elapsed > 300 && !isResolved) ;
+
+  
+
   return (
-    <span style={{ color: isUrgent ? "#dc2626" : "#64748b", fontSize: 12, fontWeight: 500 }}>
-      ⏱ {str}
+    <span
+      style={{
+        color: isResolved
+          ? "#16a34a"
+          : isUrgent
+          ? "#dc2626"
+          : "#64748b",
+
+        fontSize: 12,
+
+        fontWeight: 500,
+      }}
+    >
+      {isResolved
+        ? `✅ Resolved in ${str}`
+        : `⏱ ${str}`}
     </span>
   );
 }
 
 function TicketCard({ ticket, onOpen, onStatusChange }) {
-  const priority = PRIORITY_COLORS[ticket.priority] || PRIORITY_COLORS.medium;
+  // const priority = PRIORITY_COLORS[ticket.priority] || PRIORITY_COLORS.medium;
+const dynamicPriority =
+  calculatePriority(ticket);
+
+const priority =
+  PRIORITY_COLORS[
+    dynamicPriority
+  ] || PRIORITY_COLORS.medium;
   const status = STATUS_COLORS[ticket.status] || STATUS_COLORS.open;
 
   return (
@@ -72,13 +261,19 @@ function TicketCard({ ticket, onOpen, onStatusChange }) {
       <div style={s.cardTop}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ ...s.badge, background: priority.bg, color: priority.text, border: `1px solid ${priority.border}` }}>
-            {ticket.priority?.toUpperCase()}
+            {/* {ticket.priority?.toUpperCase()} */}
+{dynamicPriority?.toUpperCase()}
           </span>
           <span style={{ ...s.badge, background: status.bg, color: status.text }}>
             {ticket.status?.toUpperCase()}
           </span>
         </div>
-        <ElapsedTimer createdAt={ticket.createdAt} />
+        {/* <ElapsedTimer createdAt={ticket.createdAt} /> */}
+<ElapsedTimer
+  createdAt={ticket.createdAt}
+  resolvedAt={ticket.resolvedAt}
+  status={ticket.status}
+/>
       </div>
 
       {/* Info */}
@@ -112,8 +307,8 @@ function TicketCard({ ticket, onOpen, onStatusChange }) {
       </div>
 
       {/* Unread badge */}
-      {ticket.unreadAdmin > 0 && (
-        <div style={s.unreadBadge}>{ticket.unreadAdmin}</div>
+      {ticket.unreadAdmin < 0 && (
+        <div style={s.unreadBadge}></div>
       )}
     </div>
   );
@@ -243,7 +438,7 @@ async function handleOpenTicket(ticket) {
           </div>
           <div style={s.statBox}>
             <span style={s.statNum}>{tickets.filter((t) => t.status === "active").length}</span>
-            <span style={s.statLabel}>Active</span>
+            <span style={s.statLabel}>Active </span>
           </div>
           <div style={s.statBox}>
             <span style={s.statNum}>{closedTickets.length}</span>

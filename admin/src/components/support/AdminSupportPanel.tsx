@@ -1,18 +1,6 @@
 "use client";
-// ============================================================
-// FILE: admin/src/components/support/AdminSupportPanel.tsx
-// ============================================================
-
 import { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
-// import SupportMessage from "../../../../server/src/models/SupportMessage";
-
-export const getIO = () => {
-  if (!io) throw new Error("Socket.IO not initialized");
-  return io;
-};
-// ── Helper: emit to admin room + ticket room ──────────────
-
+import OrderEditPanel from "./OrderEditPanel";
 
 const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
 
@@ -30,7 +18,7 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
   const [ticket, setTicket] = useState(initialTicket);
   const [orderDetails, setOrderDetails] = useState(null);
   const [userStats, setUserStats] = useState(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
@@ -41,57 +29,37 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
-  let typingTimer = useRef(null);
+  const typingTimer = useRef(null);
 
-  // ── Fetch ticket details + messages ─────────────────────
   useEffect(() => {
     fetchDetails();
     fetchMessages();
+
+    const handleTicketUpdate = (updated) => {
+      setTicket((prev) => {
+        if (!prev) return prev;
+        if (prev._id?.toString() !== updated._id?.toString()) return prev;
+        return updated;
+      });
+    };
 
     socket?.on("message:new", (msg) => {
       setMessages((prev) => [...prev, msg]);
       setTyping(false);
     });
-
     socket?.on("support:typing", ({ senderType }) => {
       if (senderType === "user") setTyping(true);
     });
-
     socket?.on("support:stop_typing", ({ senderType }) => {
       if (senderType === "user") setTyping(false);
     });
-
-    // socket?.on("ticket:updated", (updated) => {
-    //   if (updated._id === ticket._id) setTicket(updated);
-    // });
-const handleTicketUpdate = (updated) => {
-
-  setTicket((prev) => {
-
-    if (!prev) return prev;
-
-    if (
-      prev._id?.toString() !==
-      updated._id?.toString()
-    ) {
-      return prev;
-    }
-
-    return updated;
-  });
-};
-
-socket?.on(
-  "ticket:updated",
-  handleTicketUpdate
-);
-
+    socket?.on("ticket:updated", handleTicketUpdate);
 
     return () => {
       socket?.off("message:new");
       socket?.off("support:typing");
       socket?.off("support:stop_typing");
-      socket?.off("ticket:updated",handleTicketUpdate);
+      socket?.off("ticket:updated", handleTicketUpdate);
     };
   }, [socket]);
 
@@ -115,45 +83,6 @@ socket?.on(
     }
   }
 
-async function handleBack() {
-  try {
-    if  (ticket.status != "resolved"){
-    await handleStatusChange("pending");
-    }
-    await fetch(
-      `${SERVER}/api/support/tickets/${ticket._id}/message`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
-        body: JSON.stringify({
-          message:
-            "Support agent has left the chat. You can continue messaging and another agent will assist you.",
-
-          senderType: "system",
-        }),
-      }
-    );
-
-    socket?.emit("support:admin_left", {
-      ticketId: ticket._id,
-    });
-
-    onBack();
-
-  } catch (err) {
-
-    console.error(
-      "[AdminPanel] handleBack:",
-      err
-    );
-  }
-}
-
   async function fetchMessages() {
     try {
       const res = await fetch(`${SERVER}/api/support/tickets/${ticket._id}/messages`, {
@@ -166,18 +95,35 @@ async function handleBack() {
     }
   }
 
-  // ── Send message ─────────────────────────────────────────
+  async function handleBack() {
+    try {
+      if (ticket.status !== "resolved") {
+        await handleStatusChange("pending");
+      }
+      await fetch(`${SERVER}/api/support/tickets/${ticket._id}/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          message: "Support agent has left the chat. You can continue messaging and another agent will assist you.",
+          senderType: "system",
+        }),
+      });
+      socket?.emit("support:admin_left", { ticketId: ticket._id });
+      onBack();
+    } catch (err) {
+      console.error("[AdminPanel] handleBack:", err);
+    }
+  }
+
   async function sendMessage() {
     if (!input.trim()) return;
     const text = input.trim();
     setInput("");
     socket?.emit("support:stop_typing", { ticketId: ticket._id, senderType: "admin" });
-
     setMessages((prev) => [
       ...prev,
       { senderType: "admin", message: text, createdAt: new Date(), _optimistic: true },
     ]);
-
     try {
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/message`, {
         method: "POST",
@@ -198,10 +144,8 @@ async function handleBack() {
     }, 1500);
   }
 
-  // ── Resolve ──────────────────────────────────────────────
   async function handleResolve() {
     try {
-
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/resolve`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -211,11 +155,8 @@ async function handleBack() {
     } catch (err) {
       console.error("[AdminPanel] resolve:", err);
     }
-    // handleStatusChange("resolved");
-
   }
 
-  // ── Refund ───────────────────────────────────────────────
   async function handleRefund() {
     try {
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/refund`, {
@@ -230,7 +171,6 @@ async function handleBack() {
     }
   }
 
-  // ── Note ─────────────────────────────────────────────────
   async function handleNote() {
     try {
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/note`, {
@@ -245,7 +185,6 @@ async function handleBack() {
     }
   }
 
-  // ── Status change ────────────────────────────────────────
   async function handleStatusChange(status) {
     try {
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/status`, {
@@ -262,6 +201,7 @@ async function handleBack() {
 
   return (
     <div style={s.page}>
+
       {/* ── Top Bar ── */}
       <div style={s.topBar}>
         <button style={s.backBtn} onClick={handleBack}>← Back</button>
@@ -284,10 +224,10 @@ async function handleBack() {
       {/* ── Main Layout ── */}
       <div style={s.layout}>
 
-        {/* ══ LEFT: Order Panel ══ */}
+        {/* ══ LEFT PANEL ══ */}
         <div style={s.leftPanel}>
 
-          {/* User Info */}
+          {/* Customer */}
           <div style={s.card}>
             <div style={s.cardTitle}>👤 Customer</div>
             <div style={s.infoRow}><span style={s.infoLabel}>Name</span><span style={s.infoVal}>{ticket.userId?.name}</span></div>
@@ -307,7 +247,7 @@ async function handleBack() {
             )}
           </div>
 
-          {/* Order Info */}
+          {/* Order Details */}
           {orderDetails && (
             <div style={s.card}>
               <div style={s.cardTitle}>📦 Order Details</div>
@@ -339,7 +279,15 @@ async function handleBack() {
             </div>
           )}
 
-          {/* Admin Actions */}
+          {/* ✅ Edit Order Panel */}
+          <OrderEditPanel
+            ticket={ticket}
+            orderDetails={orderDetails}
+            token={token}
+            onUpdated={fetchDetails}
+          />
+
+          {/* Quick Actions */}
           {!isResolved && (
             <div style={s.card}>
               <div style={s.cardTitle}>⚡ Quick Actions</div>
@@ -365,6 +313,7 @@ async function handleBack() {
               ))}
             </div>
           )}
+
         </div>
 
         {/* ══ RIGHT: Chat Panel ══ */}
@@ -376,7 +325,10 @@ async function handleBack() {
 
           <div style={s.messages}>
             {messages.map((m, i) => (
-              <div key={i} style={{ ...s.msgRow, justifyContent: m.senderType === "admin" ? "flex-end" : m.senderType === "system" ? "center" : "flex-start" }}>
+              <div key={i} style={{
+                ...s.msgRow,
+                justifyContent: m.senderType === "admin" ? "flex-end" : m.senderType === "system" ? "center" : "flex-start"
+              }}>
                 <div style={{
                   ...s.bubble,
                   ...(m.senderType === "admin" ? s.adminBubble : m.senderType === "system" ? s.systemBubble : s.userBubble),
@@ -432,13 +384,9 @@ async function handleBack() {
               {RESOLUTION_TYPES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
             </select>
             <label style={s.label}>Resolution Notes</label>
-            <textarea
-              style={s.textarea}
-              rows={3}
-              value={resolveForm.summary}
+            <textarea style={s.textarea} rows={3} value={resolveForm.summary}
               onChange={(e) => setResolveForm({ ...resolveForm, summary: e.target.value })}
-              placeholder="Describe what was done..."
-            />
+              placeholder="Describe what was done..." />
             <div style={s.modalActions}>
               <button style={s.cancelBtn} onClick={() => setShowResolveModal(false)}>Cancel</button>
               <button style={s.confirmBtn} onClick={handleResolve}>Resolve Ticket</button>
@@ -461,11 +409,13 @@ async function handleBack() {
             {refundForm.type !== "full" && (
               <>
                 <label style={s.label}>Amount (₹)</label>
-                <input style={s.inputField} type="number" value={refundForm.amount} onChange={(e) => setRefundForm({ ...refundForm, amount: e.target.value })} placeholder="Enter amount" />
+                <input style={s.inputField} type="number" value={refundForm.amount}
+                  onChange={(e) => setRefundForm({ ...refundForm, amount: e.target.value })} placeholder="Enter amount" />
               </>
             )}
             <label style={s.label}>Reason</label>
-            <input style={s.inputField} value={refundForm.reason} onChange={(e) => setRefundForm({ ...refundForm, reason: e.target.value })} placeholder="Reason for refund" />
+            <input style={s.inputField} value={refundForm.reason}
+              onChange={(e) => setRefundForm({ ...refundForm, reason: e.target.value })} placeholder="Reason for refund" />
             <div style={s.modalActions}>
               <button style={s.cancelBtn} onClick={() => setShowRefundModal(false)}>Cancel</button>
               <button style={s.confirmBtn} onClick={handleRefund}>Process Refund</button>
@@ -479,7 +429,8 @@ async function handleBack() {
         <div style={s.overlay}>
           <div style={s.modal}>
             <h3 style={s.modalTitle}>Add Internal Note</h3>
-            <textarea style={s.textarea} rows={4} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Internal note (not visible to customer)..." />
+            <textarea style={s.textarea} rows={4} value={note}
+              onChange={(e) => setNote(e.target.value)} placeholder="Internal note (not visible to customer)..." />
             <div style={s.modalActions}>
               <button style={s.cancelBtn} onClick={() => setShowNoteModal(false)}>Cancel</button>
               <button style={s.confirmBtn} onClick={handleNote}>Save Note</button>
@@ -487,16 +438,14 @@ async function handleBack() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
 
 const s = {
   page: { background: "#f8fafc", minHeight: "100vh", display: "flex", flexDirection: "column" },
-  topBar: {
-    background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "14px 24px",
-    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
-  },
+  topBar: { background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 },
   backBtn: { background: "none", border: "1px solid #e2e8f0", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13, color: "#64748b" },
   topCenter: { display: "flex", alignItems: "center", gap: 10 },
   ticketIdLabel: { fontSize: 15, fontWeight: 700, color: "#4f46e5" },

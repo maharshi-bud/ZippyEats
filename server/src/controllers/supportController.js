@@ -207,6 +207,89 @@ export async function updateStatus(req, res) {
   }
 } 
 
+
+// ── PATCH /api/support/tickets/:id/edit-order ─────────────
+// Allows support staff to edit order details
+export async function editOrder(req, res) {
+  try {
+    const ticket = await SupportTicket.findById(req.params.id).populate("orderId");
+    if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+ 
+    const order = await Order.findById(ticket.orderId._id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+ 
+    const { field, value, reason } = req.body;
+    // field: "delivery_address.full_name" | "delivery_address.phone" |
+    //        "delivery_address.address_line" | "delivery_address.city" |
+    //        "delivery_address.pincode" | "items" (full items array)
+ 
+    const allowedFields = [
+      "delivery_address.full_name",
+      "delivery_address.phone",
+      "delivery_address.address_line",
+      "delivery_address.city",
+      "delivery_address.state",
+      "delivery_address.pincode",
+      "items",
+    ];
+ 
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({ message: `Field "${field}" is not editable` });
+    }
+ 
+    // Apply the change using dot notation
+    if (field.startsWith("delivery_address.")) {
+      const key = field.split(".")[1];
+      order.delivery_address[key] = value;
+    } else if (field === "items") {
+      // value should be array of { menu_item_id, name, quantity, price, veg, image }
+      if (!Array.isArray(value) || value.length === 0) {
+        return res.status(400).json({ message: "Items must be a non-empty array" });
+      }
+      order.items = value;
+ 
+      // Recalculate totals
+      const subtotal = value.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      order.subtotal = subtotal;
+      order.tax_amount = parseFloat((subtotal * 0.05).toFixed(2));
+      order.total_amount = subtotal + order.delivery_fee + order.tax_amount;
+    }
+ 
+    order._updatedByAdmin = true;
+    await order.save();
+ 
+    // Log the action on the ticket
+    const changeLabel = field === "items"
+      ? `Items updated`
+      : `${field.replace("delivery_address.", "").replace(/_/g, " ")} changed to "${value}"`;
+ 
+    ticket.actionLog.push({
+      action: `Order edit — ${changeLabel}. Reason: ${reason || "Support action"}`,
+      performedBy: req.user._id,
+    });
+    await ticket.save();
+ 
+    // System message in chat
+    const msg = await SupportMessage.create({
+      ticketId: ticket._id,
+      senderType: "system",
+      message: `✏️ Order updated by support: ${changeLabel}.${reason ? ` Reason: ${reason}` : ""}`,
+    });
+ 
+    const io = getIO();
+    io.to(`support:${ticket._id}`).emit("message:new", msg);
+    io.to(`user:${ticket.userId.toString()}`).emit("message:new", msg);
+ 
+    res.json({ success: true, order, message: msg });
+  } catch (err) {
+    console.error("[Support] editOrder error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+ 
+
+
+
 // ── PATCH /api/support/tickets/:id/resolve ────────────────
 export async function resolveTicket(req, res) {
   try {
