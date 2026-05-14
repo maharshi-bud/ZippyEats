@@ -33,7 +33,9 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
 import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
 // import {createRestaurantOwners} from "./utils/createRestaurantOwner.js"
-
+  import supportRoutes from "./routes/supportRoutes.js";
+  import SupportTicket from "./models/SupportTicket.js";
+  import SupportMessage from "./models/SupportMessage.js";
 
 
 const app = express();
@@ -79,6 +81,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
 // app.use("/api/restaurant-owner",  restaurantOwnerRoutes);
 
+  app.use("/api/support", supportRoutes);
 
 app.use(errorHandler);
 app.use("/api/restaurant-owner", restaurantOwnerRoutes);
@@ -94,8 +97,9 @@ const startServer = async () => {
     User.init(),
     Restaurant.init(),
     MenuItem.init(),
-    Order.init()
-    
+    Order.init(),
+    SupportTicket.init(),  
+    SupportMessage.init(),
   ]);
   
   await reloadActiveOrders();

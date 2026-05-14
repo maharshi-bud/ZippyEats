@@ -13,6 +13,8 @@ const links = [
   { name: "Users", href: "/users" },
   { name: "Restaurants", href: "/restaurants" },
   { name: "BI", href: "/BI" },
+    { name: "Queries", href: "/queries" }
+
 ];
 
 export default function Sidebar() {

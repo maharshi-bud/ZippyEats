@@ -5,6 +5,9 @@ import axios from "../../../lib/axios";
 import gsap from "gsap";
 import { resolveItemImage, handleImgError } from "../../../lib/imageUtils";
 import { getSocket } from "../../../lib/socket";
+  import SupportWidget from "../../../components/SupportWidget";
+
+
 const BASE_URL = "http://localhost:5010";
 
 const steps = [
@@ -36,6 +39,7 @@ export default function OrderPage({ params }) {
   const [order, setOrder] = useState(null);
   const [copied, setCopied] = useState(false);
   const lineRefs = useRef([]);
+    const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -311,7 +315,11 @@ Dishes</h2>
           <circle cx="38" cy="12" r="8" stroke="#16a34a" strokeWidth="2"/>
         </svg>
       </div>
-
+          <SupportWidget
+    orderId={params.id}
+    userId={params.user_id}// user_id
+    token={token}
+  />
     </div>
   );
 }
