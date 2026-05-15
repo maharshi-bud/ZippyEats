@@ -6,7 +6,7 @@ import User from "../models/User.js";
 
 const generateToken = (userId, role, restaurantId = null) => {
   return jwt.sign({ id: userId, role, restaurant_id: restaurantId }, process.env.JWT_SECRET, {
-    expiresIn: "2h" , 
+    expiresIn: "9h" , 
   });
 };
 

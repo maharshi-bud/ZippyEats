@@ -126,3 +126,8 @@ dump/
 
 foodTry
 foodTry.py
+
+server/firebase-service-account.json
+firebase-service-account.json
+
+temp

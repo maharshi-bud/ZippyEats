@@ -1,6 +1,13 @@
 import Order from "../models/Order.js";
 import { getIO } from "../lib/socket.js";
+ import {
+  notifyOrderCreated,
+  notifyOrderStatusChanged,
+  notifyOrderCancelled,
+} from "../services/fcmService.js";
 
+import Restaurant from "../models/Restaurant.js";
+import User from "../models/User.js";
 
 
 // ================= STATUS FLOW =================
@@ -108,12 +115,25 @@ export const scheduleNextTransition = (order) => {
       // ================= AUTO STATUS LOGIC =================
 
       // ❌ Auto cancel if restaurant ignored order
-      if (fresh.status === "placed") {
+  // ✅ Correct order
+if (fresh.status === "placed") {
+  fresh.status = "cancelled";
+  fresh._updatedByAdmin = true;
+  await fresh.save(); // 💾 Save FIRST
 
-        fresh.status = "cancelled";
-
-      }
-
+  try {
+    const restaurant = await Restaurant.findById(fresh.restaurant_id);
+    const user = await User.findById(fresh.user_id);
+    await notifyOrderCancelled({
+      restaurantFcmToken: restaurant?.fcmToken,
+      userFcmToken: user?.fcmToken,
+      orderId: fresh._id.toString(),
+      restaurantName: fresh.restaurant_name,
+    });
+  } catch (err) {
+    console.error("FCM FAILED:", err);
+  }
+}
       // ✅ Normal transition
       else if (STATUS_FLOW[fresh.status]) {
 
@@ -220,6 +240,45 @@ export const updateOrderStatus = async (
   }
 
   // ================= SCHEDULE NEXT =================
+  
+if (order.status == "cancelled"){
+
+  try{
+       const restaurant = await Restaurant.findById(order.restaurant_id);
+const user = await User.findById(order.user_id);
+await notifyOrderCancelled({
+  restaurantFcmToken: restaurant?.fcmToken,
+  userFcmToken: user?.fcmToken,
+  orderId: order._id.toString(),
+  restaurantName: order.restaurant_name,
+});
+}catch (err) {
+
+  console.error(
+    "FCM FAILED:",
+    err
+  );
+}
+}
+else{
+ 
+ 
+  const user = await User.findById(order.user_id);
+ try{ await notifyOrderStatusChanged({
+  userFcmToken: user?.fcmToken,
+  status: order.status,
+  restaurantName: order.restaurant_name,
+  orderId: order._id.toString(),
+});
+ }
+catch (err) {
+
+  console.error(
+    "FCM FAILED:",
+    err
+  );
+}
+}
 
   scheduleNextTransition(order);
 

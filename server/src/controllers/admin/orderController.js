@@ -6,6 +6,14 @@ import MenuItem from "../../models/MenuItem.js";
 import Restaurant from "../../models/Restaurant.js";
 import { updateOrderStatus as updateScheduledOrderStatus } from "../../services/orderEngine.js";
 
+ import {
+  notifyOrderCreated,
+  notifyOrderStatusChanged,
+  notifyOrderCancelled,
+} from "../../services/fcmService.js";
+
+
+
 export const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -133,6 +141,30 @@ export const updateOrderStatus = async (req, res) => {
       success: true,
       order: updatedOrder,
     });
+
+
+
+
+    try{
+           const restaurant = await Restaurant.findById(order.restaurant_id);
+    const user = await User.findById(order.user_id);
+    await notifyOrderCancelled({
+      restaurantFcmToken: restaurant?.fcmToken,
+      userFcmToken: user?.fcmToken,
+      orderId: order._id.toString(),
+      restaurantName: order.restaurant_name,
+    });
+    }catch (err) {
+    
+      console.error(
+        "FCM FAILED:",
+        err
+      );
+    }
+
+
+
+
 
   } catch (err) {
 

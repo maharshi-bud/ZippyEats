@@ -36,7 +36,8 @@ import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
   import supportRoutes from "./routes/supportRoutes.js";
   import SupportTicket from "./models/SupportTicket.js";
   import SupportMessage from "./models/SupportMessage.js";
-
+  import { initFirebase } from "./services/fcmService.js";
+  import fcmRoutes from "./routes/fcmRoutes.js";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -89,6 +90,7 @@ app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
 // app.use("/api/restaurant-owner",  restaurantOwnerRoutes);
 
   app.use("/api/support", supportRoutes);
+  app.use("/api/fcm", fcmRoutes);
 
 app.use(errorHandler);
 app.use("/api/restaurant-owner", restaurantOwnerRoutes);
@@ -99,7 +101,7 @@ const PORT = process.env.PORT || 5010;
 const startServer = async () => {
   await connectDB();
   
-  
+
   await Promise.all([
     User.init(),
     Restaurant.init(),
@@ -110,6 +112,7 @@ const startServer = async () => {
   ]);
   
   await reloadActiveOrders();
+  initFirebase();
   
   httpServer.listen(PORT, () => {
     console.log(`🚀 ZippyEats + Socket.IO running on ${PORT}`);

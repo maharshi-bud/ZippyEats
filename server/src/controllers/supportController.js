@@ -8,6 +8,15 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import { getIO } from "../lib/socket.js";
 
+import {
+  notifyNewTicket,
+  notifyTicketUrgent,
+  notifyTicketStatusChanged,
+  notifyRefundIssued,
+} from "../services/fcmService.js";
+
+
+
 // ── Helper: emit to admin room + ticket room ──────────────
 function emitTicketUpdate(ticket) {
   const io = getIO();
@@ -47,6 +56,28 @@ export async function createTicket(req, res) {
     // Notify admin room
     const io = getIO();
     io.to("admin_support").emit("ticket:new", populated);
+
+
+
+      
+  try {
+  const user = await User.findById(userId);
+  await notifyNewTicket({
+    ticketId: ticket._id.toString(),
+    ticketNo: ticket.ticketId,
+    category: ticket.category,
+    userName: user?.name || "A user",
+  });
+  if (["urgent", "high"].includes(ticket.priority)) {
+    await notifyTicketUrgent({
+      ticketId: ticket._id.toString(),
+      ticketNo: ticket.ticketId,
+      category: ticket.category,
+    });
+  }
+} catch (fcmErr) {
+  console.error("FCM FAILED (non-fatal):", fcmErr.message);
+}
 
     res.status(201).json(populated);
   } catch (err) {
@@ -201,6 +232,23 @@ export async function updateStatus(req, res) {
           ? "Support staff joined the chat"
           : `Ticket status updated: ${status}`,
     });
+
+
+   // ✅ Fix
+try {
+  const user = await User.findById(ticket.userId);
+  await notifyTicketStatusChanged({
+    userFcmToken: user?.fcmToken,
+    status,
+    ticketNo: ticket.ticketId,
+  });
+} catch (fcmErr) {
+  console.error("FCM FAILED (non-fatal):", fcmErr.message);
+}
+
+res.json(populated); // always reached
+
+
 
     res.json(populated);
   } catch (err) {
@@ -480,6 +528,20 @@ export async function processRefund(req, res) {
     io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", { refundAmount, refundType });
     io.to("admin_support").emit("ticket:message", { ticketId: ticket._id.toString(), message: msg });
     emitTicketUpdate(populatedTicket);
+
+
+try {
+  const user = await User.findById(ticket.userId);
+  await notifyRefundIssued({
+    userFcmToken: user?.fcmToken,
+    amount: refundAmount,
+    // orderId: ticket.orderId.toString(),
+    orderId: ticket.orderId._id.toString(),
+
+  });
+} catch (fcmErr) {
+  console.error("FCM FAILED (non-fatal):", fcmErr.message);
+}
 
     return res.json({ success: true, refundAmount, message: msg, ticket: populatedTicket });
   } catch (err) {
