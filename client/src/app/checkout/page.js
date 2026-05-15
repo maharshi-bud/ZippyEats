@@ -280,12 +280,13 @@ export default function CheckoutPage() {
           <button
             onClick={handleCheckout}
             disabled={loading || items.length === 0}
-            className="mt-5 w-full py-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="mt-5 w-full py-3.5 pl-3 pr-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Placing order…
+                <span className="w-4 h-4 text-center  border-2 border-white border-t-transparent rounded-full animate-spin" >
+              </span>
+               <p className="text-start self-start w-[100%]">Placing order…</p> 
               </>
             ) : (
               `Place order · ₹${total + DELIVERY_FEE}`

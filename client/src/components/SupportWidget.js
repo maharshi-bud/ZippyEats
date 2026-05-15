@@ -40,6 +40,14 @@ export default function SupportWidget({ orderId, userId, token }) {
     setMessages((prev) => {
       const id = msg._id?.toString();
       if (id && prev.some((m) => m._id?.toString() === id)) return prev;
+      if (msg.senderType === "user") {
+        const optimisticIndex = prev.findIndex(
+          (m) => m._optimistic && m.senderType === "user" && m.message === msg.message
+        );
+        if (optimisticIndex !== -1) {
+          return prev.map((m, i) => (i === optimisticIndex ? msg : m));
+        }
+      }
       return [...prev, msg];
     });
   }
@@ -80,11 +88,26 @@ export default function SupportWidget({ orderId, userId, token }) {
 
     // ✅ FIX: Only add message if it's NOT from us (avoid duplicate with optimistic)
     socketRef.current.on("message:new", (msg) => {
+      appendMessage(msg);
       if (msg.senderType !== "user") {
-        appendMessage(msg);
+        setStep("chat");
+        setOpen(true);
       }
+
       setTyping(false);
     });
+
+
+
+// // ✅ FIX: Only add message if it's NOT from us (avoid duplicate with optimistic)
+//     socketRef.current.on("message:new", (msg) => {
+//       if (msg.senderType !== "user") {
+//         appendMessage(msg);
+//       }
+//       setTyping(false);
+//     });
+
+
 
     socketRef.current.on("ticket:refund", ({ ticketId, ticket: updatedTicket, message }) => {
       if (updatedTicket) setTicket(updatedTicket);
@@ -307,13 +330,12 @@ async function sendMessage() {
   ) {
     return;
   }
-
   const text = input.trim();
-
+  
   setInput("");
-
+  
   clearTimeout(typingTimer.current);
-
+  
   socketRef.current?.emit(
     "support:stop_typing",
     {
@@ -321,18 +343,19 @@ async function sendMessage() {
       senderType: "user",
     }
   );
-
+  
   try {
-
+    
+    // appendMessage("hi");
     const res = await fetch(
       `${SERVER}/api/support/tickets/${ticket._id}/message`,
       {
         method: "POST",
-
+        
         headers: {
           "Content-Type":
-            "application/json",
-
+          "application/json",
+          
           Authorization:
             `Bearer ${token}`,
         },
@@ -342,19 +365,19 @@ async function sendMessage() {
         }),
       }
     );
-
+    
     if (!res.ok) {
-
+      
       const err = await res.json();
-
+      
       console.error(
         "[SupportWidget] send failed:",
         err
       );
     }
-
+    
   } catch (err) {
-
+    
     console.error(
       "[SupportWidget] sendMessage error:",
       err
@@ -362,9 +385,9 @@ async function sendMessage() {
   }
 }
 
-  function handleInputChange(e) {
-    setInput(e.target.value);
-    if (ticket && socketRef.current) {
+function handleInputChange(e) {
+  setInput(e.target.value);
+  if (ticket && socketRef.current) {
       socketRef.current.emit("support:typing", {
         ticketId: ticket._id,
         senderType: "user",
@@ -378,7 +401,7 @@ async function sendMessage() {
       }, 1500);
     }
   }
-
+  
   return (
     <>
       {/* ── Trigger Button ── */}

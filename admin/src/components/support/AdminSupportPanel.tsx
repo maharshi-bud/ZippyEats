@@ -43,8 +43,18 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
       });
     };
 
+    const appendMessage = (msg) => {
+      if (!msg) return;
+      setMessages((prev) => {
+        if (msg._id && prev.some((m) => m._id?.toString() === msg._id?.toString())) {
+          return prev;
+        }
+        return [...prev, msg];
+      });
+    };
+
     socket?.on("message:new", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      appendMessage(msg);
       setTyping(false);
     });
     socket?.on("support:typing", ({ senderType }) => {
@@ -116,14 +126,10 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
   }
 
   async function sendMessage() {
-    if (!input.trim()) return;
+    if (!input.trim() || !ticket) return;
     const text = input.trim();
     setInput("");
     socket?.emit("support:stop_typing", { ticketId: ticket._id, senderType: "admin" });
-    setMessages((prev) => [
-      ...prev,
-      { senderType: "admin", message: text, createdAt: new Date(), _optimistic: true },
-    ]);
     try {
       await fetch(`${SERVER}/api/support/tickets/${ticket._id}/message`, {
         method: "POST",
@@ -444,7 +450,18 @@ export default function AdminSupportPanel({ ticket: initialTicket, token, socket
 }
 
 const s = {
-  page: { background: "#f8fafc", minHeight: "100vh", display: "flex", flexDirection: "column" },
+  // page: { background: "#f8fafc", minHeight: "100vh", display: "flex", flexDirection: "column" },
+ page: {
+  background: "#f8fafc",
+
+  height: "84vh",
+
+  display: "flex",
+
+  flexDirection: "column",
+
+  overflow: "hidden",
+},
   topBar: { background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 },
   backBtn: { background: "none", border: "1px solid #e2e8f0", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13, color: "#64748b" },
   topCenter: { display: "flex", alignItems: "center", gap: 10 },
@@ -455,7 +472,8 @@ const s = {
   noteBtn: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "7px 14px", cursor: "pointer", fontSize: 13 },
   refundBtn: { background: "#fff7ed", color: "#ea580c", border: "1px solid #fed7aa", borderRadius: 8, padding: "7px 14px", cursor: "pointer", fontSize: 13, fontWeight: 600 },
   resolveBtn: { background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, padding: "7px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600 },
-  layout: { display: "flex", flex: 1, gap: 0, padding: 0, height: "calc(100vh - 60px)" },
+  // layout: { display: "flex", flex: 1, gap: 0, padding: 0, height: "calc(100vh - 60px)" },
+  layout: {display: "flex",  flex: 1,  minHeight: 0,  overflow: "hidden",  gap: 0,  padding: 0,},
   leftPanel: { width: 360, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, borderRight: "1px solid #e2e8f0", background: "#f8fafc", flexShrink: 0 },
   card: { background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: "14px 16px" },
   cardTitle: { fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 },

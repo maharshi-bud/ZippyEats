@@ -13,10 +13,10 @@ import { startRouteLoader } from "../lib/routeLoading";
 import { useDispatch } from "react-redux";
 import { replaceCart } from "../store/slices/cartSlice";
 
-const PUBLIC_ROUTES = ["/login", "/"];
+const PUBLIC_ROUTES = ["/login", "/", "/restaurants", "/search"];
 
 // ─────────────────────────────────────────────
-// Separate inner component so it's INSIDE Provider
+// Separate inner component so it INSIDE Provider
 // and can safely use useDispatch
 // ─────────────────────────────────────────────
 function AppShell({ children }) {
@@ -26,7 +26,7 @@ function AppShell({ children }) {
 
   // ── Auth guard ──────────────────────────────
   useEffect(() => {
-    if (PUBLIC_ROUTES.includes(pathname)) return;
+    if (PUBLIC_ROUTES.includes(pathname) || pathname.startsWith("/restaurant")) return;
 
     const token = localStorage.getItem("token");
 

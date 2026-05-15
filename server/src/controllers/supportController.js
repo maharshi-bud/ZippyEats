@@ -117,7 +117,6 @@ export async function getMessages(req, res) {
     const messages = await SupportMessage.find({ ticketId: req.params.id })
       .populate("senderId", "name")
       .sort({ createdAt: 1 });
-
     res.json(messages);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -153,6 +152,9 @@ export async function sendMessage(req, res) {
     // Emit to ticket room
     const io = getIO();
     io.to(`support:${ticket._id}`).emit("message:new", populated);
+    if (isAdmin) {
+      io.to(`user:${ticket.userId.toString()}`).emit("message:new", populated);
+    }
     io.to("admin_support").emit("ticket:message", { ticketId: ticket._id, message: populated });
 
     res.status(201).json(populated);
@@ -361,14 +363,97 @@ export async function sendSystemMessage(req, res) {
 
 
 // ── POST /api/support/tickets/:id/refund ──────────────────
+// working  export async function processRefund(req, res) {
+//   try {
+//     const { refundType, amount, reason } = req.body;
+//     // refundType: "full" | "partial" | "item"
+//     const ticket = await SupportTicket.findById(req.params.id).populate("orderId");
+//     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+
+//     let refundAmount = amount;
+//     if (refundType === "full") refundAmount = ticket.orderId.total_amount;
+
+//     ticket.refundAmount = (ticket.refundAmount || 0) + refundAmount;
+//     ticket.actionLog.push({
+//       action: `Refund processed: ₹${refundAmount} (${refundType})`,
+//       performedBy: req.user._id,
+//       meta: { refundType, amount: refundAmount, reason },
+//     });
+
+//     await ticket.save();
+
+//     const msg = await SupportMessage.create({
+//       ticketId: ticket._id,
+//       senderType: "system",
+//       message: `Refund of Rs.${refundAmount} processed (${refundType}). Reason: ${reason || "Not provided"}`,
+//     });
+
+//     const populatedTicket = await SupportTicket.findById(ticket._id)
+//       .populate("userId", "name email")
+//       .populate("orderId");
+
+//     const refundPayload = {
+//       ticketId: ticket._id.toString(),
+//       ticket: populatedTicket,
+//       message: msg,
+//       refundAmount,
+//       refundType,
+//     };
+
+//     const io = getIO();
+//     io.to(`support:${ticket._id}`).emit("message:new", msg);
+//     io.to(`user:${ticket.userId.toString()}`).emit("message:new", msg);
+//     io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", refundPayload);
+//     io.to("admin_support").emit("ticket:message", { ticketId: ticket._id.toString(), message: msg });
+//     emitTicketUpdate(populatedTicket);
+
+//     return res.json({ success: true, refundAmount, message: msg, ticket: populatedTicket });
+//     {
+
+//     // System message
+//     // await SupportMessage.create({
+//     //   ticketId: ticket._id,
+//     //   senderType: "system",
+//     //   message: `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason}`,
+//     // });
+// const msg = await SupportMessage.create({
+//   ticketId: ticket._id,
+
+//   senderType: "system",
+
+//   message:
+//     `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason}`,
+// });
+
+
+//     // const io = getIO();
+//     // io.to(`support:${ticket._id}`).emit("ticket:refund", { refundAmount, refundType });
+//     // io.to(`user:${ticket.userId}`).emit("ticket:refund", { refundAmount, refundType });
+
+// const io = getIO();
+// io.to(`support:${ticket._id}`).emit("message:new", msg);
+// io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", { refundAmount, refundType });
+
+//     res.json({ success: true, refundAmount });
+//     }
+//   } catch (err) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// } working 
+
+
+// ============================================================
+// FILE: server/src/controllers/supportController.js
+// REPLACE your processRefund with this clean version
+// ============================================================
+
 export async function processRefund(req, res) {
   try {
     const { refundType, amount, reason } = req.body;
-    // refundType: "full" | "partial" | "item"
     const ticket = await SupportTicket.findById(req.params.id).populate("orderId");
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
 
-    let refundAmount = amount;
+    let refundAmount = Number(amount);
     if (refundType === "full") refundAmount = ticket.orderId.total_amount;
 
     ticket.refundAmount = (ticket.refundAmount || 0) + refundAmount;
@@ -377,67 +462,43 @@ export async function processRefund(req, res) {
       performedBy: req.user._id,
       meta: { refundType, amount: refundAmount, reason },
     });
-
     await ticket.save();
 
     const msg = await SupportMessage.create({
       ticketId: ticket._id,
       senderType: "system",
-      message: `Refund of Rs.${refundAmount} processed (${refundType}). Reason: ${reason || "Not provided"}`,
+      message: `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason || "Not provided"}`,
     });
 
     const populatedTicket = await SupportTicket.findById(ticket._id)
       .populate("userId", "name email")
       .populate("orderId");
 
-    const refundPayload = {
-      ticketId: ticket._id.toString(),
-      ticket: populatedTicket,
-      message: msg,
-      refundAmount,
-      refundType,
-    };
-
     const io = getIO();
     io.to(`support:${ticket._id}`).emit("message:new", msg);
     io.to(`user:${ticket.userId.toString()}`).emit("message:new", msg);
-    io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", refundPayload);
+    io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", { refundAmount, refundType });
     io.to("admin_support").emit("ticket:message", { ticketId: ticket._id.toString(), message: msg });
     emitTicketUpdate(populatedTicket);
 
     return res.json({ success: true, refundAmount, message: msg, ticket: populatedTicket });
-    {
-
-    // System message
-    // await SupportMessage.create({
-    //   ticketId: ticket._id,
-    //   senderType: "system",
-    //   message: `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason}`,
-    // });
-const msg = await SupportMessage.create({
-  ticketId: ticket._id,
-
-  senderType: "system",
-
-  message:
-    `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason}`,
-});
-
-
-    // const io = getIO();
-    // io.to(`support:${ticket._id}`).emit("ticket:refund", { refundAmount, refundType });
-    // io.to(`user:${ticket.userId}`).emit("ticket:refund", { refundAmount, refundType });
-
-const io = getIO();
-io.to(`support:${ticket._id}`).emit("message:new", msg);
-io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", { refundAmount, refundType });
-
-    res.json({ success: true, refundAmount });
-    }
   } catch (err) {
+    console.error("[Support] processRefund error:", err);
     res.status(500).json({ message: "Server error" });
   }
 }
+
+
+// ============================================================
+// FILE: server/src/routes/supportRoutes.js
+// ADD these 2 lines
+// ============================================================
+
+// Add to imports:
+// import { ..., editOrder } from "../controllers/supportController.js";
+
+// Add route:
+// router.patch("/tickets/:id/edit-order", protect, adminOnly, editOrder);
 
 // ── PATCH /api/support/tickets/:id/note ───────────────────
 export async function addNote(req, res) {
