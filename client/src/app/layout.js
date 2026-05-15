@@ -12,6 +12,11 @@ import RouteLoader from "../components/RouteLoader";
 import { startRouteLoader } from "../lib/routeLoading";
 import { useDispatch } from "react-redux";
 import { replaceCart } from "../store/slices/cartSlice";
+import { useNotifications } from "../hooks/useNotifications";
+
+
+
+
 
 const PUBLIC_ROUTES = ["/login", "/", "/restaurants", "/search"];
 
@@ -23,6 +28,7 @@ function AppShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
+  useNotifications();
 
   // ── Auth guard ──────────────────────────────
   useEffect(() => {

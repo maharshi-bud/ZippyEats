@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+  // import { useNotifications } from "../hooks/useNotifications";
+import NotificationInit from "../components/NotificationInit";
 
 import "./global.css";
 
@@ -7,6 +9,9 @@ export const metadata = {
   description: "ZippyEats operations dashboard",
 };
 
+  // useNotifications();
+
+
 export default function RootLayout({
   children,
 }: {
@@ -14,7 +19,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+                <NotificationInit /> {/* ✅ client component handles the hook */}
+
+        {children}</body>
     </html>
   );
 }

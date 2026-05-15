@@ -146,7 +146,7 @@ export const updateOrderStatus = async (req, res) => {
 
 
     try{
-           const restaurant = await Restaurant.findById(order.restaurant_id);
+           const restaurant = await Restaurant.findById(updatedOrder.restaurant_id);
     const user = await User.findById(order.user_id);
     await notifyOrderCancelled({
       restaurantFcmToken: restaurant?.fcmToken,

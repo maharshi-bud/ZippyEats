@@ -250,7 +250,7 @@ res.json(populated); // always reached
 
 
 
-    res.json(populated);
+    // res.json(populated);
   } catch (err) {
     console.error("[Support] updateStatus error:", err);
     res.status(500).json({ message: "Server error" });

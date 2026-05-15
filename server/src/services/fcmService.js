@@ -19,8 +19,7 @@ export function initFirebase() {
   if (initialized) return;
   try {
     const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-      readFileSync(path.join(__dirname, "../../firebase-service-account.json"), "utf8")
+      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ,"utf8"
     );
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
@@ -87,7 +86,7 @@ export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, o
     body: `You have a new order — ${itemCount} items for ₹${total}`,
     data: { type: "ORDER_NEW", orderId },
   });
-  // To admin topic
+  // To admin topic          -------------------------------------------remove later  ----------------
   await sendToTopic("admin_orders", {
     title: "📦 New Order Placed",
     body: `New order at ${restaurantName} — ₹${total}`,
