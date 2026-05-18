@@ -145,24 +145,6 @@ export const updateOrderStatus = async (req, res) => {
 
 
 
-    try{
-           const restaurant = await Restaurant.findById(updatedOrder.restaurant_id);
-    const user = await User.findById(updatedOrder.user_id);
-    await notifyOrderCancelled({
-      restaurantFcmToken: restaurant?.fcmToken,
-      userFcmToken: user?.fcmToken,
-      updatedOrder: updatedOrder._id.toString(),
-      restaurantName: updatedOrder.restaurant_name,
-    });
-    }catch (err) {
-    
-      console.error(
-        "FCM FAILED:",
-        err
-      );
-    }
-
-
 
 
 
