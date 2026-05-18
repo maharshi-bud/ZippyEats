@@ -19,8 +19,9 @@ export function initFirebase() {
   if (initialized) return;
   try {
     const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ,"utf8"
-    );
+  process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+  readFileSync(path.join(__dirname, "../../firebase-service-account.json"), "utf8")
+);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -33,7 +34,9 @@ export function initFirebase() {
 
 // ── Send to single FCM token ─────────────────────────────
 export async function sendToToken(token, { title, body, data = {} }) {
-  if (!token) return;
+    // console.log("[FCM] sendToToken called with token:", token ? token.slice(0, 20) + "..." : "NULL");
+  console.log("[FCM] sendToToken:", title, "→", token?.slice(0, 15));
+    if (!token) return;
   try {
     await admin.messaging().send({
       token,
@@ -58,6 +61,7 @@ export async function sendToTokens(tokens, payload) {
 
 // ── Send to a topic ──────────────────────────────────────
 export async function sendToTopic(topic, { title, body, data = {} }) {
+    console.log("[FCM] sendToTopic:", title, "→ topic:", topic);
   try {
     await admin.messaging().send({
       topic,
@@ -81,6 +85,7 @@ export async function sendToTopic(topic, { title, body, data = {} }) {
 
 export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, orderId, itemCount, total }) {
   // To restaurant
+  console.log("Sending notfications to admin and res ")        ;                                                 //remove
   await sendToToken(restaurantFcmToken, {
     title: "🛎️ New Order!",
     body: `You have a new order — ${itemCount} items for ₹${total}`,
@@ -94,22 +99,89 @@ export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, o
   });
 }
 
-export async function notifyOrderStatusChanged({ userFcmToken, status, restaurantName, orderId }) {
+export async function notifyOrderStatusChanged({
+  userFcmToken,
+  status,
+  restaurantName,
+  orderId,
+}) {
+
+  console.log(
+    "Sending notifications for order status:",
+    status
+  );
+
   const messages = {
-    accepted:         { title: "✅ Order Accepted!",          body: `${restaurantName} accepted your order. Preparing soon!` },
-    preparing:        { title: "🍳 Being Prepared",           body: `${restaurantName} is now preparing your order.` },
-    out_for_delivery: { title: "🛵 On the Way!",              body: "Your order is out for delivery. Hang tight!" },
-    delivered:        { title: "📦 Delivered!",               body: `Your order from ${restaurantName} has been delivered. Enjoy! ⭐ Leave a review!` },
-    cancelled:        { title: "❌ Order Cancelled",          body: `Your order from ${restaurantName} was cancelled.` },
+
+    accepted: {
+      title: "✅ Order Accepted!",
+      body:
+        `${restaurantName} accepted your order. Preparing soon!`,
+    },
+
+    preparing: {
+      title: "🍳 Being Prepared",
+      body:
+        `${restaurantName} is now preparing your order.`,
+    },
+
+    out_for_delivery: {
+      title: "🛵 On the Way!",
+      body:
+        "Your order is out for delivery. Hang tight!",
+    },
+
+    delivered: {
+      title: "📦 Delivered!",
+      body:
+        `Your order from ${restaurantName} has been delivered. Enjoy! ⭐ Leave a review!`,
+    },
+
+    cancelled: {
+      title: "❌ Order Cancelled",
+      body:
+        `Your order from ${restaurantName} was cancelled.`,
+    },
   };
 
   const msg = messages[status];
+
   if (!msg) return;
 
-  await sendToToken(userFcmToken, {
-    ...msg,
-    data: { type: "ORDER_STATUS", orderId, status },
-  });
+  try {
+
+    const response =
+      await sendToToken(
+        userFcmToken,
+        {
+
+          ...msg,
+
+          data: {
+            type:
+              `ORDER_${status.toUpperCase()}`,
+
+            orderId:
+              orderId?.toString(),
+
+            status:
+              status?.toString(),
+          },
+        }
+      );
+
+    console.log(
+      "FCM RESPONSE:",
+      response
+    );
+
+  } catch (err) {
+
+    console.error(
+      "FCM SEND FAILED:",
+      err
+    );
+  }
 }
 
 export async function notifyOrderCancelled({ restaurantFcmToken, userFcmToken, orderId, restaurantName }) {

@@ -25,7 +25,7 @@ export function getFirebaseMessaging() {
 // ── Request permission + get FCM token ───────────────────
 export async function requestNotificationPermission(
   authToken,
-  isAdmin = false
+  isAdmin = true
 ) {
 
   try {

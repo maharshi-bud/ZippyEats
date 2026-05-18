@@ -304,17 +304,27 @@ export const createOrder = async (req, res) => {
 
     // ✅ FCM — single call, isolated, non-fatal
     try {
-      const restaurant = await Restaurant.findById(order[0].restaurant_id);
-      await notifyOrderCreated({
-        restaurantFcmToken: restaurant?.fcmToken,
-        restaurantName: order[0].restaurant_name,
-        orderId: order[0]._id.toString(),
-        itemCount: order[0].items.length,
-        total: order[0].total_amount,
-      });
-    } catch (fcmErr) {
-      console.error("FCM FAILED (non-fatal):", fcmErr.message);
-    }
+  const createdOrder = order[0]; // ← always use order[0]
+
+  console.log("[Order] restaurant_id:", createdOrder.restaurant_id);
+
+  const restaurantOwner = await User.findOne({
+    restaurant_id: createdOrder.restaurant_id,
+    role: "restaurant",
+  });
+
+  console.log("[Order] restaurantOwner FCM:", restaurantOwner?.fcmToken?.slice(0, 20));
+
+  await notifyOrderCreated({
+    restaurantFcmToken: restaurantOwner?.fcmToken,
+    restaurantName: createdOrder.restaurant_name,
+    orderId: createdOrder._id.toString(),
+    itemCount: createdOrder.items.length,
+    total: createdOrder.total_amount,
+  });
+} catch (fcmErr) {
+  console.error("FCM FAILED (non-fatal):", fcmErr.message);
+}
 
     // ✅ Single return with correct variable
     return res.status(201).json({

@@ -1,55 +1,38 @@
 "use client";
-// ============================================================
-// FILE: client/src/hooks/useNotifications.js
-// Also copy to: admin/src/hooks/useNotifications.js
-// ============================================================
-// Usage in your root layout or _app:
-//   import { useNotifications } from "@/hooks/useNotifications";
-//   useNotifications(); // call inside any component that renders on login
-// ============================================================
-
 import { useEffect } from "react";
 import { requestNotificationPermission, onForegroundMessage } from "../lib/firebase";
 
 export function useNotifications() {
   useEffect(() => {
-    const token =
-      localStorage.getItem("token") ||
-      localStorage.getItem("adminToken");
-
+    const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
     if (!token) return;
 
-    // Request permission + register FCM token
-    requestNotificationPermission(token);
+    if (sessionStorage.getItem("fcm_init")) return;
 
-    // Handle foreground messages (app is open)
+    async function init() {
+      try {
+        // ✅ Wait for service worker to be ready before getting FCM token
+        if ("serviceWorker" in navigator) {
+          await navigator.serviceWorker.ready;
+          console.log("[FCM] Service worker ready");
+        }
+
+        sessionStorage.setItem("fcm_init", "true");
+        await requestNotificationPermission(token);
+      } catch (err) {
+        console.error("[FCM] init failed:", err);
+        sessionStorage.removeItem("fcm_init"); // allow retry on next load
+      }
+    }
+
+    init();
+
     const unsubscribe = onForegroundMessage((payload) => {
       const { title, body } = payload.notification || {};
       const data = payload.data || {};
-
       console.log("[FCM] Foreground message:", title, body);
-
-      // Show browser notification even when app is open
-      if (Notification.permission === "granted") {
-        const n = new Notification(title, {
-          body,
-          icon: "/icons/icon-192x192.png",
-          data,
-        });
-
-        n.onclick = () => {
-          window.focus();
-          if (data.type?.startsWith("ORDER") && data.orderId) {
-            window.location.href = `/orders/${data.orderId}`;
-          }
-          if (data.type?.startsWith("TICKET")) {
-            window.location.href = `/queries`;
-          }
-          n.close();
-        };
-      }
     });
 
     return () => unsubscribe?.();
   }, []);
-}
+} 

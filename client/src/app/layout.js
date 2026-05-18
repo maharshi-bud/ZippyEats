@@ -13,6 +13,7 @@ import { startRouteLoader } from "../lib/routeLoading";
 import { useDispatch } from "react-redux";
 import { replaceCart } from "../store/slices/cartSlice";
 import { useNotifications } from "../hooks/useNotifications";
+import { registerMessagingServiceWorker } from "../lib/firebase";
 
 
 
@@ -54,6 +55,14 @@ function AppShell({ children }) {
       router.push("/login");
     }
   }, [pathname, router]);
+
+
+
+  useEffect(() => {
+    registerMessagingServiceWorker().catch((err) => {
+      console.error("[SW] Registration failed:", err);
+    });
+  }, []);
 
   // ── Cross-tab cart sync ──────────────────────
   useEffect(() => {

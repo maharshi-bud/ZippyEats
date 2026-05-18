@@ -4,7 +4,7 @@
 // ============================================================
 
 import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, isSupported, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,9 +17,33 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export function getFirebaseMessaging() {
+export async function getFirebaseMessaging() {
   if (typeof window === "undefined") return null;
+  const supported = await isSupported();
+  if (!supported) {
+    console.warn("[FCM] Messaging is not supported in this browser");
+    return null;
+  }
   return getMessaging(app);
+}
+
+export async function registerMessagingServiceWorker() {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    console.warn("[FCM] Service workers are not available");
+    return null;
+  }
+
+  const existing = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+  if (existing) {
+    console.log("[SW] Existing registration:", existing.scope);
+    return existing;
+  }
+
+  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+    scope: "/",
+  });
+  console.log("[SW] Registered:", registration.scope);
+  return registration;
 }
 
 // ── Request permission + get FCM token ───────────────────
@@ -31,11 +55,15 @@ export async function requestNotificationPermission(authToken) {
       return null;
     }
 
-    const messaging = getFirebaseMessaging();
+    const messaging = await getFirebaseMessaging();
     if (!messaging) return null;
+
+    const serviceWorkerRegistration = await registerMessagingServiceWorker();
+    if (!serviceWorkerRegistration) return null;
 
     const fcmToken = await getToken(messaging, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration,
     });
 
     if (!fcmToken) return null;
@@ -64,7 +92,14 @@ export async function requestNotificationPermission(authToken) {
 // ── Listen for foreground messages ───────────────────────
 export function onForegroundMessage(callback) {
   if (typeof window === "undefined") return () => {};
-  const messaging = getFirebaseMessaging();
-  if (!messaging) return () => {};
-  return onMessage(messaging, callback);
+  let unsubscribe = () => {};
+
+  getFirebaseMessaging()
+    .then((messaging) => {
+      if (!messaging) return;
+      unsubscribe = onMessage(messaging, callback);
+    })
+    .catch((err) => console.error("[FCM] foreground listener failed:", err));
+
+  return () => unsubscribe?.();
 }

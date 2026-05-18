@@ -1,12 +1,13 @@
 // ============================================================
 // FILE: client/public/firebase-messaging-sw.js
-// Also copy to: admin/public/firebase-messaging-sw.js
-// ============================================================
-// This file MUST be in /public — it runs as a service worker
 // ============================================================
 
-importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js");
+// ✅ Take over immediately — prevents duplicate service workers
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
+importScripts("https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/12.13.0/firebase-messaging-compat.js");
 
 firebase.initializeApp({
   apiKey:            "AIzaSyDcUIhib2wJVlFeXRmWG3Yc27WD1wFf2-4",
@@ -15,42 +16,38 @@ firebase.initializeApp({
   storageBucket:     "zippyeats-9a038.firebasestorage.app",
   messagingSenderId: "855429795584",
   appId:             "1:855429795584:web:34b5636417c50254142de5",
-    measurementId: "G-T6EQ8YD4S0"
+  measurementId:     "G-T6EQ8YD4S0"
 });
 
 const messaging = firebase.messaging();
-// Handle background messages
+
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification;
-  const data = payload.data || {};
+  // ✅ Skip if app window is open — prevents duplicate with foreground handler
+  self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    if (clients.length > 0) return;
 
-  const notificationTitle = title;
-  const notificationOptions = {
-    body,
-    icon: "../src/lib/imgs/logoSquare.png",
-    badge: "../src/lib/imgs/logoCircle.png",
-    data,
-    actions: getActions(data.type),
-  };
+    const { title = "ZippyEats", body = "" } = payload.notification || {};
+    const data = payload.data || {};
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+    self.registration.showNotification(title, {
+      body,
+      icon: "/logoSquare.png",
+      badge: "/logoCircle.png",
+      data,
+      actions: getActions(data.type),
+    });
+  });
 });
 
 function getActions(type) {
-  if (type?.startsWith("ORDER")) {
-    return [{ action: "view_order", title: "View Order" }];
-  }
-  if (type?.startsWith("TICKET")) {
-    return [{ action: "view_ticket", title: "View Ticket" }];
-  }
+  if (type?.startsWith("ORDER")) return [{ action: "view_order", title: "View Order" }];
+  if (type?.startsWith("TICKET")) return [{ action: "view_ticket", title: "View Ticket" }];
   return [];
 }
 
-// Handle notification click
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const data = event.notification.data || {};
-
   let url = "/";
   if (data.type?.startsWith("ORDER")) url = `/orders/${data.orderId}`;
   if (data.type?.startsWith("TICKET")) url = `/queries`;
