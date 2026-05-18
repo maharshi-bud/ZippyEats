@@ -53,7 +53,7 @@ router.post("/token", protect, async (req, res) => {
 // DELETE /api/fcm/token — remove on logout
 router.delete("/token", protect, async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user._id, { $unset: { fcmToken: "" } });
+    await User.findByIdAndUpdate(req.user._id || req.user.id, { fcmToken: null });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: "Server error" });

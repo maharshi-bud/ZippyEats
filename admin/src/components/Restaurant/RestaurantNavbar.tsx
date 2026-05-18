@@ -6,10 +6,27 @@ import { useRouter } from "next/navigation";
 export default function RestaurantNavbar() {
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem("restaurantToken");
-    localStorage.removeItem("restaurant");
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
+      if (token) {
+        await fetch("http://localhost:5010/api/fcm/token", {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch (err) {
+      console.error("[FCM] Logout clear failed:", err);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("restaurantToken");
+      localStorage.removeItem("restaurant");
+      Object.keys(sessionStorage)
+        .filter((k) => k.startsWith("fcm_init_"))
+        .forEach((k) => sessionStorage.removeItem(k));
+      router.push("/login");
+    }
   };
 
   return (

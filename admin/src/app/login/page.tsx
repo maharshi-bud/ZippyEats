@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import api from "../../../../client/src/lib/api";
-
+import { requestNotificationPermission } from "../../lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,20 +33,25 @@ export default function LoginPage() {
       // store token
       localStorage.setItem("token", token);
 
+      // register FCM immediately after login
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1] || ""));
+        await requestNotificationPermission(token, payload?.role === "admin");
+      } catch (err) {
+        console.warn("[FCM] Login registration failed:", err);
+      }
+
       // decode role
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-   if (payload.role === "admin") {
-  router.push("/");
-}
-else if (payload.role === "restaurant") {
-  router.push("/restaurant");
-  console.log("Pushed")
-}
-else {
-  alert("Access denied");
-  localStorage.removeItem("token");
-}
+      if (payload.role === "admin") {
+        router.push("/");
+      } else if (payload.role === "restaurant") {
+        router.push("/restaurant");
+      } else {
+        alert("Access denied");
+        localStorage.removeItem("token");
+      }
     } catch (err: unknown) {
       const message =
         typeof err === "object" && err !== null && "response" in err

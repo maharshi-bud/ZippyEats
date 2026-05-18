@@ -8,14 +8,23 @@ export function useNotifications() {
     if (!token) return;
 
     // ✅ Only register once per session
-    if (sessionStorage.getItem("fcm_init")) return;
-    sessionStorage.setItem("fcm_init", "true");
+    // const tokenKey = `fcm_init_${token.slice(-10)}`; // last 10 chars of JWT as key
+    // if (sessionStorage.getItem(tokenKey)) return;
+    // if (sessionStorage.getItem("fcm_init")) return;
+    // sessionStorage.setItem("fcm_init", "true");
 
-    requestNotificationPermission(token, true);
+    let isAdmin = false;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1] || ""));
+      isAdmin = payload?.role === "admin";
+    } catch (err) {
+      console.warn("[FCM] Could not parse token role:", err);
+    }
+
+    requestNotificationPermission(token, isAdmin);
 
     const unsubscribe = onForegroundMessage((payload) => {
       const { title, body } = payload.notification || {};
-      const data = payload.data || {};
       console.log("[FCM] Foreground message:", title, body);
     });
 

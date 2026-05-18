@@ -2,7 +2,6 @@
 // FILE: client/public/firebase-messaging-sw.js
 // ============================================================
 
-// ✅ Take over immediately — prevents duplicate service workers
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
@@ -22,7 +21,6 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  // ✅ Skip if app window is open — prevents duplicate with foreground handler
   self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
     if (clients.length > 0) return;
 
@@ -35,6 +33,8 @@ messaging.onBackgroundMessage((payload) => {
       badge: "/logoCircle.png",
       data,
       actions: getActions(data.type),
+      tag: data.orderId || data.ticketId || "default", // ← prevents duplicate notifications
+      renotify: true,
     });
   });
 });
@@ -45,20 +45,47 @@ function getActions(type) {
   return [];
 }
 
+function getTargetUrl(data) {
+  if (!data) return "/";
+  // Order notifications → go to that specific order page
+  if (data.orderId && data.type?.startsWith("ORDER")) return `/orders/${data.orderId}`;
+  if (data.type === "REFUND" && data.orderId) return `/orders/${data.orderId}`;
+  if (data.type?.startsWith("TICKET")) return "/support"; // adjust to your support page path
+  return "/";
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
   const data = event.notification.data || {};
-  let url = "/";
-  if (data.type?.startsWith("ORDER")) url = `/orders/${data.orderId}`;
-  if (data.type?.startsWith("TICKET")) url = `/queries`;
-  if (data.type === "REFUND") url = `/orders/${data.orderId}`;
+  const action = event.action;
+
+  // Determine URL based on action button clicked or notification type
+  let url;
+  if (action === "view_order" || (data.type?.startsWith("ORDER") && data.orderId)) {
+    url = `/orders/${data.orderId}`;
+  } else if (action === "view_ticket" || data.type?.startsWith("TICKET")) {
+    url = "/support"; // ← adjust to your client-side support/ticket page path
+  } else if (data.type === "REFUND" && data.orderId) {
+    url = `/orders/${data.orderId}`;
+  } else {
+    url = getTargetUrl(data);
+  }
 
   event.waitUntil(
-    clients.matchAll({ type: "window" }).then((clientList) => {
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // ✅ If app is already open — focus and navigate to the right page
       for (const client of clientList) {
-        if (client.url === url && "focus" in client) return client.focus();
+        if ("focus" in client) {
+          client.focus();
+          client.navigate(url); // ← navigate existing tab
+          return;
+        }
       }
-      if (clients.openWindow) return clients.openWindow(url);
+      // ✅ App not open — open new window at the right URL
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(url);
+      }
     })
   );
 });
