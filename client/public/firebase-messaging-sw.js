@@ -116,10 +116,11 @@ self.addEventListener("notificationclick", (event) => {
 function getNavigationUrl(data) {
   const type = data.type || "";
   if (type.startsWith("ORDER") || type === "REFUND") {
-    return data.orderId ? `/orders/${data.orderId}` : "/orders";
+    return data.orderId ? `/orders/${data.orderId}` : "/profile";
   }
-  if (type.startsWith("TICKET") || type === "SUPPORT") {
-    return "/queries";
+
+    if (type.startsWith("TICKET") || type === "SUPPORT") {
+    return data.orderId ? `/orders/${data.orderId}` : "/profile";
   }
   return "/";
 }

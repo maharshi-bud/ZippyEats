@@ -240,9 +240,9 @@ try {
   await notifyTicketStatusChanged({
     userFcmToken: user?.fcmToken,
     status,
-    
     ticketNo: ticket.ticketId,
     ticketId: ticket._id.toString(),
+    orderId: ticket.orderId?.toString(),
   });
 } catch (fcmErr) {
   console.error("FCM FAILED (non-fatal):", fcmErr.message);

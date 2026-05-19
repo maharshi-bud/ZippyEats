@@ -111,7 +111,7 @@ export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, o
     data: makeMessageData(
       "🛎️ New Order!",
       `You have a new order — ${itemCount} items for ₹${total}`,
-      { type: "ORDER_NEW", orderId: orderId?.toString() }
+      { type: "ORDER_NEW", orderId: orderId?.toString(), role: "restaurant" }
     ),
   });
 
@@ -120,7 +120,7 @@ export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, o
     data: makeMessageData(
       "📦 New Order Placed",
       `New order at ${restaurantName} — ₹${total}`,
-      { type: "ORDER_NEW", orderId: orderId?.toString() }
+      { type: "ORDER_NEW", orderId: orderId?.toString(), role: "admin" }
     ),
   });
 }
@@ -180,6 +180,7 @@ export async function notifyOrderStatusChanged({
         type: `ORDER_${status.toUpperCase()}`,
         orderId: orderId?.toString(),
         status: status?.toString(),
+        role: "user",
       }),
     });
   } catch (err) {
@@ -189,37 +190,37 @@ export async function notifyOrderStatusChanged({
 
 export async function notifyOrderCancelled({ restaurantFcmToken, userFcmToken, orderId, restaurantName }) {
   await sendToToken(restaurantFcmToken, {
-    data: makeMessageData("❌ Order Cancelled", "A customer has cancelled their order.", { type: "ORDER_CANCELLED", orderId: orderId?.toString() }),
+    data: makeMessageData("❌ Order Cancelled", "A customer has cancelled their order.", { type: "ORDER_CANCELLED", orderId: orderId?.toString(), role: "restaurant" }),
   });
   await sendToToken(userFcmToken, {
-    data: makeMessageData("❌ Order Cancelled", `Your order from ${restaurantName} has been cancelled.`, { type: "ORDER_CANCELLED", orderId: orderId?.toString() }),
+    data: makeMessageData("❌ Order Cancelled", `Your order from ${restaurantName} has been cancelled.`, { type: "ORDER_CANCELLED", orderId: orderId?.toString(), role: "user" }),
   });
   await sendToTopic("admin_orders", {
-    data: makeMessageData("❌ Order Cancelled", `Order at ${restaurantName} was cancelled.`, { type: "ORDER_CANCELLED", orderId: orderId?.toString() }),
+    data: makeMessageData("❌ Order Cancelled", `Order at ${restaurantName} was cancelled.`, { type: "ORDER_CANCELLED", orderId: orderId?.toString(), role: "admin" }),
   });
 }
 
 export async function notifyRefundIssued({ userFcmToken, amount, orderId }) {
   await sendToToken(userFcmToken, {
-    data: makeMessageData("💰 Refund Issued", `₹${amount} has been refunded to your account.`, { type: "REFUND", orderId: orderId?.toString(), amount: String(amount) }),
+    data: makeMessageData("💰 Refund Issued", `₹${amount} has been refunded to your account.`, { type: "REFUND", orderId: orderId?.toString(), amount: String(amount), role: "user" }),
   });
 }
 
 // ── Support ticket notifications ─────────────────────────
 
-export async function notifyNewTicket({ ticketId, ticketNo, category, userName }) {
+export async function notifyNewTicket({ ticketId, ticketNo, category, userName , }) {
   await sendToTopic("admin_support", {
-    data: makeMessageData("🎫 New Support Ticket", `${userName} raised a ${category.replace(/_/g, " ")} ticket — ${ticketNo}`, { type: "TICKET_NEW", ticketId }),
+    data: makeMessageData("🎫 New Support Ticket", `${userName} raised a ${category.replace(/_/g, " ")} ticket — ${ticketNo}`, { type: "TICKET_NEW", ticketId, role: "admin" }),
   });
 }
 
 export async function notifyTicketUrgent({ ticketId, ticketNo, category }) {
   await sendToTopic("admin_support", {
-    data: makeMessageData("🚨 Urgent Ticket!", `High priority: ${category.replace(/_/g, " ")} — ${ticketNo}`, { type: "TICKET_URGENT", ticketId }),
+    data: makeMessageData("🚨 Urgent Ticket!", `High priority: ${category.replace(/_/g, " ")} — ${ticketNo}`, { type: "TICKET_URGENT", ticketId, role: "admin" }),
   });
 }
 
-export async function notifyTicketStatusChanged({ userFcmToken, status, ticketNo,ticketId  }) {
+export async function notifyTicketStatusChanged({ userFcmToken, status, ticketNo, ticketId, orderId }) {
   const messages = {
     active:   { title: "💬 Agent Joined",      body: `Support staff joined your ticket ${ticketNo}` },
     resolved: { title: "✅ Ticket Resolved",   body: `Your support ticket ${ticketNo} has been resolved.` },
@@ -228,6 +229,6 @@ export async function notifyTicketStatusChanged({ userFcmToken, status, ticketNo
   const msg = messages[status];
   if (!msg) return;
   await sendToToken(userFcmToken, {
-    data: makeMessageData(msg.title, msg.body, { type: "TICKET_STATUS", ticketNo, ticketId: ticketId?.toString(), status }),
+    data: makeMessageData(msg.title, msg.body, { type: "TICKET_STATUS", ticketNo, ticketId: ticketId?.toString(), orderId: orderId?.toString(), status, role: "user" }),
   });
 }
