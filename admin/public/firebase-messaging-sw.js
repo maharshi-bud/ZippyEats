@@ -20,69 +20,115 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Dedupe guard + prefer payload.data for title/body
+const recentMessageIds = new Set();
+function forgetMessageId(id, ttl = 30_000) { setTimeout(() => recentMessageIds.delete(id), ttl); }
+
 messaging.onBackgroundMessage((payload) => {
+  const data = payload.data || {};
+  const title = data.title || (payload.notification && payload.notification.title) || "ZippyEats Admin";
+  const body = data.body || (payload.notification && payload.notification.body) || "";
+  const messageId = data.messageId || payload.messageId || `m_${Date.now()}`;
+  const tag = data.tag || data.ticketId || data.orderId || messageId || "default";
+
+  // avoid duplicate processing
+  if (recentMessageIds.has(messageId)) {
+    console.log("[SW] Duplicate messageId in-memory, skipping:", messageId);
+    return;
+  }
+
   self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-    if (clients.length > 0) return;
+    // show notification only if not already present
+    self.registration.getNotifications({ tag }).then((existing) => {
+      if (existing && existing.length > 0) {
+        console.log("[SW] Existing notification with tag found, skipping:", tag);
+        return;
+      }
 
-    const { title = "ZippyEats Admin", body = "" } = payload.notification || {};
-    const data = payload.data || {};
+      recentMessageIds.add(messageId);
+      forgetMessageId(messageId);
 
-    self.registration.showNotification(title, {
-      body,
-      icon: "/icons/icon-192x192.png",
-      badge: "/icons/badge-72x72.png",
-      data,
-      actions: getActions(data.type),
-      tag: data.ticketId || data.orderId || "default", // ← prevents duplicate notifications
-      renotify: true,
+      self.registration.showNotification(title, {
+        body,
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/badge-72x72.png",
+        data: { ...data, messageId },
+        tag,
+        renotify: true,
+        actions: getActions(data.type),
+      });
+    }).catch((err) => {
+      console.warn('[SW] getNotifications failed:', err, '— showing notification as fallback');
+      recentMessageIds.add(messageId);
+      forgetMessageId(messageId);
+      self.registration.showNotification(title, {
+        body,
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/badge-72x72.png",
+        data: { ...data, messageId },
+        tag,
+        renotify: true,
+        actions: getActions(data.type),
+      });
     });
   });
 });
 
 function getActions(type) {
-  if (type?.startsWith("ORDER")) return [{ action: "view_order", title: "View Order" }];
   if (type?.startsWith("TICKET")) return [{ action: "view_ticket", title: "View Ticket" }];
+  if (type?.startsWith("ORDER")) return [{ action: "view_order", title: "View Order" }];
   return [];
 }
 
-function getTargetUrl(data) {
-  if (!data) return "/";
-  if (data.type === "TICKET_NEW" || data.type === "TICKET_URGENT") return "/queries";
-  if (data.type === "TICKET_STATUS") return "/queries";
-  if (data.type?.startsWith("ORDER")) return "/orders"; // admin goes to orders list
+// ── Determine URL based on notification type ─────────────
+// ── Determine URL based on notification type ─────────────
+function getUrl(data, action) {
+  const type = data?.type || "";
+  const orderId = data?.orderId;
+
+  // Ticket notifications → /queries (admin)
+  if (
+    type === "TICKET_NEW" ||
+    type === "TICKET_URGENT" ||
+    type === "TICKET_STATUS" ||
+    action === "view_ticket"
+  ) {
+    return "/queries";
+  }
+
+  // New order / cancelled for restaurant → /restaurant/orders
+  if (type === "ORDER_NEW" || type === "ORDER_CANCELLED") {
+    return "/restaurant/orders";
+  }
+
+  // Other order notifications → /orders (admin orders list)
+  if (type.startsWith("ORDER") || action === "view_order") {
+    return "/orders";
+  }
+
   return "/";
-}
+} 
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-
   const data = event.notification.data || {};
   const action = event.action;
-
-  // Determine target URL based on action or notification type
-  let url;
-  if (action === "view_ticket" || data.type?.startsWith("TICKET")) {
-    url = "/queries";
-  } else if (action === "view_order" || data.type?.startsWith("ORDER")) {
-    url = "/orders";
-  } else {
-    url = getTargetUrl(data);
-  }
+  const url = getUrl(data, action);
+  console.log("[SW] Notification clicked →", url, "Data:", data);
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      // ✅ If admin app is already open — focus it and navigate
-      for (const client of clientList) {
-        if ("focus" in client) {
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        if (clientList.length > 0) {
+          const client = clientList[0];
           client.focus();
-          client.navigate(url); // ← navigate existing tab to the right page
-          return;
+          return client.navigate(url).catch(() => {
+            console.warn("[SW] navigate() failed, using postMessage");
+            client.postMessage({ type: "navigate", url });
+          });
         }
-      }
-      // ✅ No window open — open a new one
-      if (self.clients.openWindow) {
         return self.clients.openWindow(url);
-      }
-    })
+      })
   );
 });

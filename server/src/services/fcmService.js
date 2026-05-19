@@ -38,15 +38,21 @@ export async function sendToToken(token, { title, body, data = {} }) {
   console.log("[FCM] sendToToken:", title, "→", token?.slice(0, 15));
     if (!token) return;
   try {
-    await admin.messaging().send({
+    const message = {
       token,
-      notification: { title, body },
       data: Object.fromEntries(
         Object.entries(data).map(([k, v]) => [k, String(v)])
       ),
       android: { priority: "high" },
       apns: { payload: { aps: { sound: "default" } } },
-    });
+    };
+
+    // Only include notification when title/body explicitly provided
+    if (title || body) {
+      message.notification = { title, body };
+    }
+
+    await admin.messaging().send(message);
   } catch (err) {
     console.error(`[FCM] sendToToken failed (${token?.slice(0, 20)}...):`, err.message);
   }
@@ -63,15 +69,21 @@ export async function sendToTokens(tokens, payload) {
 export async function sendToTopic(topic, { title, body, data = {} }) {
     console.log("[FCM] sendToTopic:", title, "→ topic:", topic);
   try {
-    await admin.messaging().send({
+    const message = {
       topic,
-      notification: { title, body },
       data: Object.fromEntries(
         Object.entries(data).map(([k, v]) => [k, String(v)])
       ),
       android: { priority: "high" },
       apns: { payload: { aps: { sound: "default" } } },
-    });
+    };
+
+    // Only include notification when title/body explicitly provided
+    if (title || body) {
+      message.notification = { title, body };
+    }
+
+    await admin.messaging().send(message);
   } catch (err) {
     console.error(`[FCM] sendToTopic(${topic}) failed:`, err.message);
   }
@@ -82,20 +94,34 @@ export async function sendToTopic(topic, { title, body, data = {} }) {
 // ============================================================
 
 // ── Order notifications ──────────────────────────────────
+// Helper to create a stable data payload for SW
+function makeMessageData(title, body, extra = {}) {
+  const messageId = extra.messageId || `m_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  return {
+    ...extra,
+    title,
+    body,
+    messageId,
+  };
+}
 
 export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, orderId, itemCount, total }) {
-  // To restaurant
-  console.log("Sending notfications to admin and res ")        ;                                                 //remove
+  // To restaurant (token) — send data-only payload; SW will display notification
   await sendToToken(restaurantFcmToken, {
-    title: "🛎️ New Order!",
-    body: `You have a new order — ${itemCount} items for ₹${total}`,
-    data: { type: "ORDER_NEW", orderId },
+    data: makeMessageData(
+      "🛎️ New Order!",
+      `You have a new order — ${itemCount} items for ₹${total}`,
+      { type: "ORDER_NEW", orderId: orderId?.toString() }
+    ),
   });
-  // To admin topic          -------------------------------------------remove later  ----------------
+
+  // To admin topic (data-only)
   await sendToTopic("admin_orders", {
-    title: "📦 New Order Placed",
-    body: `New order at ${restaurantName} — ₹${total}`,
-    data: { type: "ORDER_NEW", orderId },
+    data: makeMessageData(
+      "📦 New Order Placed",
+      `New order at ${restaurantName} — ₹${total}`,
+      { type: "ORDER_NEW", orderId: orderId?.toString() }
+    ),
   });
 }
 
@@ -149,64 +175,33 @@ export async function notifyOrderStatusChanged({
   if (!msg) return;
 
   try {
-
-    const response =
-      await sendToToken(
-        userFcmToken,
-        {
-
-          ...msg,
-
-          data: {
-            type:
-              `ORDER_${status.toUpperCase()}`,
-
-            orderId:
-              orderId?.toString(),
-
-            status:
-              status?.toString(),
-          },
-        }
-      );
-
-    console.log(
-      "FCM RESPONSE:",
-      response
-    );
-
+    await sendToToken(userFcmToken, {
+      data: makeMessageData(msg.title, msg.body, {
+        type: `ORDER_${status.toUpperCase()}`,
+        orderId: orderId?.toString(),
+        status: status?.toString(),
+      }),
+    });
   } catch (err) {
-
-    console.error(
-      "FCM SEND FAILED:",
-      err
-    );
+    console.error("FCM SEND FAILED:", err);
   }
 }
 
 export async function notifyOrderCancelled({ restaurantFcmToken, userFcmToken, orderId, restaurantName }) {
   await sendToToken(restaurantFcmToken, {
-    title: "❌ Order Cancelled",
-    body: "A customer has cancelled their order.",
-    data: { type: "ORDER_CANCELLED", orderId },
+    data: makeMessageData("❌ Order Cancelled", "A customer has cancelled their order.", { type: "ORDER_CANCELLED", orderId: orderId?.toString() }),
   });
   await sendToToken(userFcmToken, {
-    title: "❌ Order Cancelled",
-    body: `Your order from ${restaurantName} has been cancelled.`,
-    data: { type: "ORDER_CANCELLED", orderId },
+    data: makeMessageData("❌ Order Cancelled", `Your order from ${restaurantName} has been cancelled.`, { type: "ORDER_CANCELLED", orderId: orderId?.toString() }),
   });
   await sendToTopic("admin_orders", {
-    title: "❌ Order Cancelled",
-    body: `Order at ${restaurantName} was cancelled.`,
-    data: { type: "ORDER_CANCELLED", orderId },
+    data: makeMessageData("❌ Order Cancelled", `Order at ${restaurantName} was cancelled.`, { type: "ORDER_CANCELLED", orderId: orderId?.toString() }),
   });
 }
 
 export async function notifyRefundIssued({ userFcmToken, amount, orderId }) {
   await sendToToken(userFcmToken, {
-    title: "💰 Refund Issued",
-    body: `₹${amount} has been refunded to your account.`,
-    data: { type: "REFUND", orderId, amount: String(amount) },
+    data: makeMessageData("💰 Refund Issued", `₹${amount} has been refunded to your account.`, { type: "REFUND", orderId: orderId?.toString(), amount: String(amount) }),
   });
 }
 
@@ -214,21 +209,17 @@ export async function notifyRefundIssued({ userFcmToken, amount, orderId }) {
 
 export async function notifyNewTicket({ ticketId, ticketNo, category, userName }) {
   await sendToTopic("admin_support", {
-    title: "🎫 New Support Ticket",
-    body: `${userName} raised a ${category.replace(/_/g, " ")} ticket — ${ticketNo}`,
-    data: { type: "TICKET_NEW", ticketId },
+    data: makeMessageData("🎫 New Support Ticket", `${userName} raised a ${category.replace(/_/g, " ")} ticket — ${ticketNo}`, { type: "TICKET_NEW", ticketId }),
   });
 }
 
 export async function notifyTicketUrgent({ ticketId, ticketNo, category }) {
   await sendToTopic("admin_support", {
-    title: "🚨 Urgent Ticket!",
-    body: `High priority: ${category.replace(/_/g, " ")} — ${ticketNo}`,
-    data: { type: "TICKET_URGENT", ticketId },
+    data: makeMessageData("🚨 Urgent Ticket!", `High priority: ${category.replace(/_/g, " ")} — ${ticketNo}`, { type: "TICKET_URGENT", ticketId }),
   });
 }
 
-export async function notifyTicketStatusChanged({ userFcmToken, status, ticketNo }) {
+export async function notifyTicketStatusChanged({ userFcmToken, status, ticketNo,ticketId  }) {
   const messages = {
     active:   { title: "💬 Agent Joined",      body: `Support staff joined your ticket ${ticketNo}` },
     resolved: { title: "✅ Ticket Resolved",   body: `Your support ticket ${ticketNo} has been resolved.` },
@@ -237,7 +228,6 @@ export async function notifyTicketStatusChanged({ userFcmToken, status, ticketNo
   const msg = messages[status];
   if (!msg) return;
   await sendToToken(userFcmToken, {
-    ...msg,
-    data: { type: "TICKET_STATUS", ticketNo, status },
+    data: makeMessageData(msg.title, msg.body, { type: "TICKET_STATUS", ticketNo, ticketId: ticketId?.toString(), status }),
   });
 }

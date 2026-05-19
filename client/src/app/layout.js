@@ -15,34 +15,23 @@ import { replaceCart } from "../store/slices/cartSlice";
 import { useNotifications } from "../hooks/useNotifications";
 import { registerMessagingServiceWorker } from "../lib/firebase";
 
-
-
-
-
 const PUBLIC_ROUTES = ["/login", "/", "/restaurants", "/search"];
 
-// ─────────────────────────────────────────────
-// Separate inner component so it INSIDE Provider
-// and can safely use useDispatch
-// ─────────────────────────────────────────────
 function AppShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
   useNotifications();
 
-  // ── Auth guard ──────────────────────────────
+  // ── Auth guard ────────────────────────────────────────────
   useEffect(() => {
     if (PUBLIC_ROUTES.includes(pathname) || pathname.startsWith("/restaurant")) return;
-
     const token = localStorage.getItem("token");
-
     if (!token) {
       startRouteLoader();
       router.push("/login");
       return;
     }
-
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       if (payload.exp * 1000 < Date.now()) {
@@ -56,33 +45,46 @@ function AppShell({ children }) {
     }
   }, [pathname, router]);
 
-
-
+  // ── Service worker registration ───────────────────────────
   useEffect(() => {
     registerMessagingServiceWorker().catch((err) => {
       console.error("[SW] Registration failed:", err);
     });
   }, []);
 
-  // ── Cross-tab cart sync ──────────────────────
+  // ── SW postMessage → router.push ──────────────────────────
+  // Single listener. SW sends { type: "navigate", url: "/orders/..." }
+  // after a notification click when the app tab is already open.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+
+    const handleMessage = (event) => {
+      console.log("[Layout] SW message received:", event.data);
+      if (event.data?.type === "navigate" && event.data?.url) {
+        console.log("[Layout] Navigating to:", event.data.url);
+        router.push(event.data.url);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
+    };
+  }, [router]);
+
+  // ── Cross-tab cart sync ───────────────────────────────────
   useEffect(() => {
     const handleStorageChange = (event) => {
       if (event.key === "cart") {
         try {
-          const parsed = event.newValue 
-            ? JSON.parse(event.newValue) 
-            : { items: [] };
-          
-          // ✅ Extract items array from object shape { items: [...] }
+          const parsed = event.newValue ? JSON.parse(event.newValue) : { items: [] };
           const items = Array.isArray(parsed.items) ? parsed.items : [];
-          
           dispatch(replaceCart(items));
         } catch (error) {
           console.error("Failed to sync cart from storage event:", error);
         }
       }
     };
-
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [dispatch]);
@@ -98,9 +100,6 @@ function AppShell({ children }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Root layout just wraps with Provider
-// ─────────────────────────────────────────────
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
