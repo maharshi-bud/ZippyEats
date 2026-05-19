@@ -16,8 +16,22 @@ import {
 
 import { getUserGrowth } from "./tools/users.tools.js";
 
+import {
+  getAvgDeliveryTime,
+  getTopItems,
+  getRevenueByRestaurant,
+  getRepeatCustomers,
+  getPaymentMethodBreakdown,
+  getDeliveryFeeRevenue,
+  getDailyOrderVolume,
+  getNewVsReturningUsers,
+  getTopCustomers,
+  getLowRatedRestaurants,
+} from "./tools/analytics.tools.js";
+
 // ✅ Add new tools here — AI will automatically have access to them
 export const toolRegistry = {
+  // existing
   getRevenueStats,
   getPeakHours,
   getCancellationStats,
@@ -25,4 +39,16 @@ export const toolRegistry = {
   getTopRestaurants,
   getUnderperformingRestaurants,
   getUserGrowth,
+
+  // analytics.tools.js
+  getAvgDeliveryTime,
+  getTopItems,
+  getRevenueByRestaurant,
+  getRepeatCustomers,
+  getPaymentMethodBreakdown,
+  getDeliveryFeeRevenue,
+  getDailyOrderVolume,
+  getNewVsReturningUsers,
+  getTopCustomers,
+  getLowRatedRestaurants,
 };
