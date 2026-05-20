@@ -33,7 +33,8 @@ const orderItemSchema = new mongoose.Schema(
     veg: {
       type: Boolean,
       default: true,
-    },
+    },coins_used: { type: Number, default: 0, min: 0 },
+coins_discount: { type: Number, default: 0, min: 0 },
   },
   { _id: false }
 );

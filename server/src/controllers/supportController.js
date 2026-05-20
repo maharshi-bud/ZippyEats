@@ -412,90 +412,6 @@ export async function sendSystemMessage(req, res) {
 
 
 
-// ── POST /api/support/tickets/:id/refund ──────────────────
-// working  export async function processRefund(req, res) {
-//   try {
-//     const { refundType, amount, reason } = req.body;
-//     // refundType: "full" | "partial" | "item"
-//     const ticket = await SupportTicket.findById(req.params.id).populate("orderId");
-//     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
-
-//     let refundAmount = amount;
-//     if (refundType === "full") refundAmount = ticket.orderId.total_amount;
-
-//     ticket.refundAmount = (ticket.refundAmount || 0) + refundAmount;
-//     ticket.actionLog.push({
-//       action: `Refund processed: ₹${refundAmount} (${refundType})`,
-//       performedBy: req.user._id,
-//       meta: { refundType, amount: refundAmount, reason },
-//     });
-
-//     await ticket.save();
-
-//     const msg = await SupportMessage.create({
-//       ticketId: ticket._id,
-//       senderType: "system",
-//       message: `Refund of Rs.${refundAmount} processed (${refundType}). Reason: ${reason || "Not provided"}`,
-//     });
-
-//     const populatedTicket = await SupportTicket.findById(ticket._id)
-//       .populate("userId", "name email")
-//       .populate("orderId");
-
-//     const refundPayload = {
-//       ticketId: ticket._id.toString(),
-//       ticket: populatedTicket,
-//       message: msg,
-//       refundAmount,
-//       refundType,
-//     };
-
-//     const io = getIO();
-//     io.to(`support:${ticket._id}`).emit("message:new", msg);
-//     io.to(`user:${ticket.userId.toString()}`).emit("message:new", msg);
-//     io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", refundPayload);
-//     io.to("admin_support").emit("ticket:message", { ticketId: ticket._id.toString(), message: msg });
-//     emitTicketUpdate(populatedTicket);
-
-//     return res.json({ success: true, refundAmount, message: msg, ticket: populatedTicket });
-//     {
-
-//     // System message
-//     // await SupportMessage.create({
-//     //   ticketId: ticket._id,
-//     //   senderType: "system",
-//     //   message: `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason}`,
-//     // });
-// const msg = await SupportMessage.create({
-//   ticketId: ticket._id,
-
-//   senderType: "system",
-
-//   message:
-//     `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason}`,
-// });
-
-
-//     // const io = getIO();
-//     // io.to(`support:${ticket._id}`).emit("ticket:refund", { refundAmount, refundType });
-//     // io.to(`user:${ticket.userId}`).emit("ticket:refund", { refundAmount, refundType });
-
-// const io = getIO();
-// io.to(`support:${ticket._id}`).emit("message:new", msg);
-// io.to(`user:${ticket.userId.toString()}`).emit("ticket:refund", { refundAmount, refundType });
-
-//     res.json({ success: true, refundAmount });
-//     }
-//   } catch (err) {
-//     res.status(500).json({ message: "Server error" });
-//   }
-// } working 
-
-
-// ============================================================
-// FILE: server/src/controllers/supportController.js
-// REPLACE your processRefund with this clean version
-// ============================================================
 
 export async function processRefund(req, res) {
   try {
@@ -513,11 +429,15 @@ export async function processRefund(req, res) {
       meta: { refundType, amount: refundAmount, reason },
     });
     await ticket.save();
+await User.findByIdAndUpdate(ticket.userId, {
+  $inc: { zipCoins: refundAmount },
+});
+
 
     const msg = await SupportMessage.create({
-      ticketId: ticket._id,
-      senderType: "system",
-      message: `💰 Refund of ₹${refundAmount} processed (${refundType}). Reason: ${reason || "Not provided"}`,
+       ticketId: ticket._id,
+  senderType: "system",
+  message: `🪙 ${refundAmount} ZipCoins credited to your account (equivalent to ₹${refundAmount} refund).`,
     });
 
     const populatedTicket = await SupportTicket.findById(ticket._id)

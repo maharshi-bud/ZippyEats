@@ -9,8 +9,17 @@ import {
   setDefaultAddress,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import multer from "multer";
+import { uploadProfilePic, getProfilePic, getMyCoins } from "../controllers/userController.js";
+
 
 const router = express.Router();
+
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
+router.post("/me/profile-pic", protect, upload.single("pic"), uploadProfilePic);
+router.get("/me/profile-pic", protect, getProfilePic);
+router.get("/me/coins", protect, getMyCoins);
 
 // Profile & stats
 router.get("/me", protect, getProfile);

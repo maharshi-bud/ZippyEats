@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema(
     type: String,
     default: null,
   },
+  zipCoins: {
+  type: Number,
+  default: 0,
+  min: 0,
+},profilePic: {
+  data: Buffer,
+  contentType: String,
+},
   },
   { timestamps: true }
 );

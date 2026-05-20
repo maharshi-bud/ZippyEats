@@ -172,3 +172,45 @@ export const setDefaultAddress = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// ── Upload profile pic ───────────────────────────────────
+export async function uploadProfilePic(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
+    await User.findByIdAndUpdate(req.user.id, {
+      profilePic: {
+        data: req.file.buffer,
+        contentType: req.file.mimetype,
+      },
+    });
+
+    res.json({ success: true, message: "Profile picture updated" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ── Ge;t profile pic ──────────────────────────────────────
+export async function getProfilePic(req, res) {
+  try {
+    const user = await User.findById(req.user.id).select("profilePic");
+    if (!user?.profilePic?.data) {
+      return res.status(404).json({ message: "No profile picture" });
+    }
+    res.set("Content-Type", user.profilePic.contentType);
+    res.send(user.profilePic.data);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ── Get coins balance ────────────────────────────────────
+export async function getMyCoins(req, res) {
+  try {
+    const user = await User.findById(req.user.id).select("zipCoins");
+    res.json({ success: true, data: { zipCoins: user?.zipCoins || 0 } });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
