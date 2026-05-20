@@ -95,7 +95,7 @@ export async function requestNotificationPermission(
     if (isAdmin) {
 
       try {
-
+          
         await fetch(
           `${
             process.env

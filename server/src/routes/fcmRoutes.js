@@ -9,7 +9,7 @@ import admin from "firebase-admin";
 import { adminOnly } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
-
+const ADMIN_TOPICS = ["admin_orders", "admin_support"];
 // POST /api/fcm/token  — save FCM token for logged-in user
 // router.post("/token", protect, async (req, res) => {
 //   try {
@@ -51,14 +51,52 @@ router.post("/token", protect, async (req, res) => {
 
 
 // DELETE /api/fcm/token — remove on logout
+// router.delete("/token", protect, async (req, res) => {
+//   try {
+//     await User.findByIdAndUpdate(req.user._id || req.user.id, { fcmToken: null });
+//     res.json({ success: true });
+//   } catch (err) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 router.delete("/token", protect, async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user._id || req.user.id, { fcmToken: null });
+      console.log("[FCM DELETE] req.user:", req.user);  // add this
+
+    const userId = req.user.id;
+    const userRole = req.user.role; // ← from JWT via protect, no DB query needed
+ 
+    // Get current FCM token from DB before clearing it
+    const user = await User.findById(userId).select("fcmToken");
+ 
+    const fcmToken = user?.fcmToken;
+ 
+    // Unsubscribe from admin topics BEFORE clearing token from DB
+    // role comes from req.user (JWT) — no need to select it from DB
+    if (fcmToken && userRole === "admin") {
+      await Promise.allSettled(
+        ADMIN_TOPICS.map((topic) =>
+          admin.messaging()
+            .unsubscribeFromTopic([fcmToken], topic)
+            .then(() => console.log(`[FCM] Unsubscribed ${userId} from ${topic}`))
+            .catch((err) => console.warn(`[FCM] Unsub ${topic} failed:`, err.message))
+        )
+      );
+    }
+ 
+    // Always clear token from DB regardless of role
+    await User.findByIdAndUpdate(userId, { fcmToken: null });
+ 
+    console.log("[FCM] Token cleared for user:", userId, "role:", userRole);
     res.json({ success: true });
   } catch (err) {
+    console.error("[FCM Route] /token DELETE error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
+
 
 
 // POST /api/fcm/subscribe-admin

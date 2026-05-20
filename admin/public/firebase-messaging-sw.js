@@ -200,70 +200,7 @@ function getActions(type) {
   return [];
 }
 
-// ── Route resolver ────────────────────────────────────────
-// function getUrl(
-//   data,
-//   action
-// ) {
 
-//   const type =
-//     data?.type || "";
-
-//   // ── Tickets ─────────────────
-//   if (
-//     type.startsWith(
-//       "TICKET"
-//     )
-//     ||
-//     action ===
-//       "view_ticket"
-//   ) {
-
-//     // if (data.ticketId) {
-
-//     //   return `/queries?ticket=${data.ticketId}`;
-//     // }
-
-//     return "/queries";
-//   }
-
-//   // ── Restaurant orders ──────
-//   if (
-//     type ===
-//       "ORDER_NEW"
-//     ||
-//     type ===
-//       "ORDER_CANCELLED"
-//   ) {
-
-//     if (data.orderId) {
-
-//       return `/orders?order=${data.orderId}`;
-//     }
-
-//     return "/restaurant/orders";
-//   }
-
-//   // ── Admin orders ───────────
-//   if (
-//     type.startsWith(
-//       "ORDER"
-//     )
-//     ||
-//     action ===
-//       "view_order"
-//   ) {
-
-//     if (data.orderId) {
-
-//       return `/orders?order=${data.orderId}`;
-//     }
-
-//     return "/orders";
-//   }
-
-//   return "/";
-// }
 
 // ── Notification click handler ────────────────────────────
 self.addEventListener(
@@ -361,7 +298,7 @@ function getUrl(data, action) {
 
   if (type.startsWith("ORDER") || action === "view_order") {
     if (role === "restaurant") {
-      return "/orders";
+      return "/restaurant/orders";
     }
     if (role === "admin") {
       return data.orderId ? `/order/${data.orderId}` : "/orders";

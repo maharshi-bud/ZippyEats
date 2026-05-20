@@ -14,8 +14,10 @@ export default function Navbar() {
         await fetch("http://localhost:5010/api/fcm/token", {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
-        });
+        }); 
       }
+    // unsubscribeFromTopic([fcmToken], "admin_support");  
+
     } catch (err) {
       console.error("[FCM] Logout clear failed:", err);
     } finally {
