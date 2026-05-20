@@ -8,7 +8,7 @@ import { connectDB } from "./config/db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import testRoutes from "./routes/testRoutes.js";
+// import testRoutes from "./routes/testRoutes.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import User from "./models/User.js";
 import Restaurant from "./models/Restaurant.js";
@@ -72,7 +72,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use("/api", orderRoutes);
-app.use("/api/test", testRoutes);
+// app.use("/api/test", testRoutes);
 app.use("/api/admin/stats", protect, adminOnly, adminStatsRoutes);
 
 app.get("/api/health", (req, res) => {

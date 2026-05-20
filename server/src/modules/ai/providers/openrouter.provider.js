@@ -23,7 +23,7 @@ export async function chatCompletion(messages) {
    ,
     messages,
     temperature: 0.2,
-    max_tokens: 10000,
+    max_tokens: 5000,
   });
   return res.choices[0].message.content;
 }
