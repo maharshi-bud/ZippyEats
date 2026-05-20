@@ -1,45 +1,68 @@
 // ============================================================
 // FILE: server/src/modules/ai/ai.service.js
 // ============================================================
+// CHANGES:
+// 1. Multi-tool: LLM can now request multiple tools in one turn
+//    via { "action": "tool_calls", "tools": [...] }
+// 2. Custom dates: user query is enriched with today's date so
+//    LLM can resolve "yesterday", "last week", etc. into
+//    { from, to } args that tools now accept
+// 3. MAX_ITERATIONS raised to 10 to allow multi-tool analysis
+// ============================================================
 
 import { systemPrompt } from "./prompts/systemPrompt.js";
 import { toolRegistry } from "./toolRegistry.js";
 import "dotenv/config";
 
-// 🔁 Provider auto-switch based on environment
-// Development → Ollama (local, free)
-// Production  → OpenRouter (hosted, paid)
 const isDev = process.env.NODE_ENV === "development";
-
-// const { chatCompletion } = isDev
-//   ? await import("./providers/ollama.provider.js")
-//   : await import("./providers/openrouter.provider.js");
-// console.log("API KEY:", process.env.OPENROUTER_API_KEY?.slice(0, 10));
-  const { chatCompletion } = isDev
+const { chatCompletion } = isDev
   ? await import("./providers/ollama.provider.js")
   : await import("./providers/openrouter.provider.js");
-const MAX_ITERATIONS = 5; // safety cap on agent loop
+
+const MAX_ITERATIONS = 10;
+
+// ── Inject today's date into every query ─────────────────
+// This lets the LLM resolve "yesterday", "last week",
+// "first week of the month" into actual { from, to } dates.
+function buildUserMessage(userQuery) {
+  const now = new Date();
+  const dateStr = now.toISOString().split("T")[0]; // "2025-01-15"
+  const dayName = now.toLocaleDateString("en-US", { weekday: "long" }); // "Wednesday"
+
+  return `Today is ${dayName}, ${dateStr}.
+
+User query: ${userQuery}`;
+}
+
+// ── Execute a single tool call ────────────────────────────
+async function executeTool(toolName, args) {
+  const toolFn = toolRegistry[toolName];
+  if (!toolFn) {
+    return { error: `Unknown tool: ${toolName}` };
+  }
+  try {
+    return await toolFn(args || {});
+  } catch (err) {
+    console.error(`[AI Service] Tool "${toolName}" failed:`, err.message);
+    return { error: err.message };
+  }
+}
 
 /**
- * Core agent loop.
- * 1. Sends user query to LLM
- * 2. LLM picks a tool
- * 3. We execute the tool
- * 4. Feed result back to LLM
- * 5. LLM gives final answer
- *
- * @param {string} userQuery
- * @returns {Promise<{ response: string }>}
+ * Core agent loop — supports:
+ * - Single tool call:   { action: "tool_call", tool, args }
+ * - Multi tool calls:   { action: "tool_calls", tools: [{ tool, args }, ...] }
+ * - Final answer:       { action: "final_answer", response }
+ * - Clarify:            { action: "clarify", message }
  */
 export async function runAgentLoop(userQuery) {
   const messages = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: userQuery },
+    { role: "user", content: buildUserMessage(userQuery) },
   ];
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     let raw;
-
     try {
       raw = await chatCompletion(messages);
     } catch (err) {
@@ -47,58 +70,63 @@ export async function runAgentLoop(userQuery) {
       return { response: "AI service is currently unavailable. Please try again." };
     }
 
-    // Strip any accidental markdown fences
     const clean = raw.replace(/```json|```/g, "").trim();
 
     let parsed;
     try {
       parsed = JSON.parse(clean);
     } catch {
-      // LLM didn't return JSON — return raw as fallback
-      console.warn("[AI Service] Non-JSON response from LLM:", raw);
+      console.warn("[AI Service] Non-JSON response:", raw);
       return { response: raw };
     }
 
-    // ✅ Final answer — return to user
+    // ── Final answer ────────────────────────────────────
     if (parsed.action === "final_answer") {
       return { response: parsed.response };
     }
 
-    // ❓ Clarification needed
+    // ── Clarification needed ─────────────────────────────
     if (parsed.action === "clarify") {
       return { response: parsed.message };
     }
 
-    // 🔧 Tool call — execute it
+    // ── Single tool call ─────────────────────────────────
     if (parsed.action === "tool_call") {
-      const toolName = parsed.tool;
-      const toolFn = toolRegistry[toolName];
+      console.log(`[AI Service] Tool call: ${parsed.tool}`, parsed.args);
+      const result = await executeTool(parsed.tool, parsed.args);
 
-      if (!toolFn) {
-        console.warn(`[AI Service] Unknown tool requested: ${toolName}`);
-        return { response: `I tried to use an unknown tool (${toolName}). Please rephrase your question.` };
-      }
-
-      let toolResult;
-      try {
-        toolResult = await toolFn(parsed.args || {});
-      } catch (err) {
-        console.error(`[AI Service] Tool "${toolName}" failed:`, err.message);
-        return { response: `Failed to fetch data for your query. Please try again.` };
-      }
-
-      // Feed result back to conversation
       messages.push({ role: "assistant", content: raw });
       messages.push({
         role: "user",
-        content: `Tool "${toolName}" returned this result:\n${JSON.stringify(toolResult, null, 2)}\n\nNow give your final_answer as JSON.`,
+        content: `Tool "${parsed.tool}" result:\n${JSON.stringify(result, null, 2)}\n\nContinue: call more tools if needed, or give final_answer.`,
       });
-
-      // Continue loop → LLM will now produce final_answer
       continue;
     }
 
-    // Unknown action
+    // ── Multiple tool calls in parallel ──────────────────
+    // LLM sends: { action: "tool_calls", tools: [{ tool, args }, ...] }
+    if (parsed.action === "tool_calls" && Array.isArray(parsed.tools)) {
+      console.log(`[AI Service] Parallel tool calls:`, parsed.tools.map(t => t.tool));
+
+      const results = await Promise.all(
+        parsed.tools.map(async ({ tool, args }) => {
+          const result = await executeTool(tool, args);
+          return { tool, args, result };
+        })
+      );
+
+      const resultsText = results
+        .map(({ tool, result }) => `Tool "${tool}" result:\n${JSON.stringify(result, null, 2)}`)
+        .join("\n\n---\n\n");
+
+      messages.push({ role: "assistant", content: raw });
+      messages.push({
+        role: "user",
+        content: `${resultsText}\n\nAll tools have returned results. Now give your final_answer as JSON with a comprehensive analysis combining all the data above.`,
+      });
+      continue;
+    }
+
     return { response: "Unexpected response format from AI. Please try again." };
   }
 

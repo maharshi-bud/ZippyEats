@@ -1,31 +1,24 @@
 // ============================================================
 // FILE: server/src/modules/ai/tools/analytics.tools.js
 // ============================================================
-
 import Order from "../../../models/Order.js";
 import User from "../../../models/User.js";
+import { resolveDateRange } from "./dateUtils.js";
 
-// ── 1. Average Delivery Time ─────────────────────────────
-export async function getAvgDeliveryTime({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getAvgDeliveryTime(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const result = await Order.aggregate([
     {
       $match: {
-        createdAt: { $gte: since },
+        createdAt: { $gte: startDate, $lte: endDate },
         status: "delivered",
         delivered_at: { $exists: true, $ne: null },
       },
     },
     {
       $addFields: {
-        deliveryMinutes: {
-          $divide: [
-            { $subtract: ["$delivered_at", "$createdAt"] },
-            60000, // ms to minutes
-          ],
-        },
+        deliveryMinutes: { $divide: [{ $subtract: ["$delivered_at", "$createdAt"] }, 60000] },
       },
     },
     {
@@ -39,11 +32,11 @@ export async function getAvgDeliveryTime({ range = "30d" } = {}) {
     },
   ]);
 
-  if (!result.length) return { period: range, avgMinutes: 0, message: "No delivered orders found" };
+  if (!result.length) return { period: label, avgMinutes: 0, message: "No delivered orders found" };
 
   const r = result[0];
   return {
-    period: range,
+    period: label,
     avgDeliveryTime: `${Math.round(r.avgMinutes)} minutes`,
     fastestDelivery: `${Math.round(r.minMinutes)} minutes`,
     slowestDelivery: `${Math.round(r.maxMinutes)} minutes`,
@@ -51,13 +44,12 @@ export async function getAvgDeliveryTime({ range = "30d" } = {}) {
   };
 }
 
-// ── 2. Top Menu Items ────────────────────────────────────
-export async function getTopItems({ limit = 10, range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getTopItems(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
+  const limit = args.limit || 10;
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since }, status: "delivered" } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "delivered" } },
     { $unwind: "$items" },
     {
       $group: {
@@ -69,26 +61,18 @@ export async function getTopItems({ limit = 10, range = "30d" } = {}) {
     },
     { $sort: { totalQuantity: -1 } },
     { $limit: limit },
-    {
-      $project: {
-        name: "$_id",
-        totalQuantity: 1,
-        totalRevenue: 1,
-        orderCount: 1,
-      },
-    },
+    { $project: { name: "$_id", totalQuantity: 1, totalRevenue: 1, orderCount: 1 } },
   ]);
 
-  return { period: range, topItems: result };
+  return { period: label, topItems: result };
 }
 
-// ── 3. Revenue by Restaurant ─────────────────────────────
-export async function getRevenueByRestaurant({ range = "30d", limit = 10 } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getRevenueByRestaurant(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
+  const limit = args.limit || 10;
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since }, status: "delivered" } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "delivered" } },
     {
       $group: {
         _id: "$restaurant_id",
@@ -110,34 +94,20 @@ export async function getRevenueByRestaurant({ range = "30d", limit = 10 } = {})
     },
   ]);
 
-  return { period: range, revenueByRestaurant: result };
+  return { period: label, revenueByRestaurant: result };
 }
 
-// ── 4. Repeat Customers ──────────────────────────────────
-export async function getRepeatCustomers({ range = "30d", minOrders = 2 } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getRepeatCustomers(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
+  const minOrders = args.minOrders || 2;
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
-    {
-      $group: {
-        _id: "$user_id",
-        orderCount: { $sum: 1 },
-        totalSpent: { $sum: "$total_amount" },
-      },
-    },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+    { $group: { _id: "$user_id", orderCount: { $sum: 1 }, totalSpent: { $sum: "$total_amount" } } },
     { $match: { orderCount: { $gte: Number(minOrders) } } },
     { $sort: { orderCount: -1 } },
     { $limit: 20 },
-    {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "user",
-      },
-    },
+    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
     {
       $project: {
         name: { $arrayElemAt: ["$user.name", 0] },
@@ -149,34 +119,26 @@ export async function getRepeatCustomers({ range = "30d", minOrders = 2 } = {}) 
   ]);
 
   const totalRepeat = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     { $group: { _id: "$user_id", orderCount: { $sum: 1 } } },
     { $match: { orderCount: { $gte: Number(minOrders) } } },
     { $count: "total" },
   ]);
 
   return {
-    period: range,
+    period: label,
     minOrders,
     totalRepeatCustomers: totalRepeat[0]?.total || 0,
     topRepeatCustomers: result,
   };
 }
 
-// ── 5. Payment Method Breakdown ──────────────────────────
-export async function getPaymentMethodBreakdown({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getPaymentMethodBreakdown(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
-    {
-      $group: {
-        _id: "$payment_method",
-        count: { $sum: 1 },
-        revenue: { $sum: "$total_amount" },
-      },
-    },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+    { $group: { _id: "$payment_method", count: { $sum: 1 }, revenue: { $sum: "$total_amount" } } },
     { $sort: { count: -1 } },
   ]);
 
@@ -188,16 +150,14 @@ export async function getPaymentMethodBreakdown({ range = "30d" } = {}) {
     percentage: `${((r.count / total) * 100).toFixed(1)}%`,
   }));
 
-  return { period: range, totalOrders: total, paymentBreakdown: breakdown };
+  return { period: label, totalOrders: total, paymentBreakdown: breakdown };
 }
 
-// ── 6. Delivery Fee Revenue ──────────────────────────────
-export async function getDeliveryFeeRevenue({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getDeliveryFeeRevenue(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since }, status: "delivered" } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "delivered" } },
     {
       $group: {
         _id: null,
@@ -209,11 +169,11 @@ export async function getDeliveryFeeRevenue({ range = "30d" } = {}) {
     },
   ]);
 
-  if (!result.length) return { period: range, totalDeliveryFee: 0 };
+  if (!result.length) return { period: label, totalDeliveryFee: 0 };
 
   const r = result[0];
   return {
-    period: range,
+    period: label,
     totalDeliveryFeeRevenue: r.totalDeliveryFee,
     avgDeliveryFee: Math.round(r.avgDeliveryFee),
     deliveryFeeAsPercentOfRevenue: `${((r.totalDeliveryFee / r.totalRevenue) * 100).toFixed(1)}%`,
@@ -221,23 +181,17 @@ export async function getDeliveryFeeRevenue({ range = "30d" } = {}) {
   };
 }
 
-// ── 7. Daily Order Volume ────────────────────────────────
-export async function getDailyOrderVolume({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getDailyOrderVolume(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
         totalOrders: { $sum: 1 },
-        deliveredOrders: {
-          $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] },
-        },
-        cancelledOrders: {
-          $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
-        },
+        deliveredOrders: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
+        cancelledOrders: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
         revenue: { $sum: "$total_amount" },
       },
     },
@@ -248,55 +202,45 @@ export async function getDailyOrderVolume({ range = "30d" } = {}) {
     ? Math.round(result.reduce((s, d) => s + d.totalOrders, 0) / result.length)
     : 0;
 
-  return { period: range, avgDailyOrders: avgDaily, dailyVolume: result };
+  return { period: label, avgDailyOrders: avgDaily, dailyVolume: result };
 }
 
-// ── 8. New vs Returning Users ────────────────────────────
-export async function getNewVsReturningUsers({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getNewVsReturningUsers(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
-  // Users who placed their first order in this range
   const allOrdersInRange = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     { $group: { _id: "$user_id" } },
   ]);
 
   const userIds = allOrdersInRange.map((o) => o._id);
 
-  // Of those users, which ones had orders BEFORE this range
   const returningUsers = await Order.aggregate([
-    {
-      $match: {
-        user_id: { $in: userIds },
-        createdAt: { $lt: since },
-      },
-    },
+    { $match: { user_id: { $in: userIds }, createdAt: { $lt: startDate } } },
     { $group: { _id: "$user_id" } },
     { $count: "total" },
   ]);
 
   const totalActive = userIds.length;
-  const returning = returningUsers[0]?.total || 0;
-  const newUsers = totalActive - returning;
+  const returning   = returningUsers[0]?.total || 0;
+  const newUsers    = totalActive - returning;
 
   return {
-    period: range,
+    period: label,
     totalActiveUsers: totalActive,
     newUsers,
     returningUsers: returning,
-    newUserPercentage: `${((newUsers / totalActive) * 100).toFixed(1)}%`,
-    returningUserPercentage: `${((returning / totalActive) * 100).toFixed(1)}%`,
+    newUserPercentage: totalActive ? `${((newUsers / totalActive) * 100).toFixed(1)}%` : "0%",
+    returningUserPercentage: totalActive ? `${((returning / totalActive) * 100).toFixed(1)}%` : "0%",
   };
 }
 
-// ── 9. Top Customers ─────────────────────────────────────
-export async function getTopCustomers({ limit = 10, range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getTopCustomers(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
+  const limit = args.limit || 10;
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since }, status: "delivered" } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "delivered" } },
     {
       $group: {
         _id: "$user_id",
@@ -307,14 +251,7 @@ export async function getTopCustomers({ limit = 10, range = "30d" } = {}) {
     },
     { $sort: { totalSpent: -1 } },
     { $limit: limit },
-    {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "user",
-      },
-    },
+    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
     {
       $project: {
         name: { $arrayElemAt: ["$user.name", 0] },
@@ -326,27 +263,22 @@ export async function getTopCustomers({ limit = 10, range = "30d" } = {}) {
     },
   ]);
 
-  return { period: range, topCustomers: result };
+  return { period: label, topCustomers: result };
 }
 
-// ── 10. Low Rated / High Cancellation Restaurants ────────
-export async function getLowRatedRestaurants({ limit = 5, range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getLowRatedRestaurants(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
+  const limit = args.limit || 5;
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: "$restaurant_id",
         restaurantName: { $first: "$restaurant_name" },
         totalOrders: { $sum: 1 },
-        cancellations: {
-          $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
-        },
-        delivered: {
-          $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] },
-        },
+        cancellations: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
+        delivered: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
       },
     },
     {
@@ -360,7 +292,7 @@ export async function getLowRatedRestaurants({ limit = 5, range = "30d" } = {}) 
         },
       },
     },
-    { $match: { totalOrders: { $gte: 5 } } }, // only restaurants with enough data
+    { $match: { totalOrders: { $gte: 5 } } },
     { $sort: { cancellationRate: -1 } },
     { $limit: limit },
     {
@@ -371,11 +303,7 @@ export async function getLowRatedRestaurants({ limit = 5, range = "30d" } = {}) 
         delivered: 1,
         cancellationRate: {
           $concat: [
-            {
-              $toString: {
-                $round: [{ $multiply: ["$cancellationRate", 100] }, 1],
-              },
-            },
+            { $toString: { $round: [{ $multiply: ["$cancellationRate", 100] }, 1] } },
             "%",
           ],
         },
@@ -383,5 +311,5 @@ export async function getLowRatedRestaurants({ limit = 5, range = "30d" } = {}) 
     },
   ]);
 
-  return { period: range, lowRatedRestaurants: result };
+  return { period: label, lowRatedRestaurants: result };
 }

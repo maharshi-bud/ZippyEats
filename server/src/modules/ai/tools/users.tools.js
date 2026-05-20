@@ -1,15 +1,15 @@
 // ============================================================
 // FILE: server/src/modules/ai/tools/users.tools.js
 // ============================================================
+import User from "../../../models/User.js";
+import Order from "../../../models/Order.js";
+import { resolveDateRange } from "./dateUtils.js";
 
-import User from "../../../models/User.js"; // ← adjust if needed
-
-export async function getUserGrowth({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getUserGrowth(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const daily = await User.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -20,5 +20,5 @@ export async function getUserGrowth({ range = "30d" } = {}) {
   ]);
 
   const total = daily.reduce((sum, d) => sum + d.newUsers, 0);
-  return { period: range, totalNewUsers: total, dailyBreakdown: daily };
+  return { period: label, totalNewUsers: total, dailyBreakdown: daily };
 }

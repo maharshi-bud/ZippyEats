@@ -1,22 +1,22 @@
 // ============================================================
 // FILE: server/src/modules/ai/tools/restaurants.tools.js
 // ============================================================
-
-// import Order from "../../../models/Order.js";       // ← adjust if needed
-// import Restaurant from "../../../models/Restaurant.js"; // ← adjust if needed
-
 import Order from "../../../models/Order.js";
 import Restaurant from "../../../models/Restaurant.js";
+import { resolveDateRange } from "./dateUtils.js";
 
-export async function getTopRestaurants({ limit = 5 } = {}) {
+export async function getTopRestaurants(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
+  const limit = args.limit || 5;
+
   const result = await Order.aggregate([
-    { $match: { status: "delivered" } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "delivered" } },
     {
       $group: {
         _id: "$restaurant_id",
         totalRevenue: { $sum: "$total_amount" },
         totalOrders: { $sum: 1 },
-        restaurantName: { $first: "$restaurant_name" }, // ✅ using restaurant_name from order
+        restaurantName: { $first: "$restaurant_name" },
       },
     },
     { $sort: { totalRevenue: -1 } },
@@ -26,21 +26,20 @@ export async function getTopRestaurants({ limit = 5 } = {}) {
         name: "$restaurantName",
         totalRevenue: 1,
         totalOrders: 1,
-        avgOrderValue: {
-          $round: [{ $divide: ["$totalRevenue", "$totalOrders"] }, 2],
-        },
+        avgOrderValue: { $round: [{ $divide: ["$totalRevenue", "$totalOrders"] }, 2] },
       },
     },
   ]);
 
-  return { topRestaurants: result };
+  return { period: label, topRestaurants: result };
 }
 
-export async function getUnderperformingRestaurants({ limit = 5 } = {}) {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+export async function getUnderperformingRestaurants(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange({ range: "30d", ...args });
+  const limit = args.limit || 5;
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: "$restaurant_id",
@@ -63,7 +62,7 @@ export async function getUnderperformingRestaurants({ limit = 5 } = {}) {
         },
       },
     },
-    { $sort: { totalRevenue: 1 } }, // lowest revenue first = worst performers
+    { $sort: { totalRevenue: 1 } },
     { $limit: limit },
     {
       $project: {
@@ -81,5 +80,5 @@ export async function getUnderperformingRestaurants({ limit = 5 } = {}) {
     },
   ]);
 
-  return { underperformingRestaurants: result };
+  return { period: label, underperformingRestaurants: result };
 }

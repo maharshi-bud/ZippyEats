@@ -1,15 +1,14 @@
 // ============================================================
 // FILE: server/src/modules/ai/tools/orders.tools.js
 // ============================================================
+import Order from "../../../models/Order.js";
+import { resolveDateRange } from "./dateUtils.js";
 
-import Order from "../../../models/Order.js"; // ← adjust if needed
-
-export async function getRevenueStats({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getRevenueStats(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const daily = await Order.aggregate([
-    { $match: { createdAt: { $gte: since }, status: "delivered" } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "delivered" } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -21,17 +20,17 @@ export async function getRevenueStats({ range = "30d" } = {}) {
   ]);
 
   const totalRevenue = daily.reduce((sum, d) => sum + d.revenue, 0);
-  const totalOrders = daily.reduce((sum, d) => sum + d.orders, 0);
+  const totalOrders  = daily.reduce((sum, d) => sum + d.orders, 0);
   const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : 0;
 
-  return { period: range, totalRevenue, totalOrders, avgOrderValue, dailyBreakdown: daily };
+  return { period: label, totalRevenue, totalOrders, avgOrderValue, dailyBreakdown: daily };
 }
 
-export async function getPeakHours({ days = 7 } = {}) {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getPeakHours(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange({ range: `${args.days || 7}d`, ...args });
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: { $hour: "$createdAt" },
@@ -50,28 +49,26 @@ export async function getPeakHours({ days = 7 } = {}) {
     },
   ]);
 
-  return { days, peakHours: result };
+  return { period: label, peakHours: result };
 }
 
-export async function getCancellationStats({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getCancellationStats(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const [cancelled, total] = await Promise.all([
-    Order.countDocuments({ createdAt: { $gte: since }, status: "cancelled" }),
-    Order.countDocuments({ createdAt: { $gte: since } }),
+    Order.countDocuments({ createdAt: { $gte: startDate, $lte: endDate }, status: "cancelled" }),
+    Order.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
   ]);
 
   const rate = total > 0 ? ((cancelled / total) * 100).toFixed(2) : "0.00";
-  return { period: range, cancelled, total, cancellationRate: `${rate}%` };
+  return { period: label, cancelled, total, cancellationRate: `${rate}%` };
 }
 
-export async function getOrderStatusBreakdown({ range = "30d" } = {}) {
-  const days = parseInt(range);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+export async function getOrderStatusBreakdown(args = {}) {
+  const { startDate, endDate, label } = resolveDateRange(args);
 
   const result = await Order.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: "$status",
@@ -81,5 +78,5 @@ export async function getOrderStatusBreakdown({ range = "30d" } = {}) {
     },
   ]);
 
-  return { period: range, breakdown: result };
+  return { period: label, breakdown: result };
 }
