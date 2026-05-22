@@ -115,12 +115,16 @@ if (useZipCoins) {
           restaurant_id: restaurantId,
           restaurant_name: restaurantName,
           items: orderItems,
-          total_amount: total + 40,
+          // total_amount: total + 40,
           delivery_fee: 40,
           subtotal: total,
           status: "placed",
           timeout_at,
           eta,
+          
+  total_amount: total + 40 - coinsDiscount,  // ← subtract coins discount
+  coins_used: coinsUsed,                     // ← add this field to Order model too
+  coins_discount: coinsDiscount,
           delivery_address: {
             full_name: deliveryAddress?.full_name || "Customer",
             phone: deliveryAddress?.phone || "0000000000",
@@ -134,9 +138,6 @@ if (useZipCoins) {
             country: deliveryAddress?.country || "India",
           },
           
-  total_amount: total + 40 - coinsDiscount,  // ← subtract coins discount
-  coins_used: coinsUsed,                     // ← add this field to Order model too
-  coins_discount: coinsDiscount,
         },
       ],
       { session }

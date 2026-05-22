@@ -3,6 +3,7 @@ import { getIO } from "../lib/socket.js";
  import {
   notifyOrderCreated,
   notifyOrderStatusChanged,
+  notifyRefundIssued, // ← add this
   notifyOrderCancelled,
 } from "../services/fcmService.js";
 
@@ -120,7 +121,17 @@ if (fresh.status === "placed") {
   fresh.status = "cancelled";
   fresh._updatedByAdmin = true;
   await fresh.save(); // 💾 Save FIRST
+if (order.coins_used > 0) {
+    await User.findByIdAndUpdate(order.user_id, {
+      $inc: { zipCoins: order.coins_used },
+    });
 
+    await notifyRefundIssued({
+  userFcmToken: user?.fcmToken,
+  amount: order.coins_used,
+  orderId: order._id.toString(),
+});
+  }
   try {
     const restaurant = await Restaurant.findById(fresh.restaurant_id);
     const user = await User.findById(fresh.user_id);
