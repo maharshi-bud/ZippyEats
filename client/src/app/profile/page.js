@@ -17,7 +17,9 @@ export default function ProfilePage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [profilePicUrl, setProfilePicUrl] = useState(null);
   const [uploadingPic, setUploadingPic] = useState(false);
+  const [showPicMenu, setShowPicMenu] = useState(false);
   const fileInputRef = useRef(null);
+  const picMenuRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +39,6 @@ export default function ProfilePage() {
         setReviewableCount(reviewableRes.data.data?.length || 0);
         setZipCoins(coinsRes.data.data?.zipCoins || 0);
 
-        // Load profile pic
         try {
           const token = localStorage.getItem("token");
           const picRes = await fetch(
@@ -59,14 +60,23 @@ export default function ProfilePage() {
     fetchData();
   }, []);
 
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (picMenuRef.current && !picMenuRef.current.contains(e.target)) {
+        setShowPicMenu(false);
+      }
+    }
+    if (showPicMenu) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showPicMenu]);
+
   async function handlePicUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Preview immediately
     setProfilePicUrl(URL.createObjectURL(file));
+    setShowPicMenu(false);
     setUploadingPic(true);
-
     try {
       const formData = new FormData();
       formData.append("pic", file);
@@ -77,6 +87,16 @@ export default function ProfilePage() {
       console.error("Pic upload failed:", err);
     } finally {
       setUploadingPic(false);
+    }
+  }
+
+  async function handleRemovePic() {
+    setShowPicMenu(false);
+    try {
+      await api.delete("/users/me/profile-pic");
+      setProfilePicUrl(null);
+    } catch (err) {
+      console.error("Pic remove failed:", err);
     }
   }
 
@@ -94,24 +114,58 @@ export default function ProfilePage() {
             <div className="flex items-center gap-5 justify-center flex-col sm:flex-row">
 
               {/* Profile Pic */}
-              <div className="relative group">
+              <div className="relative" ref={picMenuRef}>
+
+                {/* Avatar — click to open menu */}
                 <div
                   className="w-20 h-20 rounded-full overflow-hidden bg-green-500 flex items-center justify-center text-2xl font-bold text-white cursor-pointer border-4 border-white/20 shadow-lg"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => setShowPicMenu((v) => !v)}
                 >
                   {profilePicUrl ? (
                     <img src={profilePicUrl} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    profile?.name?.[0] || "U"
-                  )}
-                </div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 bg-white text-slate-800 rounded-full w-7 h-7 flex items-center justify-center text-xs shadow hover:bg-slate-100 transition"
+                  ) : (<>
+                    <p className="text-[42px] leading-none absolute bottom-[19px] right-[28px]">{profile?.name?.[0] || "U"}</p>
+                    <button
+                  onClick={() => setShowPicMenu((v) => !v)}
+                  className="absolute bottom-0 right-0 bg-white text-slate-800 rounded-full w-7 h-7 flex items-center justify-center leading-none shadow hover:bg-slate-100 transition"
                   title="Change photo"
                 >
-                  {uploadingPic ? "⏳" : "📷"}
+                  <span className="text-sm leading-none absolute bottom-2 right-[4px] ">
+                    {uploadingPic ? "⏳" : "📷"}
+                  </span>
                 </button>
+                  </>
+                  )}
+                </div>
+
+                {/* Camera badge */}
+                
+
+                {/* Dropdown */}
+                {showPicMenu && (
+                  <div className="absolute top-[88px] left-1/2 -translate-x-1/2 z-50 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden w-44">
+                    <button
+                      onClick={() => {
+                        setShowPicMenu(false);
+                        fileInputRef.current?.click();
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition"
+                    >
+                      <span>📷</span>
+                      {profilePicUrl ? "Change photo" : "Upload photo"}
+                    </button>
+                    {profilePicUrl && (
+                      <button
+                        onClick={handleRemovePic}
+                        className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2 transition border-t border-slate-100"
+                      >
+                        <span>🗑️</span>
+                        Remove photo
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -122,7 +176,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Name + Email */}
-              <div className="text-center sm:text-left">
+              <div className="text-center sm:text-right">
                 <h1 className="text-2xl font-semibold">{profile?.name || "User"}</h1>
                 <p className="text-sm text-slate-300">{profile?.email}</p>
               </div>
@@ -147,8 +201,8 @@ export default function ProfilePage() {
             {/* ZipCoins Card */}
             <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-6 rounded-2xl shadow hover:shadow-md transition text-white">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">🪙</span>
-                <p className="text-xs font-semibold uppercase tracking-wide opacity-90">ZipCoins</p>
+                <span className="text-lg leading-none relative top-px">🪙</span>
+                <p className="text-xs font-semibold uppercase tracking-wide opacity-90 leading-none">ZipCoins</p>
               </div>
               <h2 className="text-3xl font-bold mt-1">{zipCoins.toLocaleString()}</h2>
               <p className="text-xs opacity-80 mt-1">Worth ₹{zipCoins.toLocaleString()} at checkout</p>
@@ -261,6 +315,7 @@ export default function ProfilePage() {
               ))
             )}
           </div>
+
         </div>
       </div>
 
