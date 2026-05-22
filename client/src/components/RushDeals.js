@@ -1,141 +1,435 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addToCart, decreaseQty } from "../store/slices/cartSlice";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import axios from "axios";
+
+import {
+  useDispatch,
+  useSelector,
+} from "react-redux";
+
+import {
+  addToCart,
+  decreaseQty,
+} from "../store/slices/cartSlice";
+
+const API =
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  "http://localhost:5010";
 
 export default function RushDeals() {
-  const dispatch = useDispatch();
-  const cart = useSelector((state) => state.cart.items);
 
-  // 🔥 countdown (20 mins = 1200 sec)
-  const [time, setTime] = useState(1200);
+  const dispatch =
+    useDispatch();
+
+  const cart =
+    useSelector(
+      (state) => state.cart.items
+    );
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
+const [allDeals, setAllDeals] =
+  useState([]);
+
+const [visibleDeals, setVisibleDeals] =
+  useState([]);
+
+  const [now, setNow] =
+    useState(Date.now());
+
+  // ==========================================================
+  // LIVE CLOCK
+  // ==========================================================
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
 
-    return () => clearInterval(timer);
+    const interval =
+      setInterval(() => {
+
+        setNow(Date.now());
+
+      }, 1000);
+
+    return () =>
+      clearInterval(interval);
+
   }, []);
 
-  const formatTime = () => {
-    const min = Math.floor(time / 60);
-    const sec = time % 60;
-    return `${min}:${sec.toString().padStart(2, "0")}`;
+  // ==========================================================
+  // FETCH RUSH DEALS
+  // ==========================================================
+
+  useEffect(() => {
+
+    fetchRushDeals();
+
+  }, []);
+
+const fetchRushDeals =
+  async () => {
+
+    try {
+
+      const res =
+        await axios.get(
+          `${API}/api/rush-deals`
+        );
+
+      const formatted =
+        (res.data.data || [])
+
+          .map((deal) => {
+
+            const item =
+              deal.menuItem || {};
+
+            return {
+
+              _id:
+                deal._id,
+
+              menu_item_id:
+                item._id,
+
+              restaurant_id:
+                deal.restaurant_id,
+
+              name:
+                deal.itemName,
+
+              price:
+                deal.oldPrice,
+
+              discountPrice:
+                deal.discountPrice,
+
+              discount:
+                deal.discountPercent,
+
+              endsAt:
+                deal.endsAt,
+
+              image:
+                item.image,
+            };
+          });
+
+      setAllDeals(formatted);
+
+    } catch (err) {
+
+      console.error(
+        "Failed to fetch rush deals:",
+        err
+      );
+    }
   };
 
-  // 🔥 your real data
-  const deals = [
-    {
-      _id: "69f07b097de83adf654cf672",
-      name: "Pasta Alfredo",
-      price: 280,
-      discountPrice: 160,
-      discount: "45%",
-      img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b"
-    },
-    {
-      _id: "69f07b097de83adf654cf673",
-      name: "Lasagna",
-      price: 350,
-      discountPrice: 199,
-      discount: "40%",
-      // img: "https://images.unsplash.com/photo-1604908176997-431dfc0e7a3d"
-      img : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRs1nkXfdrJgGxUXvlzUAWB-_qKj5snjoguBFEqpSEgCbfh3V2qxg3IA3q0JlAIrBaWw0LtTbjp6-9zLUaBQwwy2bAPBSOzsJ5Mf_TgR2bi&s=10"
-    }
-  ];
+  // ==========================================================
+  // FORMAT TIMER
+  // ==========================================================
+
+  const formatTime =
+    (endsAt) => {
+
+      if (!endsAt)
+        return "Limited";
+
+      const distance =
+        new Date(endsAt).getTime() -
+        now;
+
+      if (distance <= 0)
+        return "Expired";
+
+      const hours =
+        Math.floor(
+          distance /
+          (1000 * 60 * 60)
+        );
+
+      const mins =
+        Math.floor(
+          (
+            distance %
+            (1000 * 60 * 60)
+          ) /
+          (1000 * 60)
+        );
+
+      const secs =
+        Math.floor(
+          (
+            distance %
+            (1000 * 60)
+          ) / 1000
+        );
+
+      if (hours > 0) {
+
+        return `${hours}h ${mins}m`;
+      }
+
+      return `${mins}m ${secs}s`;
+    };
+
+  // ==========================================================
+  // REMOVE EXPIRED LIVE
+  // ==========================================================
+
+useEffect(() => {
+
+  const activeDeals =
+
+    allDeals.filter((deal) => {
+
+      if (!deal.endsAt)
+        return true;
+
+      return (
+        new Date(
+          deal.endsAt
+        ).getTime() > now
+      );
+    });
+
+  setVisibleDeals(
+    activeDeals.slice(0, 2)
+  );
+
+}, [allDeals, now]);
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
+
     <div className="rush-container">
 
+      {/* ==================================================== */}
       {/* LEFT */}
-      <div className="rush-left">
-        <div className="rush-content">
-          <span className="rush-tag">RUSH DEALS</span>
-          <h1>Hurry! Big Savings</h1>
+      {/* ==================================================== */}
 
-          <div className="rush-timer">
-            ⏱ Ends in <b>{formatTime()}</b>
-          </div>
+      <div className="rush-left">
+
+        <div className="rush-content">
+
+          <span className="rush-tag">
+            RUSH DEALS
+          </span>
+
+          <h1>
+            Limited Time Offers
+          </h1>
+
+          <p className="
+            mt-3
+            text-slate-300
+            text-lg
+          ">
+            Grab exclusive food deals
+            before they disappear.
+          </p>
+
         </div>
+
       </div>
 
+      {/* ==================================================== */}
       {/* RIGHT */}
+      {/* ==================================================== */}
+
       <div className="rush-right">
-        {deals.map((item) => {
-          const itemInCart = cart.find(
-            (i) => i.menu_item_id === item._id
-          );
+
+        {/* {deals.map((item) => { */}
+          {visibleDeals.map((item) => {
+          const itemInCart =
+            cart.find(
+              (i) =>
+                i.menu_item_id ===
+                item.menu_item_id
+            );
 
           return (
-            <div key={item._id} className="rush-card">
+
+            <div
+              key={item._id}
+              className="rush-card"
+            >
+
+              {/* IMAGE */}
 
               <div
                 className="rush-img"
-                style={{ backgroundImage: `url(${item.img})` }}
+                style={{
+
+                  backgroundImage:
+                    `url(${item.image})`,
+                }}
               >
-                <span className="discount">{item.discount} OFF</span>
+
+                <span className="discount">
+
+                  {item.discount}% OFF
+
+                </span>
+
               </div>
 
+              {/* INFO */}
+
               <div className="rush-info">
-                <h3>{item.name}</h3>
+
+                <h3>
+                  {item.name}
+                </h3>
+
+                {/* PRICE */}
 
                 <p className="price">
-                  <span className="old">₹{item.price}</span>
+
+                  <span className="old">
+
+                    ₹{item.price}
+
+                  </span>
+
                   ₹{item.discountPrice}
+
                 </p>
 
-                <p className="time">⏱ {formatTime()} left</p>
+                {/* TIMER */}
 
-                {/* 🔥 ADD → STEPPER */}
+                <p className="
+                  time
+                  text-orange-400
+                ">
+
+                  ⏱
+                  {" "}
+                  {formatTime(
+                    item.endsAt
+                  )}
+                  {" "}
+                  left
+
+                </p>
+
+                {/* SAVINGS */}
+
+                <p className="
+                  mt-1
+                  text-sm
+                  text-green-400
+                ">
+
+                  Save ₹
+                  {
+                    item.price -
+                    item.discountPrice
+                  }
+
+                </p>
+
+                {/* ========================================== */}
+                {/* ADD / STEPPER */}
+                {/* ========================================== */}
+
                 {!itemInCart ? (
+
                   <button
+
                     onClick={() =>
                       dispatch(
                         addToCart({
-                          menu_item_id: item._id,
-                          name: item.name,
-                          price: item.discountPrice, restaurant_id : item.restaurant_id      , image: item.image  
+
+                          menu_item_id:
+                            item.menu_item_id,
+
+                          name:
+                            item.name,
+
+                          price:
+                            item.discountPrice,
+
+                          restaurant_id:
+                            item.restaurant_id,
+
+                          image:
+                            item.image,
                         })
                       )
                     }
                   >
+
                     Grab Now →
+
                   </button>
+
                 ) : (
+
                   <div className="stepper">
+
                     <button
                       onClick={() =>
-                        dispatch(decreaseQty(item._id))
+                        dispatch(
+                          decreaseQty(
+                            item.menu_item_id
+                          )
+                        )
                       }
                     >
                       -
                     </button>
 
-                    <span>{itemInCart.quantity}</span>
+                    <span>
+                      {
+                        itemInCart.quantity
+                      }
+                    </span>
 
                     <button
                       onClick={() =>
                         dispatch(
                           addToCart({
-                            menu_item_id: item._id,
-                            name: item.name,
-                            price: item.discountPrice
-                            , restaurant_id : item.restaurant_id      , image: item.image  
+
+                            menu_item_id:
+                              item.menu_item_id,
+
+                            name:
+                              item.name,
+
+                            price:
+                              item.discountPrice,
+
+                            restaurant_id:
+                              item.restaurant_id,
+
+                            image:
+                              item.image,
                           })
                         )
                       }
                     >
                       +
                     </button>
+
                   </div>
                 )}
+
               </div>
 
             </div>
           );
         })}
+
       </div>
 
     </div>

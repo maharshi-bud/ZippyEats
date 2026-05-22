@@ -31,6 +31,7 @@ import http from "http";
 import { initSocket } from "./lib/socket.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
+import bannerRoutes from "./routes/bannerRoutes.js";
 import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
 // import {createRestaurantOwners} from "./utils/createRestaurantOwner.js"
   import supportRoutes from "./routes/supportRoutes.js";
@@ -86,6 +87,7 @@ app.use("/api/search",searchRoutes );
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/images", express.static(path.join(__dirname, "../../food_images")));
 app.use("/api/reviews", reviewRoutes);
+app.use("/api", bannerRoutes);
 app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
 // app.use("/api/restaurant-owner",  restaurantOwnerRoutes);
 

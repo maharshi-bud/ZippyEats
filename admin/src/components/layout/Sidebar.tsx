@@ -12,9 +12,9 @@ const links = [
   { name: "Orders", href: "/orders" },
   { name: "Users", href: "/users" },
   { name: "Restaurants", href: "/restaurants" },
+  { name: "Banners", href: "/banners" },
   { name: "BI", href: "/BI" },
     { name: "Queries", href: "/queries" }
-
 ];
 
 export default function Sidebar() {
