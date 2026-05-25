@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-
+import Role from "../models/Role.js";
+import { PERMISSIONS } from "../constants/permissions.js";
 
 
 const generateToken = (userId, role, restaurantId = null) => {
@@ -44,34 +45,66 @@ export const register = async (req, res, next) => {
 };
 
 // LOGIN
-export const login = async (req, res, next) => {
+// export const login = async (req, res, next) => {
+//   try {
+//     const { email, password  } = req.body;
+
+//     const user = await User.findOne({ email });
+
+//     if (!user) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+
+//     if (!isMatch) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+
+//     const token = generateToken(user._id, user.role,user.restaurant_Id || null);
+
+//     res.json({
+//       success: true,
+//       token
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+
+export const login = async (req, res) => {
   try {
-    const { email, password  } = req.body;
-
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
-
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const token = generateToken(user._id, user.role, user.restaurant_id);
 
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    // ── Fetch this role's permissions from DB ────────────────
+    // Same source of truth as permissionMiddleware — the Role collection.
+    const roleDoc = await Role.findOne({ name: user.role, isActive: true }).select("permissions").lean();
+    const permissions = roleDoc?.permissions || [];
 
-
-    const token = generateToken(user._id, user.role,user.restaurant_Id || null);
+    const panelAccess = permissions.includes(PERMISSIONS.PANEL_ACCESS);
 
     res.json({
-      success: true,
-      token
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      panelAccess, // ← client reads this, no hardcoding needed
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 

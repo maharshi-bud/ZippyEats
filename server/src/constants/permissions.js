@@ -70,6 +70,9 @@ export const PERMISSIONS = {
   FCM_MANAGE_OWN:   "fcm.manage_own",   // self:  POST|DELETE /fcm/token
   FCM_MANAGE_ADMIN: "fcm.manage_admin", // admin: POST /fcm/subscribe-admin
 
+
+    PANEL_ACCESS: "panel.access", // ← any role with this can log into admin panel (port 3010)
+
 };
 
 // ── Convenience: all slugs as a flat array ─────────────────
@@ -100,6 +103,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.REVIEWS_VIEW,
     PERMISSIONS.REVIEWS_CREATE,
     PERMISSIONS.FCM_MANAGE_OWN,
+
   ],
 
   restaurant: [
@@ -171,8 +175,11 @@ export const ROLE_PERMISSIONS = {
     // FCM
     PERMISSIONS.FCM_MANAGE_OWN,
     PERMISSIONS.FCM_MANAGE_ADMIN,
+    //Panel
+       PERMISSIONS.PANEL_ACCESS,
   ],
 
+  
   // super_admin gets everything — computed dynamically so it
   // automatically picks up any new permissions added above.
   super_admin: ALL_PERMISSIONS,

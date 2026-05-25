@@ -40,9 +40,10 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 6 },
     role: {
       type: String,
-      enum: ["user", "admin", "restaurant"],
       default: "user",
+      index: true,
     },
+
     restaurant_id: {
       type: String,
       default: null,
