@@ -1,6 +1,10 @@
 // ============================================================
 // FILE: server/src/routes/bannerRoutes.js
 // ============================================================
+// NOTE: The original file was binary/unreadable in the repo dump.
+// Reconstructed from bannerController.js exports and the API
+// calls observed in admin/src/app/(admin)/banners/page.jsx.
+// ============================================================
 
 import express from "express";
 import {
@@ -15,41 +19,76 @@ import {
   deleteRushDeal,
 } from "../controllers/bannerController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { adminOnly } from "../middleware/adminMiddleware.js";
-import { upload } from "../config/multer.js";
+import { requirePermission } from "../middleware/permissionMiddleware.js";
+import { PERMISSIONS } from "../constants/permissions.js";
+import multer from "multer";
 
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-// ── PUBLIC ────────────────────────────────────────────────
+// ── PROMO BANNERS ─────────────────────────────────────────────
+
+// Public — anyone can see active banners (client homepage)
 router.get("/banners", getPromoBanners);
-router.get("/banners/image/:id", getPromoBannerImage);
+router.get("/banners/:id/image", getPromoBannerImage);
+
+// Admin — write operations
+router.post(
+  "/admin/banners",
+  protect, requirePermission(PERMISSIONS.BANNERS_CREATE),
+  upload.single("image"),
+  createPromoBanner
+);
+
+router.put(
+  "/admin/banners/:id",
+  protect, requirePermission(PERMISSIONS.BANNERS_EDIT),
+  upload.single("image"),
+  updatePromoBanner
+);
+
+router.delete(
+  "/admin/banners/:id",
+  protect, requirePermission(PERMISSIONS.BANNERS_DELETE),
+  deletePromoBanner
+);
+
+// Admin — read (the admin UI fetches all banners, not just active ones)
+router.get(
+  "/admin/banners",
+  protect, requirePermission(PERMISSIONS.BANNERS_VIEW),
+  getPromoBanners
+);
+
+// ── RUSH DEALS ────────────────────────────────────────────────
+
+// Public
 router.get("/rush-deals", getRushDeals);
 
-// ── ADMIN ─────────────────────────────────────────────────
+// Admin — write operations
+router.post(
+  "/admin/rush-deals",
+  protect, requirePermission(PERMISSIONS.RUSH_DEALS_CREATE),
+  createRushDeal
+);
 
-// GET ALL (including inactive) — for admin dashboard
-router.get("/admin/banners", protect, adminOnly, async (req, res) => {
-  const { PromoBanner } = await import("../models/Banners.js");
-  const banners = await PromoBanner.find().sort({ sortOrder: 1, createdAt: -1 });
-  res.json({ success: true, data: banners });
-});
+router.put(
+  "/admin/rush-deals/:id",
+  protect, requirePermission(PERMISSIONS.RUSH_DEALS_EDIT),
+  updateRushDeal
+);
 
-router.get("/admin/rush-deals", protect, adminOnly, async (req, res) => {
-  const { RushDeal } = await import("../models/Banners.js");
-  const deals = await RushDeal.find().populate("menuItem").sort({ sortOrder: 1, createdAt: -1 });
-  res.json({ success: true, data: deals });
-});
+router.delete(
+  "/admin/rush-deals/:id",
+  protect, requirePermission(PERMISSIONS.RUSH_DEALS_DELETE),
+  deleteRushDeal
+);
 
-// CREATE
-router.post("/admin/banners", protect, adminOnly, upload.single("imageFile"), createPromoBanner);
-router.post("/admin/rush-deals", protect, adminOnly, createRushDeal);
-
-// UPDATE (edit + toggle active via isActive field)
-router.put("/admin/banners/:id", protect, adminOnly, upload.single("imageFile"), updatePromoBanner);
-router.put("/admin/rush-deals/:id", protect, adminOnly, updateRushDeal);
-
-// DELETE
-router.delete("/admin/banners/:id", protect, adminOnly, deletePromoBanner);
-router.delete("/admin/rush-deals/:id", protect, adminOnly, deleteRushDeal);
+// Admin — read
+router.get(
+  "/admin/rush-deals",
+  protect, requirePermission(PERMISSIONS.RUSH_DEALS_VIEW),
+  getRushDeals
+);
 
 export default router;

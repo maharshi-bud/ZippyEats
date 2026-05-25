@@ -5,7 +5,7 @@ import menuRoutes from "./routes/menuRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
-
+import Role from "./models/Role.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // import testRoutes from "./routes/testRoutes.js";
@@ -39,7 +39,7 @@ import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
   import SupportMessage from "./models/SupportMessage.js";
   import { initFirebase } from "./services/fcmService.js";
   import fcmRoutes from "./routes/fcmRoutes.js";
-
+import rolesRoutes from "./routes/admin/rolesRoutes.js";
 const app = express();
 const httpServer = http.createServer(app);
 
@@ -93,7 +93,7 @@ app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
 
   app.use("/api/support", supportRoutes);
   app.use("/api/fcm", fcmRoutes);
-
+app.use("/api/admin", rolesRoutes);
 app.use(errorHandler);
 app.use("/api/restaurant-owner", restaurantOwnerRoutes);
 
@@ -112,6 +112,7 @@ const startServer = async () => {
     SupportTicket.init(),  
     SupportMessage.init(),
   ]);
+await Role.seedDefaults();
   
   await reloadActiveOrders();
   initFirebase();

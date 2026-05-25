@@ -289,13 +289,12 @@ const { user, token } = useSelector((state) => state.auth);
           via-white/80
           to-transparent
 
-          animate-[loadingFlow_1.2s_linear_infinite]
+          animate-[loadingFlow_1.3s_linear_infinite]
         " />
 
       )}
 
     </div>
-
   </div>
 )}
               </div>
