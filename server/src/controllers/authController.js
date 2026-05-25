@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Role from "../models/Role.js";
-import { PERMISSIONS } from "../constants/permissions.js";
+import { hasPanelAccess } from "../constants/permissions.js";
 
 
 const generateToken = (userId, role, restaurantId = null) => {
@@ -87,9 +87,8 @@ export const login = async (req, res) => {
     // ── Fetch this role's permissions from DB ────────────────
     // Same source of truth as permissionMiddleware — the Role collection.
     const roleDoc = await Role.findOne({ name: user.role, isActive: true }).select("permissions").lean();
-    const permissions = roleDoc?.permissions || [];
-
-    const panelAccess = permissions.includes(PERMISSIONS.PANEL_ACCESS);
+    const permissions = roleDoc?.permissions || {};
+    const panelAccess = hasPanelAccess(user.role, permissions);
 
     res.json({
       token,

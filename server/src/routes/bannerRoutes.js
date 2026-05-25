@@ -20,7 +20,6 @@ import {
 } from "../controllers/bannerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { requirePermission } from "../middleware/permissionMiddleware.js";
-import { PERMISSIONS } from "../constants/permissions.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -35,28 +34,28 @@ router.get("/banners/:id/image", getPromoBannerImage);
 // Admin — write operations
 router.post(
   "/admin/banners",
-  protect, requirePermission(PERMISSIONS.BANNERS_CREATE),
+  protect, requirePermission("banners", "add"),
   upload.single("image"),
   createPromoBanner
 );
 
 router.put(
   "/admin/banners/:id",
-  protect, requirePermission(PERMISSIONS.BANNERS_EDIT),
+  protect, requirePermission("banners", "edit"),
   upload.single("image"),
   updatePromoBanner
 );
 
 router.delete(
   "/admin/banners/:id",
-  protect, requirePermission(PERMISSIONS.BANNERS_DELETE),
+  protect, requirePermission("banners", "delete"),
   deletePromoBanner
 );
 
 // Admin — read (the admin UI fetches all banners, not just active ones)
 router.get(
   "/admin/banners",
-  protect, requirePermission(PERMISSIONS.BANNERS_VIEW),
+  protect, requirePermission("banners", "view"),
   getPromoBanners
 );
 
@@ -68,26 +67,26 @@ router.get("/rush-deals", getRushDeals);
 // Admin — write operations
 router.post(
   "/admin/rush-deals",
-  protect, requirePermission(PERMISSIONS.RUSH_DEALS_CREATE),
+  protect, requirePermission("queries", "add"),
   createRushDeal
 );
 
 router.put(
   "/admin/rush-deals/:id",
-  protect, requirePermission(PERMISSIONS.RUSH_DEALS_EDIT),
+  protect, requirePermission("queries", "edit"),
   updateRushDeal
 );
 
 router.delete(
   "/admin/rush-deals/:id",
-  protect, requirePermission(PERMISSIONS.RUSH_DEALS_DELETE),
+  protect, requirePermission("queries", "delete"),
   deleteRushDeal
 );
 
 // Admin — read
 router.get(
   "/admin/rush-deals",
-  protect, requirePermission(PERMISSIONS.RUSH_DEALS_VIEW),
+  protect, requirePermission("queries", "view"),
   getRushDeals
 );
 

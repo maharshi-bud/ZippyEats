@@ -5,7 +5,6 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import { requirePermission } from "../middleware/permissionMiddleware.js";
-import { PERMISSIONS } from "../constants/permissions.js";
 import {
   createTicket,
   getTickets,
@@ -25,70 +24,70 @@ const router = express.Router();
 // ── Any logged-in user ────────────────────────────────────────
 router.post(
   "/tickets",
-  protect, requirePermission(PERMISSIONS.SUPPORT_CREATE),
+  protect, requirePermission("queries", "add"),
   createTicket
 );
 
 router.get(
   "/tickets",
-  protect, requirePermission(PERMISSIONS.SUPPORT_VIEW_OWN),
+  protect, requirePermission("queries", "view"),
   getTickets
 );
 
 router.get(
   "/tickets/:id",
-  protect, requirePermission(PERMISSIONS.SUPPORT_VIEW_OWN),
+  protect, requirePermission("queries", "view"),
   getTicketById
 );
 
 router.get(
   "/tickets/:id/messages",
-  protect, requirePermission(PERMISSIONS.SUPPORT_VIEW_OWN),
+  protect, requirePermission("queries", "view"),
   getMessages
 );
 
 router.post(
   "/tickets/:id/message",
-  protect, requirePermission(PERMISSIONS.SUPPORT_REPLY),
+  protect, requirePermission("queries", "edit"),
   sendMessage
 );
 
 // ── Admin-level actions ───────────────────────────────────────
 router.patch(
   "/tickets/:id/status",
-  protect, requirePermission(PERMISSIONS.SUPPORT_EDIT_STATUS),
+  protect, requirePermission("queries", "edit"),
   updateStatus
 );
 
 router.patch(
   "/tickets/:id/resolve",
-  protect, requirePermission(PERMISSIONS.SUPPORT_RESOLVE),
+  protect, requirePermission("queries", "edit"),
   resolveTicket
 );
 
 // Refund is its own permission — more sensitive than a status change
 router.post(
   "/tickets/:id/refund",
-  protect, requirePermission(PERMISSIONS.SUPPORT_REFUND),
+  protect, requirePermission("queries", "edit"),
   processRefund
 );
 
 router.patch(
   "/tickets/:id/note",
-  protect, requirePermission(PERMISSIONS.SUPPORT_ADD_NOTE),
+  protect, requirePermission("queries", "edit"),
   addNote
 );
 
 router.post(
   "/tickets/:id/system-message",
-  protect, requirePermission(PERMISSIONS.SUPPORT_SYS_MSG),
+  protect, requirePermission("queries", "add"),
   sendSystemMessage
 );
 
 // Editing order items requires both support AND order permissions
 router.patch(
   "/tickets/:id/edit-order",
-  protect, requirePermission(PERMISSIONS.SUPPORT_EDIT_ORDER, PERMISSIONS.ORDERS_EDIT_ITEMS),
+  protect, requirePermission("orders", "edit"),
   editOrder
 );
 

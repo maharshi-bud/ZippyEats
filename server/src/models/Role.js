@@ -3,7 +3,7 @@
 // ============================================================
 
 import mongoose from "mongoose";
-import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from "../constants/permissions.js";
+import { RESOURCES, OPERATIONS, DEFAULT_PERMISSIONS } from "../constants/permissions.js";
 
 const roleSchema = new mongoose.Schema(
   {
@@ -13,8 +13,7 @@ const roleSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      // Matches the existing User.role enum values + super_admin.
-      // Custom roles (created from the UI) can be any unique string.
+      lowercase: true,
     },
 
     label: {
@@ -28,11 +27,26 @@ const roleSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ── Permissions ───────────────────────────────────────────
+    // ── Permissions (NEW: Matrix structure) ────────────────────
+    // Structure:
+    // {
+    //   dashboard: { add: false, view: true, edit: false, delete: false },
+    //   menu: { add: true, view: true, edit: true, delete: true },
+    //   users: { add: false, view: true, edit: false, delete: false },
+    //   ... (one entry per resource)
+    // }
     permissions: {
-      type: [String],
-      enum: ALL_PERMISSIONS, // enforces only known slugs are stored
-      default: [],
+      type: Map,
+      of: new mongoose.Schema(
+        {
+          add: { type: Boolean, default: false },
+          view: { type: Boolean, default: false },
+          edit: { type: Boolean, default: false },
+          delete: { type: Boolean, default: false },
+        },
+        { _id: false }
+      ),
+      default: () => new Map(),
     },
 
     // ── Flags ─────────────────────────────────────────────────
@@ -55,75 +69,97 @@ const roleSchema = new mongoose.Schema(
 // ── Helpers ───────────────────────────────────────────────────
 
 /**
- * Check whether this role has a specific permission.
- * Usage: role.hasPermission(PERMISSIONS.ORDERS_VIEW_ALL)
+ * Check whether this role has a specific CRUD operation on a resource.
+ * Usage: role.can("menu", "edit")  →  boolean
  */
-roleSchema.methods.hasPermission = function (slug) {
-  return this.permissions.includes(slug);
+roleSchema.methods.can = function (resource, operation) {
+  if (!this.permissions || !this.permissions.has(resource)) return false;
+  const perms = this.permissions.get(resource);
+  return perms && perms[operation] === true;
 };
 
 /**
- * Check whether this role has ALL of the given permissions.
- * Usage: role.hasAll([PERMISSIONS.SUPPORT_REFUND, PERMISSIONS.ORDERS_EDIT_ITEMS])
+ * Check whether this role has ANY permission on a resource.
+ * Usage: role.canAny("menu")  →  boolean
  */
-roleSchema.methods.hasAll = function (slugs) {
-  return slugs.every((s) => this.permissions.includes(s));
+roleSchema.methods.canAny = function (resource) {
+  if (!this.permissions || !this.permissions.has(resource)) return false;
+  const perms = this.permissions.get(resource);
+  return Object.values(perms).some((v) => v === true);
 };
 
 /**
- * Check whether this role has ANY of the given permissions.
+ * Grant permission for a specific operation on a resource.
+ * Usage: role.grant("menu", "edit")
  */
-roleSchema.methods.hasAny = function (slugs) {
-  return slugs.some((s) => this.permissions.includes(s));
+roleSchema.methods.grant = function (resource, operation) {
+  if (!this.permissions.has(resource)) {
+    this.permissions.set(resource, {
+      add: false,
+      view: false,
+      edit: false,
+      delete: false,
+    });
+  }
+  const perms = this.permissions.get(resource);
+  perms[operation] = true;
+  this.permissions.set(resource, perms);
+};
+
+/**
+ * Revoke permission for a specific operation on a resource.
+ * Usage: role.revoke("menu", "edit")
+ */
+roleSchema.methods.revoke = function (resource, operation) {
+  if (!this.permissions.has(resource)) return;
+  const perms = this.permissions.get(resource);
+  perms[operation] = false;
+  this.permissions.set(resource, perms);
 };
 
 // ── Static: seed default roles ────────────────────────────────
-/**
- * Call once at server startup (after DB connect) to ensure the
- * four system roles exist.  Safe to call on every boot — it uses
- * upsert so existing documents are only updated if permissions
- * have changed.
- *
- * Usage in server/src/index.js:
- *   import Role from "./models/Role.js";
- *   await Role.seedDefaults();
- */
 roleSchema.statics.seedDefaults = async function () {
   const defaults = [
     {
       name: "user",
       label: "Customer",
       description: "Regular app user — can browse, order, and raise support tickets.",
-      permissions: ROLE_PERMISSIONS.user,
+      permissions: DEFAULT_PERMISSIONS.user,
       isSystem: true,
     },
     {
       name: "restaurant",
       label: "Restaurant Owner",
       description: "Manages their own restaurant menu and incoming orders.",
-      permissions: ROLE_PERMISSIONS.restaurant,
+      permissions: DEFAULT_PERMISSIONS.restaurant,
       isSystem: true,
     },
     {
       name: "admin",
       label: "Admin",
-      description: "Full platform management except role assignment and user deletion.",
-      permissions: ROLE_PERMISSIONS.admin,
+      description: "Full platform management.",
+      permissions: DEFAULT_PERMISSIONS.admin,
       isSystem: true,
     },
     {
       name: "super_admin",
       label: "Super Admin",
       description: "Unrestricted access. Can manage roles and users.",
-      permissions: ROLE_PERMISSIONS.super_admin,
+      permissions: DEFAULT_PERMISSIONS.super_admin,
       isSystem: true,
     },
   ];
 
   for (const role of defaults) {
+    const permMap = new Map(Object.entries(role.permissions));
     await Role.findOneAndUpdate(
       { name: role.name },
-      { $set: role },
+      {
+        $set: {
+          ...role,
+          permissions: permMap,
+        },
+      },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
   }

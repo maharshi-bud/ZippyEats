@@ -61,8 +61,35 @@ initSocket(httpServer);
 //   })
 // );
 
+const configuredOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
+  "http://localhost:3010",
+  "http://localhost:3000",
+  "http://127.0.0.1:3010",
+  "http://127.0.0.1:3000",
+  ...configuredOrigins,
+]);
+
 app.use(cors({
-  origin: ["http://localhost:3010", "http://localhost:3000"],
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const isLocalDevOrigin =
+      process.env.NODE_ENV !== "production" &&
+      /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
+    if (allowedOrigins.has(origin) || isLocalDevOrigin) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked origin: ${origin}`));
+  },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,

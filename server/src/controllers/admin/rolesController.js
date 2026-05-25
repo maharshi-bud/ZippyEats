@@ -1,14 +1,15 @@
 // ============================================================
 // FILE: server/src/controllers/admin/rolesController.js
+// NEW: Handles the matrix-based (CRUD) permission system
 // ============================================================
 
 import Role from "../../models/Role.js";
 import User from "../../models/User.js";
-import { ALL_PERMISSIONS } from "../../constants/permissions.js";
+import { RESOURCES, OPERATIONS, DEFAULT_PERMISSIONS } from "../../constants/permissions.js";
 import { invalidateRoleCache } from "../../middleware/permissionMiddleware.js";
 
 // ── GET /api/admin/roles ──────────────────────────────────────
-// List all roles with a user count per role
+// List all roles with a user count and formatted permissions
 export const getRoles = async (req, res) => {
   try {
     const roles = await Role.find().lean();
@@ -19,10 +20,21 @@ export const getRoles = async (req, res) => {
     ]);
     const countMap = Object.fromEntries(counts.map((c) => [c._id, c.count]));
 
-    const data = roles.map((r) => ({
-      ...r,
-      userCount: countMap[r.name] || 0,
-    }));
+    const data = roles.map((r) => {
+      // Convert Map to plain object for JSON response
+      const permsObj = {};
+      if (r.permissions && typeof r.permissions === 'object') {
+        for (const [key, value] of Object.entries(r.permissions)) {
+          permsObj[key] = value;
+        }
+      }
+
+      return {
+        ...r,
+        permissions: permsObj,
+        userCount: countMap[r.name] || 0,
+      };
+    });
 
     res.json({ success: true, data });
   } catch (err) {
@@ -31,14 +43,21 @@ export const getRoles = async (req, res) => {
   }
 };
 
-// ── GET /api/admin/roles/permissions ─────────────────────────
-// Return the full permission slug list — used by the UI to
-// render the permission checkboxes when creating/editing a role
+// ── GET /api/admin/roles/resources ───────────────────────────
+// Return available resources and operations for the UI
 export const getPermissionsList = async (req, res) => {
-  res.json({ success: true, data: ALL_PERMISSIONS });
+  res.json({
+    success: true,
+    data: {
+      resources: RESOURCES,
+      operations: OPERATIONS,
+      defaults: DEFAULT_PERMISSIONS,
+    },
+  });
 };
 
 // ── POST /api/admin/roles ─────────────────────────────────────
+// Create a new custom role with matrix permissions
 export const createRole = async (req, res) => {
   try {
     const { name, label, description, permissions } = req.body;
@@ -47,22 +66,69 @@ export const createRole = async (req, res) => {
       return res.status(400).json({ message: "Role name is required" });
     }
 
-    // validate every slug sent
-    const invalid = (permissions || []).filter((p) => !ALL_PERMISSIONS.includes(p));
-    if (invalid.length) {
-      return res.status(400).json({ message: "Invalid permissions", invalid });
+    // Validate permissions structure
+    if (permissions && typeof permissions === 'object') {
+      for (const [resource, ops] of Object.entries(permissions)) {
+        if (!RESOURCES.includes(resource)) {
+          return res.status(400).json({
+            message: `Invalid resource: ${resource}`,
+          });
+        }
+        if (typeof ops !== 'object') {
+          return res.status(400).json({
+            message: `Permissions for ${resource} must be an object`,
+          });
+        }
+        for (const [op, val] of Object.entries(ops)) {
+          if (!OPERATIONS.includes(op)) {
+            return res.status(400).json({
+              message: `Invalid operation: ${op}`,
+            });
+          }
+          if (typeof val !== 'boolean') {
+            return res.status(400).json({
+              message: `${resource}.${op} must be a boolean`,
+            });
+          }
+        }
+      }
     }
 
-    const existing = await Role.findOne({ name: name.trim() });
+    const existing = await Role.findOne({ name: name.trim().toLowerCase() });
     if (existing) {
       return res.status(400).json({ message: "A role with that name already exists" });
     }
 
+    // Build permissions map from request
+    const permissionsMap = new Map();
+    if (permissions) {
+      for (const [resource, ops] of Object.entries(permissions)) {
+        permissionsMap.set(resource, {
+          add: ops.add || false,
+          view: ops.view || false,
+          edit: ops.edit || false,
+          delete: ops.delete || false,
+        });
+      }
+    }
+
+    // Ensure all resources are present
+    for (const resource of RESOURCES) {
+      if (!permissionsMap.has(resource)) {
+        permissionsMap.set(resource, {
+          add: false,
+          view: false,
+          edit: false,
+          delete: false,
+        });
+      }
+    }
+
     const role = await Role.create({
-      name: name.trim(),
+      name: name.trim().toLowerCase(),
       label: label?.trim() || name.trim(),
       description: description?.trim() || "",
-      permissions: permissions || [],
+      permissions: permissionsMap,
       isSystem: false,
     });
 
@@ -74,6 +140,7 @@ export const createRole = async (req, res) => {
 };
 
 // ── PUT /api/admin/roles/:id ──────────────────────────────────
+// Update role name, description, and permissions
 export const updateRole = async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
@@ -81,13 +148,57 @@ export const updateRole = async (req, res) => {
 
     const { label, description, permissions } = req.body;
 
-    // validate slugs
-    if (permissions) {
-      const invalid = permissions.filter((p) => !ALL_PERMISSIONS.includes(p));
-      if (invalid.length) {
-        return res.status(400).json({ message: "Invalid permissions", invalid });
+    // Validate and update permissions
+    if (permissions && typeof permissions === 'object') {
+      for (const [resource, ops] of Object.entries(permissions)) {
+        if (!RESOURCES.includes(resource)) {
+          return res.status(400).json({
+            message: `Invalid resource: ${resource}`,
+          });
+        }
+        if (typeof ops !== 'object') {
+          return res.status(400).json({
+            message: `Permissions for ${resource} must be an object`,
+          });
+        }
+        for (const [op, val] of Object.entries(ops)) {
+          if (!OPERATIONS.includes(op)) {
+            return res.status(400).json({
+              message: `Invalid operation: ${op}`,
+            });
+          }
+          if (typeof val !== 'boolean') {
+            return res.status(400).json({
+              message: `${resource}.${op} must be a boolean`,
+            });
+          }
+        }
       }
-      role.permissions = permissions;
+
+      // Build permissions map
+      const permissionsMap = new Map();
+      for (const [resource, ops] of Object.entries(permissions)) {
+        permissionsMap.set(resource, {
+          add: ops.add || false,
+          view: ops.view || false,
+          edit: ops.edit || false,
+          delete: ops.delete || false,
+        });
+      }
+
+      // Ensure all resources are present
+      for (const resource of RESOURCES) {
+        if (!permissionsMap.has(resource)) {
+          permissionsMap.set(resource, {
+            add: false,
+            view: false,
+            edit: false,
+            delete: false,
+          });
+        }
+      }
+
+      role.permissions = permissionsMap;
     }
 
     if (label !== undefined) role.label = label.trim();
@@ -106,6 +217,7 @@ export const updateRole = async (req, res) => {
 };
 
 // ── DELETE /api/admin/roles/:id ───────────────────────────────
+// Delete a custom role (cannot delete system roles)
 export const deleteRole = async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);

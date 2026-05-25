@@ -1,25 +1,85 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import api from "../../lib/api";
 
-// ✅ FIX: place image inside admin/public or admin/src/assets
-import logo from "../../../../client/src/lib/imgs/logoText.png"; // adjust path accordingly
+import logo from "../../../../client/src/lib/imgs/logoText.png";
 
-const links = [
-  { name: "Dashboard", href: "/" },
-  { name: "Orders", href: "/orders" },
-  { name: "Users", href: "/users" },
-  { name: "Restaurants", href: "/restaurants" },
-  { name: "Banners", href: "/banners" },
-  { name: "BI", href: "/BI" },
-    { name: "Queries", href: "/queries" },
-    { name: "Roles", href: "/roles" },
+type UserPermissions = {
+  [resource: string]: {
+    add: boolean;
+    view: boolean;
+    edit: boolean;
+    delete: boolean;
+  };
+};
+
+type MenuLink = {
+  name: string;
+  href: string;
+  resource: string; // which resource this menu item requires
+  requiredOp?: string; // which operation (default: "view")
+};
+
+const links: MenuLink[] = [
+  { name: "Dashboard", href: "/", resource: "dashboard", requiredOp: "view" },
+  { name: "Orders", href: "/orders", resource: "orders", requiredOp: "view" },
+  { name: "Users", href: "/users", resource: "users", requiredOp: "view" },
+  { name: "Restaurants", href: "/restaurants", resource: "restaurants", requiredOp: "view" },
+  { name: "Banners", href: "/banners", resource: "banners", requiredOp: "view" },
+  { name: "BI", href: "/BI", resource: "bi", requiredOp: "view" },
+  { name: "Queries", href: "/queries", resource: "queries", requiredOp: "view" },
+  { name: "Roles", href: "/roles", resource: "dashboard", requiredOp: "view" }, // Only admins can manage roles
 ];
 
 export default function Sidebar() {
   const path = usePathname();
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        // Get current user's permissions
+        const res = await api.get("/users/me");
+        const user = res.data.data;
+        
+        // Fetch the user's role to get permissions
+        if (user.role) {
+          const roleRes = await api.get(`/admin/roles`);
+          const roles = roleRes.data.data;
+          const userRole = roles.find((r: any) => r.name === user.role);
+          
+          if (userRole && userRole.permissions) {
+            setPermissions(userRole.permissions);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch permissions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPermissions();
+  }, []);
+
+  // Check if user has permission to view a menu item
+  const hasAccess = (link: MenuLink): boolean => {
+    if (loading || !permissions) return false;
+
+    const resourcePerms = permissions[link.resource];
+    if (!resourcePerms) return false;
+
+    const op = link.requiredOp || "view";
+    return resourcePerms[op as keyof typeof resourcePerms] === true;
+  };
+
+  // Filter links based on permissions
+  const visibleLinks = links.filter(hasAccess);
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-900 text-white">
@@ -39,7 +99,7 @@ export default function Sidebar() {
 
       {/* NAV */}
       <nav className="flex-1 space-y-1.5 px-3 py-4">
-        {links.map((link) => {
+        {visibleLinks.map((link) => {
           const active =
             path === link.href ||
             (link.href !== "/" && path.startsWith(link.href));
@@ -58,6 +118,16 @@ export default function Sidebar() {
             </Link>
           );
         })}
+
+        {visibleLinks.length === 0 && !loading && (
+          <div className="px-3 py-2.5 text-xs text-slate-400">
+            No pages available. Contact admin.
+          </div>
+        )}
+
+        {loading && (
+          <div className="px-3 py-2.5 text-xs text-slate-400">Loading...</div>
+        )}
       </nav>
 
       {/* FOOTER */}

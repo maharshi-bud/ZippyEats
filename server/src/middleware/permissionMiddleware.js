@@ -1,26 +1,38 @@
 // ============================================================
 // FILE: server/src/middleware/permissionMiddleware.js
+// NEW: Handles matrix-based (CRUD) permission checks
 // ============================================================
 // Usage (must come AFTER protect):
 //
+// NEW API:
 //   import { requirePermission } from "../middleware/permissionMiddleware.js";
-//   import { PERMISSIONS } from "../constants/permissions.js";
+//   router.get("/admin/menu", protect, requirePermission("menu", "view"), getMenu);
+//   router.post("/admin/menu", protect, requirePermission("menu", "add"), createMenu);
+//   router.put("/admin/menu/:id", protect, requirePermission("menu", "edit"), updateMenu);
+//   router.delete("/admin/menu/:id", protect, requirePermission("menu", "delete"), deleteMenu);
 //
-//   // single permission
-//   router.get("/admin/orders/:id", protect, requirePermission(PERMISSIONS.ORDERS_VIEW_ALL), getOrderById);
+// Multiple operations (user must have ANY):
+//   router.get("/admin/items", protect, requirePermission("menu", ["view", "add"]), handler);
 //
-//   // multiple — user must have ALL of them
-//   router.post("/refund", protect, requirePermission(PERMISSIONS.SUPPORT_REFUND, PERMISSIONS.ORDERS_EDIT_ITEMS), handler);
 // ============================================================
 
 import Role from "../models/Role.js";
+import { PANEL_ACCESS, PANEL_ACCESS_ROLES, PERMISSIONS } from "../constants/permissions.js";
 
 // ── In-process role cache ─────────────────────────────────────
-// Avoids a DB round-trip on every request for the same role name.
-// TTL: 5 minutes — short enough to pick up live role edits from the UI.
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const roleCache = new Map(); // Map<roleName, { permissions: Map, expiresAt: number }>
+const builtInPanelAccessRoles = new Set(PANEL_ACCESS_ROLES);
 
-const roleCache = new Map(); // Map<roleName, { permissions: string[], expiresAt: number }>
+function hasBuiltInPanelAccess(roleName, checks) {
+  return (
+    builtInPanelAccessRoles.has(roleName) &&
+    checks.some(
+      ({ resource, operation }) =>
+        resource === PANEL_ACCESS.resource && operation === PANEL_ACCESS.operation
+    )
+  );
+}
 
 async function getPermissionsForRole(roleName) {
   const cached = roleCache.get(roleName);
@@ -29,75 +41,110 @@ async function getPermissionsForRole(roleName) {
     return cached.permissions;
   }
 
-  const role = await Role.findOne({ name: roleName, isActive: true })
+  const role = await Role.findOne({ name: roleName.toLowerCase(), isActive: true })
     .select("permissions")
     .lean();
 
-  if (!role) return null; // role not found in DB
+  if (!role) return null;
+
+  // Convert permissions Map to plain object if needed
+  let permsObj = role.permissions;
+  if (permsObj instanceof Map) {
+    permsObj = Object.fromEntries(permsObj);
+  }
 
   roleCache.set(roleName, {
-    permissions: role.permissions,
+    permissions: permsObj,
     expiresAt: Date.now() + CACHE_TTL_MS,
   });
 
-  return role.permissions;
+  return permsObj;
 }
 
 // ── Cache invalidation ────────────────────────────────────────
-// Call this from the roles controller after any role update
-// so the cache doesn't serve stale permissions.
-//
-//   import { invalidateRoleCache } from "../middleware/permissionMiddleware.js";
-//   await Role.findByIdAndUpdate(id, { permissions: [...] });
-//   invalidateRoleCache(roleName);
-//
 export function invalidateRoleCache(roleName) {
   if (roleName) {
     roleCache.delete(roleName);
   } else {
-    roleCache.clear(); // no arg → flush everything
+    roleCache.clear();
   }
 }
 
-// ── requirePermission factory ─────────────────────────────────
-// Accepts one or more permission slugs.
-// If multiple are passed the user must have ALL of them.
+// ── NEW: requirePermission factory for CRUD operations ────────
+// Usage:
+//   requirePermission("menu", "view")       // single operation
+//   requirePermission("menu", ["view", "add"]) // ANY operation
+//   requirePermission({resource, operation}) // old object style for backward compat
 //
-export function requirePermission(...requiredSlugs) {
-  if (!requiredSlugs.length) {
-    throw new Error("[requirePermission] At least one permission slug is required.");
+export function requirePermission(resourceOrPermObj, operationOrUndefined) {
+  let checks = [];
+
+  // Handle legacy object style (backward compat with old PERMISSIONS object)
+  if (typeof resourceOrPermObj === "object" && resourceOrPermObj !== null && operationOrUndefined === undefined) {
+    if (resourceOrPermObj.resource && resourceOrPermObj.operation) {
+      checks.push(resourceOrPermObj);
+    } else {
+      throw new Error("[requirePermission] Invalid permission object format");
+    }
+  } else if (typeof resourceOrPermObj === "string") {
+    // NEW: (resource, operation) format
+    const resource = resourceOrPermObj;
+    const operations = Array.isArray(operationOrUndefined)
+      ? operationOrUndefined
+      : [operationOrUndefined];
+
+    checks = operations.map((op) => ({ resource, operation: op }));
+  } else {
+    throw new Error("[requirePermission] Invalid arguments. Use (resource, operation) or (resource, [operations])");
+  }
+
+  if (!checks.length) {
+    throw new Error("[requirePermission] At least one permission check required");
   }
 
   return async function permissionGuard(req, res, next) {
     try {
-      // protect() must run first
       if (!req.user?.role) {
         return res.status(401).json({ message: "Not authorized" });
       }
 
+      if (hasBuiltInPanelAccess(req.user.role, checks)) {
+        return next();
+      }
+
       const permissions = await getPermissionsForRole(req.user.role);
 
-      // Role doesn't exist in the Role collection yet
-      // (e.g. legacy "admin" row not seeded) — fail closed
       if (!permissions) {
         console.warn(
-          `[Permission] Role "${req.user.role}" not found in DB. ` +
-          `Did you run Role.seedDefaults()?`
+          `[Permission] Role "${req.user.role}" not found in DB. Did you run Role.seedDefaults()?`
         );
         return res.status(403).json({
           message: "Forbidden — role not configured",
         });
       }
 
-      const missing = requiredSlugs.filter((s) => !permissions.includes(s));
+      // Check each required permission
+      let hasAny = false;
+      const failures = [];
 
-      if (missing.length > 0) {
+      for (const check of checks) {
+        const { resource, operation } = check;
+        const resourcePerms = permissions[resource];
+
+        if (resourcePerms && resourcePerms[operation] === true) {
+          hasAny = true;
+          break; // user has at least one required permission
+        } else {
+          failures.push({ resource, operation });
+        }
+      }
+
+      if (!hasAny) {
         return res.status(403).json({
           message: "Forbidden — insufficient permissions",
-          // only expose in non-production to aid debugging
           ...(process.env.NODE_ENV !== "production" && {
-            required: requiredSlugs,
-            missing,
+            required: checks,
+            failures,
             role: req.user.role,
           }),
         });
@@ -107,6 +154,80 @@ export function requirePermission(...requiredSlugs) {
     } catch (err) {
       console.error("[Permission] Middleware error:", err);
       return res.status(500).json({ message: "Server error" });
+    }
+  };
+}
+
+// ── Legacy: REQUIRE ALL permissions for backward compat ─────
+// For code that calls requirePermission(PERMISSIONS.X, PERMISSIONS.Y, ...)
+// and expects ALL to be required
+//
+export function requireAllPermissions(...requiredPerms) {
+  if (!requiredPerms.length) {
+    throw new Error("[requireAllPermissions] At least one permission required");
+  }
+
+  return async function permissionGuard(req, res, next) {
+    try {
+      if (!req.user?.role) {
+        return res.status(401).json({ message: "Not authorized" });
+      }
+
+      let checks = requiredPerms.map((permSlug) => {
+        if (typeof permSlug === "object" && permSlug.resource && permSlug.operation) {
+          return permSlug;
+        }
+        const mapped = PERMISSIONS[permSlug];
+        if (!mapped) {
+          throw new Error(`Unknown permission: ${permSlug}`);
+        }
+        return mapped;
+      });
+
+      if (hasBuiltInPanelAccess(req.user.role, checks)) {
+        return next();
+      }
+
+      const permissions = await getPermissionsForRole(req.user.role);
+
+      if (!permissions) {
+        console.warn(
+          `[Permission] Role "${req.user.role}" not found in DB. Did you run Role.seedDefaults()?`
+        );
+        return res.status(403).json({
+          message: "Forbidden — role not configured",
+        });
+      }
+
+      // ALL must be present
+      let allPresent = true;
+      const failures = [];
+
+      for (const check of checks) {
+        const { resource, operation } = check;
+        const resourcePerms = permissions[resource];
+
+        if (!resourcePerms || resourcePerms[operation] !== true) {
+          allPresent = false;
+          failures.push({ resource, operation });
+        }
+      }
+
+      if (!allPresent) {
+        return res.status(403).json({
+          message: "Forbidden — insufficient permissions",
+          ...(process.env.NODE_ENV !== "production" && {
+            required: checks,
+            failures,
+            role: req.user.role,
+          }),
+        });
+      }
+
+      next();
+    } catch (err) {
+      console.error("[Permission] Middleware error:", err);
+      return res.status(500).json({ message: "Server error 12" });
     }
   };
 }

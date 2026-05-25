@@ -5,7 +5,6 @@
 import express from "express";
 import { protect } from "../../middleware/authMiddleware.js";
 import { requirePermission } from "../../middleware/permissionMiddleware.js";
-import { PERMISSIONS } from "../../constants/permissions.js";
 import {
   getOrderById,
   updateOrderStatus,
@@ -13,15 +12,19 @@ import {
 
 const router = express.Router();
 
+// View order details
 router.get(
   "/:id",
-  protect, requirePermission(PERMISSIONS.ORDERS_VIEW_ALL),
+  protect,
+  requirePermission("orders", "view"),
   getOrderById
 );
 
+// Update order status
 router.put(
   "/:id/status",
-  protect, requirePermission(PERMISSIONS.ORDERS_EDIT_STATUS),
+  protect,
+  requirePermission("orders", "edit"),
   updateOrderStatus
 );
 

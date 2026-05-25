@@ -6,12 +6,21 @@ import Loader from "../../../components/ui/Loader";
 
 // ── Types ─────────────────────────────────────────────────────
 
+type PermissionMatrix = {
+  [resource: string]: {
+    add: boolean;
+    view: boolean;
+    edit: boolean;
+    delete: boolean;
+  };
+};
+
 type Role = {
   _id: string;
   name: string;
   label: string;
   description: string;
-  permissions: string[];
+  permissions: PermissionMatrix;
   isSystem: boolean;
   userCount: number;
 };
@@ -30,52 +39,13 @@ type Pagination = {
   pages: number;
 };
 
-// ── Permission grouping for the checkbox UI ───────────────────
-
-const PERMISSION_GROUPS: Record<string, string[]> = {
-  Orders: [
-    "orders.view_own",
-    "orders.view_all",
-    "orders.create",
-    "orders.edit_status",
-    "orders.edit_items",
-  ],
-  Menu: ["menu.view", "menu.create", "menu.edit", "menu.delete"],
-  Restaurants: ["restaurant.view", "restaurant.view_dash"],
-  Banners: [
-    "banners.view",
-    "banners.create",
-    "banners.edit",
-    "banners.delete",
-  ],
-  "Rush Deals": [
-    "rush_deals.view",
-    "rush_deals.create",
-    "rush_deals.edit",
-    "rush_deals.delete",
-  ],
-  Support: [
-    "support.view_own",
-    "support.view_all",
-    "support.create",
-    "support.reply",
-    "support.edit_status",
-    "support.resolve",
-    "support.refund",
-    "support.add_note",
-    "support.sys_message",
-    "support.edit_order",
-  ],
-  Users: [
-    "users.view_own",
-    "users.edit_own",
-    "users.view_all",
-    "users.coins_view",
-  ],
-  Reviews: ["reviews.view", "reviews.create"],
-  Analytics: ["analytics.view"],
-  AI: ["ai.query"],
-  Notifications: ["fcm.manage_own", "fcm.manage_admin"],
+type APIResponse = {
+  success: boolean;
+  data: {
+    resources: string[];
+    operations: string[];
+    defaults: { [key: string]: PermissionMatrix };
+  };
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -90,7 +60,12 @@ const roleColor = (role: string) =>
 
 // ── Empty form state ──────────────────────────────────────────
 
-const emptyForm = { name: "", label: "", description: "", permissions: [] as string[] };
+const emptyForm = {
+  name: "",
+  label: "",
+  description: "",
+  permissions: {} as PermissionMatrix,
+};
 
 // ─────────────────────────────────────────────────────────────
 // PAGE
@@ -103,6 +78,10 @@ export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
   const [rolesError, setRolesError] = useState("");
+
+  // ── Resources & Operations from backend ────────────────────
+  const [resources, setResources] = useState<string[]>([]);
+  const [operations, setOperations] = useState<string[]>([]);
 
   // ── Role modal state ──────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
@@ -120,6 +99,18 @@ export default function RolesPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+
+  // ── Fetch resources & operations ───────────────────────────
+  const fetchPermissionsList = useCallback(async () => {
+    try {
+      const res = await api.get("/admin/roles/resources");
+      const data = res.data.data as APIResponse["data"];
+      setResources(data.resources || []);
+      setOperations(data.operations || []);
+    } catch (err) {
+      console.error("Failed to fetch permission resources:", err);
+    }
+  }, []);
 
   // ── Fetch roles ───────────────────────────────────────────
   const fetchRoles = useCallback(async () => {
@@ -152,7 +143,11 @@ export default function RolesPage() {
     }
   }, [search, roleFilter, page]);
 
-  useEffect(() => { fetchRoles(); }, [fetchRoles]);
+  useEffect(() => {
+    fetchPermissionsList();
+    fetchRoles();
+  }, [fetchPermissionsList, fetchRoles]);
+
   useEffect(() => {
     if (tab === "users") fetchUsers();
   }, [tab, fetchUsers]);
@@ -160,7 +155,17 @@ export default function RolesPage() {
   // ── Role modal helpers ────────────────────────────────────
   const openCreate = () => {
     setEditingRole(null);
-    setForm(emptyForm);
+    // Initialize empty permissions for all resources
+    const emptyPerms: PermissionMatrix = {};
+    resources.forEach((r) => {
+      emptyPerms[r] = { add: false, view: false, edit: false, delete: false };
+    });
+    setForm({
+      name: "",
+      label: "",
+      description: "",
+      permissions: emptyPerms,
+    });
     setFormError("");
     setModalOpen(true);
   };
@@ -171,29 +176,37 @@ export default function RolesPage() {
       name: role.name,
       label: role.label,
       description: role.description,
-      permissions: [...role.permissions],
+      permissions: { ...role.permissions },
     });
     setFormError("");
     setModalOpen(true);
   };
 
-  const togglePermission = (slug: string) => {
-    setForm((f) => ({
-      ...f,
-      permissions: f.permissions.includes(slug)
-        ? f.permissions.filter((p) => p !== slug)
-        : [...f.permissions, slug],
-    }));
+  const togglePermissionOperation = (resource: string, operation: string) => {
+    setForm((f) => {
+      const updatedPerms = { ...f.permissions };
+      if (!updatedPerms[resource]) {
+        updatedPerms[resource] = { add: false, view: false, edit: false, delete: false };
+      }
+      updatedPerms[resource][operation as keyof typeof updatedPerms[resource]] =
+        !updatedPerms[resource][operation as keyof typeof updatedPerms[resource]];
+      return { ...f, permissions: updatedPerms };
+    });
   };
 
-  const toggleGroup = (slugs: string[]) => {
-    const allOn = slugs.every((s) => form.permissions.includes(s));
-    setForm((f) => ({
-      ...f,
-      permissions: allOn
-        ? f.permissions.filter((p) => !slugs.includes(p))
-        : [...new Set([...f.permissions, ...slugs])],
-    }));
+  const toggleResourceAll = (resource: string) => {
+    setForm((f) => {
+      const updatedPerms = { ...f.permissions };
+      if (!updatedPerms[resource]) {
+        updatedPerms[resource] = { add: false, view: false, edit: false, delete: false };
+      }
+      const allTrue = operations.every((op) => updatedPerms[resource][op as keyof typeof updatedPerms[resource]]);
+      const newValue = !allTrue;
+      operations.forEach((op) => {
+        updatedPerms[resource][op as keyof typeof updatedPerms[resource]] = newValue;
+      });
+      return { ...f, permissions: updatedPerms };
+    });
   };
 
   const saveRole = async () => {
@@ -211,7 +224,12 @@ export default function RolesPage() {
           permissions: form.permissions,
         });
       } else {
-        await api.post("/admin/roles", form);
+        await api.post("/admin/roles", {
+          name: form.name.toLowerCase().replace(/\s+/g, "_"),
+          label: form.label,
+          description: form.description,
+          permissions: form.permissions,
+        });
       }
       setModalOpen(false);
       fetchRoles();
@@ -247,6 +265,13 @@ export default function RolesPage() {
     }
   };
 
+  // Helper: count total permissions granted for a role
+  const countPermissions = (perms: PermissionMatrix): number => {
+    return Object.values(perms).reduce((sum, res) => {
+      return sum + Object.values(res).filter((v) => v).length;
+    }, 0);
+  };
+
   // ─────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────
@@ -259,7 +284,7 @@ export default function RolesPage() {
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Roles & Permissions</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Manage roles and assign them to users
+            Manage roles with matrix-based CRUD permissions
           </p>
         </div>
       </div>
@@ -327,8 +352,8 @@ export default function RolesPage() {
                       </td>
 
                       <td className="p-3">
-                        <span className="text-zinc-700 font-medium">{role.permissions.length}</span>
-                        <span className="text-zinc-400 text-xs ml-1">slugs</span>
+                        <span className="text-zinc-700 font-medium">{countPermissions(role.permissions)}</span>
+                        <span className="text-zinc-400 text-xs ml-1">operations</span>
                       </td>
 
                       <td className="p-3 text-zinc-700">{role.userCount}</td>
@@ -505,10 +530,10 @@ export default function RolesPage() {
         </div>
       )}
 
-      {/* ── ROLE MODAL ─────────────────────────────────────── */}
+      {/* ── ROLE MODAL WITH PERMISSION MATRIX ─────────────────── */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
 
             {/* MODAL HEADER */}
             <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
@@ -526,7 +551,7 @@ export default function RolesPage() {
             {/* MODAL BODY */}
             <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
 
-              {/* Name — disabled when editing (slug is immutable) */}
+              {/* Name — disabled when editing */}
               <div>
                 <label className="block text-xs font-medium text-zinc-500 mb-1">
                   Role Name (slug) {editingRole && <span className="text-zinc-400">— cannot be changed</span>}
@@ -563,62 +588,65 @@ export default function RolesPage() {
                 />
               </div>
 
-              {/* PERMISSIONS */}
+              {/* PERMISSION MATRIX */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-xs font-medium text-zinc-500">Permissions</label>
-                  <span className="text-xs text-zinc-400">{form.permissions.length} selected</span>
+                <label className="block text-xs font-medium text-zinc-500 mb-3">Permissions Matrix</label>
+                
+                <div className="overflow-x-auto border border-zinc-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-zinc-50 border-b border-zinc-200">
+                        <th className="px-4 py-3 text-left font-medium text-zinc-700">Resource</th>
+                        {operations.map((op) => (
+                          <th key={op} className="px-4 py-3 text-center font-medium text-zinc-700 capitalize">
+                            {op}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resources.map((resource) => {
+                        const resourcePerms = form.permissions[resource] || {
+                          add: false,
+                          view: false,
+                          edit: false,
+                          delete: false,
+                        };
+                        const anyChecked = Object.values(resourcePerms).some((v) => v);
+
+                        return (
+                          <tr key={resource} className="border-b border-zinc-200 hover:bg-zinc-50">
+                            <td className="px-4 py-3 font-medium text-zinc-900 capitalize">
+                              {resource}
+                              {anyChecked && (
+                                <span className="ml-2 inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>
+                              )}
+                            </td>
+                            {operations.map((op) => (
+                              <td key={`${resource}-${op}`} className="px-4 py-3 text-center">
+                                <label className="inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={resourcePerms[op as keyof typeof resourcePerms] || false}
+                                    onChange={() => togglePermissionOperation(resource, op)}
+                                    className="accent-emerald-500 w-4 h-4"
+                                  />
+                                </label>
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="space-y-4">
-                  {Object.entries(PERMISSION_GROUPS).map(([group, slugs]) => {
-                    const allOn = slugs.every((s) => form.permissions.includes(s));
-                    const someOn = slugs.some((s) => form.permissions.includes(s));
-
-                    return (
-                      <div key={group} className="rounded-lg border border-zinc-200 overflow-hidden">
-
-                        {/* GROUP HEADER */}
-                        <button
-                          type="button"
-                          onClick={() => toggleGroup(slugs)}
-                          className="flex w-full items-center justify-between bg-zinc-50 px-4 py-2.5 text-left hover:bg-zinc-100 transition"
-                        >
-                          <span className="text-sm font-medium text-zinc-700">{group}</span>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                            allOn
-                              ? "bg-emerald-100 text-emerald-700"
-                              : someOn
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-zinc-100 text-zinc-400"
-                          }`}>
-                            {allOn ? "All" : someOn ? "Some" : "None"}
-                          </span>
-                        </button>
-
-                        {/* SLUGS */}
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 px-4 py-3">
-                          {slugs.map((slug) => (
-                            <label
-                              key={slug}
-                              className="flex items-center gap-2 cursor-pointer py-0.5"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={form.permissions.includes(slug)}
-                                onChange={() => togglePermission(slug)}
-                                className="accent-emerald-500 w-3.5 h-3.5"
-                              />
-                              <span className="text-xs text-zinc-600 font-mono">
-                                {slug.split(".")[1]}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <p className="text-xs text-zinc-500 mt-2">
+                  • <strong>Add:</strong> Can create new items
+                  • <strong>View:</strong> Can read/view items
+                  • <strong>Edit:</strong> Can modify existing items
+                  • <strong>Delete:</strong> Can remove items
+                </p>
               </div>
 
               {formError && (

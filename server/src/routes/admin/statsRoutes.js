@@ -19,14 +19,11 @@ import {
 } from "../../controllers/admin/adminStatsController.js";
 import { protect } from "../../middleware/authMiddleware.js";
 import { requirePermission } from "../../middleware/permissionMiddleware.js";
-import { PERMISSIONS } from "../../constants/permissions.js";
 
 const router = express.Router();
 
-// All stats routes require ANALYTICS_VIEW.
-// protect + requirePermission replaces the old protect + adminOnly pattern.
-// Apply once at router level so every route below inherits it.
-router.use(protect, requirePermission(PERMISSIONS.ANALYTICS_VIEW));
+// All stats routes require BI (Business Intelligence) view permission
+router.use(protect, requirePermission("bi", "view"));
 
 router.get("/overview",         overview);
 router.get("/revenue",          revenueChart);

@@ -5,7 +5,6 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import { requirePermission } from "../middleware/permissionMiddleware.js";
-import { PERMISSIONS } from "../constants/permissions.js";
 import {
   getMyOrders,
   updateMyOrderStatus,
@@ -24,45 +23,45 @@ router.use(protect);
 // ── Dashboard ─────────────────────────────────────────────────
 router.get(
   "/dashboard",
-  requirePermission(PERMISSIONS.RESTAURANT_VIEW_DASH),
+  requirePermission("dashboard", "view"),
   getRestaurantDashboard
 );
 
 // ── Orders ────────────────────────────────────────────────────
 router.get(
   "/orders",
-  requirePermission(PERMISSIONS.ORDERS_VIEW_OWN),
+  requirePermission("orders", "view"),
   getMyOrders
 );
 
 router.patch(
   "/orders/:id/status",
-  requirePermission(PERMISSIONS.ORDERS_EDIT_STATUS),
+  requirePermission("orders", "edit"),
   updateMyOrderStatus
 );
 
 // ── Menu ──────────────────────────────────────────────────────
 router.get(
   "/menu",
-  requirePermission(PERMISSIONS.MENU_VIEW),
+  requirePermission("menu", "view"),
   getMyMenu
 );
 
 router.post(
   "/menu",
-  requirePermission(PERMISSIONS.MENU_CREATE),
+  requirePermission("menu", "add"),
   createMenuItem
 );
 
 router.put(
   "/menu/:itemId",
-  requirePermission(PERMISSIONS.MENU_EDIT),
+  requirePermission("menu", "edit"),
   updateMenuItem
 );
 
 router.delete(
   "/menu/:itemId",
-  requirePermission(PERMISSIONS.MENU_DELETE),
+  requirePermission("menu", "delete"),
   deleteMenuItem
 );
 
