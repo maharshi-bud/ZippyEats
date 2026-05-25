@@ -4,6 +4,7 @@
 // ============================================================
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { io } from "socket.io-client";
 
 const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
@@ -19,6 +20,7 @@ const CATEGORIES = [
 ];
 
 export default function SupportWidget({ orderId, userId, token }) {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState("home");
   const [ticket, setTicket] = useState(null);
@@ -34,6 +36,10 @@ export default function SupportWidget({ orderId, userId, token }) {
   const bottomRef = useRef(null);
   const timerRef = useRef(null);
   const typingTimer = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function appendMessage(msg) {
     if (!msg) return;
@@ -402,7 +408,7 @@ function handleInputChange(e) {
     }
   }
   
-  return (
+  const widgetContent = (
     <>
       {/* ── Trigger Button ── */}
       <button onClick={() => setOpen(!open)} style={s.trigger}>
@@ -564,6 +570,8 @@ function handleInputChange(e) {
       `}</style>
     </>
   );
+
+  return mounted ? createPortal(widgetContent, document.body) : null;
 }
 
 
@@ -573,13 +581,13 @@ const s = {
     background: "linear-gradient(135deg, #4f46e5, #6366f1)",
     color: "#fff", border: "none", borderRadius: 24,
     padding: "12px 20px", fontSize: 14, fontWeight: 600,
-    cursor: "pointer", boxShadow: "0 4px 20px rgba(79,70,229,0.4)", zIndex: 1000,
+    cursor: "pointer", boxShadow: "0 4px 20px rgba(79,70,229,0.4)", zIndex: 9999,
   },
   widget: {
     position: "fixed", bottom: 80, right: 24, width: 360, maxHeight: 560,
     background: "#fff", borderRadius: 20, boxShadow: "0 8px 40px rgba(0,0,0,0.15)",
     display: "flex", flexDirection: "column", overflow: "hidden",
-    zIndex: 1000, border: "1px solid #e2e8f0",
+    zIndex: 9999, border: "1px solid #e2e8f0",
   },
   header: {
     background: "linear-gradient(135deg, #1e1b4b, #4f46e5)",

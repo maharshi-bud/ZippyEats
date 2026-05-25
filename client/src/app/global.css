@@ -1192,3 +1192,22 @@ height: 80px;
 .veg-switch.nonveg .checkbox:checked ~ .slider::after {
   left: calc(100% - 17.5px);
 }
+
+
+
+
+/* Order page  */
+
+@keyframes loadingFlow {
+
+  0% {
+    left: -40%;
+  }
+
+  100% {
+    left: 120%;
+  }
+}
+
+
+

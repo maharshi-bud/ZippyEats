@@ -8,7 +8,25 @@ const API_URL = api.defaults.baseURL || "http://localhost:5010/api";
 // ── Modal ─────────────────────────────────────────────────
 function Modal({ onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    
+    // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div
+  className="
+    fixed
+    inset-0
+    z-50
+    flex
+    items-center
+    justify-center
+    bg-black/60
+    backdrop-blur-sm
+    p-4
+
+    animate-in
+    fade-in
+    duration-200
+  "
+>
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-700 bg-[#081028] shadow-2xl">
         <button
           onClick={onClose}
@@ -41,7 +59,23 @@ function Collapsible({ title, count, children }) {
         </span>
         <span className="text-slate-400 text-lg">{open ? "−" : "+"}</span>
       </button>
-      {open && <div className="px-5 pb-5">{children}</div>}
+     <div
+  className={`
+    overflow-hidden
+    transition-all
+    duration-300
+    ${
+      open
+        ? "max-h-[1200px] opacity-100"
+        : "max-h-0 opacity-0"
+    }
+  `}
+>
+  <div className="px-5 pb-5">
+    {children}
+  </div>
+</div>
+      {/* {open && <div className="px-5 pb-5">{children}</div>} */}
     </div>
   );
 }
@@ -57,7 +91,7 @@ function Toggle({ checked, onChange, loading }) {
       } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-all duration-300 ease-out ${
           checked ? "translate-x-6" : "translate-x-1"
         }`}
       />
@@ -68,9 +102,225 @@ function Toggle({ checked, onChange, loading }) {
 const inputCls =
   "w-full rounded-2xl border border-slate-700 bg-slate-800 p-4 text-white outline-none transition focus:border-orange-500";
 const labelCls =
-  "absolute -top-2.5 left-3 z-10 bg-[#081028] px-2 text-xs font-semibold text-orange-400";
+  "absolute -top-2.5 left-3 z-10 px-2 text-xs font-semibold text-orange-400";
 
 // ─────────────────────────────────────────────────────────────
+function StablePromoForm({
+  promoModal,
+  promoForm,
+  setPromoForm,
+  handlePromoSubmit,
+  previewUrl,
+}) {
+  const previewImage = previewUrl || promoForm.image;
+
+  return (
+    <form onSubmit={handlePromoSubmit} className="grid gap-6 p-8">
+      <div>
+        <h2 className="text-2xl font-bold text-white">
+          {promoModal === "edit" ? "Edit Promo Banner" : "Add Promo Banner"}
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">Manage homepage promotional banners</p>
+      </div>
+
+      <div className="relative ">
+        <label className={labelCls}>Banner Title</label>
+        <input
+          type="text"
+          value={promoForm.title}
+          onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })}
+          className={inputCls}
+          required
+        />
+      </div>
+
+      <div className="relative">
+        <label className={labelCls}>Image URL</label>
+        <input
+          type="text"
+          value={promoForm.image}
+          onChange={(e) => setPromoForm({ ...promoForm, image: e.target.value })}
+          className={inputCls}
+          placeholder="https://..."
+        />
+      </div>
+
+      <div className="relative">
+        <label className={labelCls}>Upload Image (overrides URL)</label>
+        <div className="flex items-center gap-4 rounded-2xl border border-slate-700 bg-slate-800 p-4">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setPromoForm({ ...promoForm, imageFile: e.target.files[0] })}
+            className="w-full text-sm text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-orange-600"
+          />
+        </div>
+        {promoForm.imageFile && (
+          <p className="mt-2 text-sm text-emerald-400">Selected: {promoForm.imageFile.name}</p>
+        )}
+      </div>
+
+      {previewImage && (
+        <div className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-900">
+          <div
+            className="h-48 w-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${previewImage})` }}
+          />
+          <div className="p-4">
+            <h3 className="text-lg font-bold text-white">{promoForm.title || "Banner Preview"}</h3>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="rounded-2xl bg-white px-5 py-4 text-lg font-bold text-black transition hover:bg-orange-500 hover:text-white"
+      >
+        {promoModal === "edit" ? "Save Changes" : "Create Banner"}
+      </button>
+    </form>
+  );
+}
+
+function StableRushForm({
+  rushModal,
+  rushForm,
+  setRushForm,
+  restaurants,
+  menuItems,
+  selectedItemPrice,
+  setSelectedItemPrice,
+  fetchRestaurantMenu,
+  editingDeal,
+  handleRushSubmit,
+}) {
+  return (
+    <form onSubmit={handleRushSubmit} className="grid gap-6 p-8">
+      <div>
+        <h2 className="text-2xl font-bold text-white">
+          {rushModal === "edit" ? "Edit Rush Deal" : "Create Rush Deal"}
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">Configure flash discounts and limited offers</p>
+      </div>
+
+      {rushModal === "create" && (
+        <>
+          <div className="relative">
+            <label className={labelCls}>Restaurant</label>
+            <select
+              value={rushForm.restaurant_id}
+              onChange={(e) => {
+                setRushForm({ ...rushForm, restaurant_id: e.target.value, menuItem: "" });
+                setSelectedItemPrice(0);
+                fetchRestaurantMenu(e.target.value);
+              }}
+              className={inputCls}
+              required
+            >
+              <option value="">Select Restaurant</option>
+              {restaurants.map((r) => (
+                <option key={r._id} value={r._id}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative">
+            <label className={labelCls}>Dish</label>
+            <select
+              value={rushForm.menuItem}
+              onChange={(e) => {
+                const sel = menuItems.find((m) => m._id === e.target.value);
+                setSelectedItemPrice(sel?.price || 0);
+                setRushForm({ ...rushForm, menuItem: e.target.value, discountPrice: sel?.price || "", discountPercent: 0 });
+              }}
+              className={inputCls}
+              required
+            >
+              <option value="">Select Dish</option>
+              {menuItems.map((m) => (
+                <option key={m._id} value={m._id}>{m.name} - Rs.{m.price}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+
+      {rushModal === "edit" && editingDeal && (
+        <div className="rounded-2xl border border-slate-700 bg-slate-800/60 p-4">
+          <p className="text-xs text-slate-400 mb-1">Item</p>
+          <p className="text-white font-semibold">{editingDeal.itemName}</p>
+        </div>
+      )}
+
+      {selectedItemPrice > 0 && (
+        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-4">
+          <p className="text-sm text-slate-400">Original Price</p>
+          <h3 className="mt-1 text-3xl font-bold text-white">Rs.{selectedItemPrice}</h3>
+        </div>
+      )}
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="relative">
+          <label className={labelCls}>Final Price (Rs.)</label>
+          <input
+            type="number"
+            value={rushForm.discountPrice}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              const pct = selectedItemPrice > 0
+                ? Math.round(((selectedItemPrice - val) / selectedItemPrice) * 100)
+                : 0;
+              setRushForm({ ...rushForm, discountPrice: val, discountPercent: pct });
+            }}
+            className={inputCls}
+          />
+        </div>
+        <div className="relative">
+          <label className={labelCls}>Discount %</label>
+          <input
+            type="number"
+            value={rushForm.discountPercent}
+            onChange={(e) => {
+              const pct = Number(e.target.value);
+              const fp = selectedItemPrice > 0
+                ? Math.round(selectedItemPrice * (1 - pct / 100))
+                : 0;
+              setRushForm({ ...rushForm, discountPercent: pct, discountPrice: fp });
+            }}
+            className={inputCls}
+          />
+        </div>
+      </div>
+
+      {selectedItemPrice > 0 && rushForm.discountPrice > 0 && (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+          <p className="text-sm text-slate-300">Customer Saves</p>
+          <h3 className="mt-1 text-2xl font-bold text-emerald-400">
+            Rs.{selectedItemPrice - rushForm.discountPrice}
+          </h3>
+        </div>
+      )}
+
+      <div className="relative">
+        <label className={labelCls}>Deal Expiry</label>
+        <input
+          type="datetime-local"
+          value={rushForm.endsAt}
+          onChange={(e) => setRushForm({ ...rushForm, endsAt: e.target.value })}
+          className={`${inputCls} [color-scheme:dark]`}
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="rounded-2xl bg-white px-5 py-4 text-lg font-bold text-black transition hover:bg-orange-500 hover:text-white"
+      >
+        {rushModal === "edit" ? "Save Changes" : "Create Rush Deal"}
+      </button>
+    </form>
+  );
+}
+
 export default function BannersPage() {
   const [activeTab, setActiveTab] = useState("promo");
   const [promoBanners, setPromoBanners] = useState([]);
@@ -85,12 +335,25 @@ export default function BannersPage() {
   const [rushModal, setRushModal] = useState(null);
   const [editingPromo, setEditingPromo] = useState(null);
   const [editingDeal, setEditingDeal] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
 
   const emptyPromo = { title: "", image: "", link: "", imageFile: null };
   const emptyRush = { restaurant_id: "", menuItem: "", discountPrice: "", discountPercent: "", endsAt: "" };
 
   const [promoForm, setPromoForm] = useState(emptyPromo);
   const [rushForm, setRushForm] = useState(emptyRush);
+
+  useEffect(() => {
+    if (!promoForm.imageFile) {
+      setPreviewUrl("");
+      return;
+    }
+
+    const url = URL.createObjectURL(promoForm.imageFile);
+    setPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [promoForm.imageFile]);
 
   useEffect(() => {
     fetchPromoBanners();
@@ -244,7 +507,7 @@ export default function BannersPage() {
   // ─────────────────────────────────────────────────────────
   // PROMO FORM (shared between create + edit modal)
   // ─────────────────────────────────────────────────────────
-  const PromoForm = () => (
+  const LegacyPromoForm = () => (
     <form onSubmit={handlePromoSubmit} className="grid gap-6 p-8">
       <div>
         <h2 className="text-2xl font-bold text-white">
@@ -253,7 +516,7 @@ export default function BannersPage() {
         <p className="mt-1 text-sm text-slate-400">Manage homepage promotional banners</p>
       </div>
 
-      <div className="relative">
+      <div className="relative ">
         <label className={labelCls}>Banner Title</label>
         <input
           type="text"
@@ -296,9 +559,7 @@ export default function BannersPage() {
           <div
             className="h-48 w-full bg-cover bg-center"
             style={{
-              backgroundImage: promoForm.imageFile
-                ? `url(${URL.createObjectURL(promoForm.imageFile)})`
-                : `url(${promoForm.image})`,
+              backgroundImage: `url(${previewUrl || promoForm.image})`,
             }}
           />
           <div className="p-4">
@@ -319,7 +580,7 @@ export default function BannersPage() {
   // ─────────────────────────────────────────────────────────
   // RUSH FORM (shared between create + edit modal)
   // ─────────────────────────────────────────────────────────
-  const RushForm = () => (
+  const LegacyRushForm = () => (
     <form onSubmit={handleRushSubmit} className="grid gap-6 p-8">
       <div>
         <h2 className="text-2xl font-bold text-white">
@@ -501,7 +762,16 @@ export default function BannersPage() {
 
       {/* ── PROMO BANNERS ─────────────────────────────────── */}
       {activeTab === "promo" && (
-        <div className="space-y-5">
+        // <div className="space-y-5">
+        <div
+  className="
+    space-y-5
+    animate-in
+    fade-in
+    slide-in-from-bottom-2
+    duration-300
+  "
+>
           {promoBanners.length === 0 ? (
             <p className="text-slate-400">No banners yet. Click "+ Add Promo Banner" to create one.</p>
           ) : (
@@ -605,13 +875,30 @@ hover:shadow-orange-500/10 text-white transition ${
       {/* ── MODALS ────────────────────────────────────────── */}
       {promoModal && (
         <Modal onClose={() => { setPromoModal(null); setEditingPromo(null); }}>
-          <PromoForm />
+          <StablePromoForm
+            promoModal={promoModal}
+            promoForm={promoForm}
+            setPromoForm={setPromoForm}
+            handlePromoSubmit={handlePromoSubmit}
+            previewUrl={previewUrl}
+          />
         </Modal>
       )}
 
       {rushModal && (
         <Modal onClose={() => { setRushModal(null); setEditingDeal(null); setSelectedItemPrice(0); }}>
-          <RushForm />
+          <StableRushForm
+            rushModal={rushModal}
+            rushForm={rushForm}
+            setRushForm={setRushForm}
+            restaurants={restaurants}
+            menuItems={menuItems}
+            selectedItemPrice={selectedItemPrice}
+            setSelectedItemPrice={setSelectedItemPrice}
+            fetchRestaurantMenu={fetchRestaurantMenu}
+            editingDeal={editingDeal}
+            handleRushSubmit={handleRushSubmit}
+          />
         </Modal>
       )}
     </div>

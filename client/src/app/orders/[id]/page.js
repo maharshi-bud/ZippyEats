@@ -1,6 +1,21 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+
+import {
+  ClipboardList,
+  CheckCircle2,
+  ChefHat,
+  Bike,
+  PackageCheck,
+  ReceiptText,
+  Clock3,
+  Hash,
+  IndianRupee,
+  UtensilsCrossed,
+  Printer,
+  CircleDot,
+} from "lucide-react";
 import axios from "../../../lib/axios";
 import gsap from "gsap";
 import { resolveItemImage, handleImgError } from "../../../lib/imageUtils";
@@ -11,13 +26,43 @@ import { useSelector } from "react-redux";
 
 const BASE_URL = "http://localhost:5010";
 
+// const steps = [
+//   { key: "placed",           label: "Placed",           icon: "📋" },
+//   { key: "accepted",         label: "Accepted",         icon: "✅" },
+//   { key: "preparing",        label: "Preparing",        icon: "🍳" },
+//   { key: "out_for_delivery", label: "Out For Delivery", icon: "🛵" },
+//   { key: "delivered",        label: "Delivered",        icon: "📦" },
+// ];
+
+
 const steps = [
-  { key: "placed",           label: "Placed",           icon: "📋" },
-  { key: "accepted",         label: "Accepted",         icon: "✅" },
-  { key: "preparing",        label: "Preparing",        icon: "🍳" },
-  { key: "out_for_delivery", label: "Out For Delivery", icon: "🛵" },
-  { key: "delivered",        label: "Delivered",        icon: "📦" },
-];
+  {
+    key: "placed",
+    label: "Placed",
+    icon: ClipboardList,
+  },
+  {
+    key: "accepted",
+    label: "Accepted",
+    icon: CheckCircle2,
+  },
+  {
+    key: "preparing",
+    label: "Preparing",
+    icon: ChefHat,
+  },
+  {
+    key: "out_for_delivery",
+    label: "Out For Delivery",
+    icon: Bike,
+  },
+  {
+    key: "delivered",
+    label: "Delivered",
+    icon: PackageCheck,
+  },
+];  
+
 
 const statusMessages = {
   placed:           { text: "Your order has been placed!",          sub: "Waiting for the restaurant to accept." },
@@ -28,9 +73,17 @@ const statusMessages = {
 };
 // const { user, token } = useSelector((state) => state.auth);
 // Icon circle — consistent padding approach so emoji always centers
-const IconCircle = ({ emoji, bg }) => (
-  <div className={`${bg} rounded-xl flex-shrink-0`} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-    {emoji}
+// const IconCircle = ({ emoji, bg }) => (
+const IconCircle = ({
+  icon: Icon,
+  bg,
+}) => (
+<div className={`${bg} rounded-xl flex-shrink-0`} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+    {/* {emoji} */}
+    <Icon
+  size={18}
+  className="text-slate-700"
+/>
   </div>
 );
 
@@ -90,7 +143,20 @@ const { user, token } = useSelector((state) => state.auth);
     const currentIndex = steps.findIndex(s => s.key === order.status);
     lineRefs.current.forEach((el, i) => {
       if (!el) return;
-      gsap.to(el, { width: i < currentIndex ? "100%" : "0%", duration: 0.6, ease: "power2.out" });
+      // gsap.to(el, { width: i < currentIndex ? "100%" : "0%", duration: 0.6, ease: "power2.out" });
+      gsap.to(el, {
+
+  width:
+    i < currentIndex
+      ? "100%"
+      : i === currentIndex
+      ? "55%"
+      : "0%",
+
+  duration: 0.8,
+
+  ease: "power2.out",
+});
     });
   }, [order]);
 
@@ -106,19 +172,41 @@ const { user, token } = useSelector((state) => state.auth);
   const restaurantId = order.restaurant_id;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 bg-slate-50 min-h-screen">
+<div className="
+   relative
+  
+  min-h-screen
+  bg-[#f0f4f7]">
+      <div className="  max-w-5xl
+  mx-auto
+  px-4
+  py-8
+  min-h-screen
+  backdrop-blur-[2px]">
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-4xl">📦</span>
+          {/* <span className="text-4xl">📦</span> */}
+          <div className="rounded-2xl bg-green-100 p-3">
+  <PackageCheck
+    size={32}
+    className="text-green-600"
+  />
+</div>
           <div>
             <h1 className="text-4xl font-bold text-slate-800 mb-0">Order Tracking</h1>
             <p className="text-sm text-slate-400 ">Track your order in real-time</p>
           </div>
         </div>
         <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm rounded-xl hover:bg-slate-700 transition">
-          🖨️ Print Bill
+        <>
+  <Printer
+    size={16}
+    className="mr-1"
+  />
+  Print Bill
+</>
         </button>
       </div>
 
@@ -135,7 +223,8 @@ const { user, token } = useSelector((state) => state.auth);
                     style={{ width: 48, height: 48, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}
                     className={`rounded-full border-2 transition-all duration-500 ${done ? "bg-green-500 border-green-500 text-white shadow-md shadow-black-200" : "bg-white border-slate-200 text-slate-400"}`}
                   >
-                    {step.icon}
+                    {/* {step.icon} */}
+                    <step.icon size={22} />
                   </div>
                   <p className={`text-xs mt-2 font-medium text-center ${done ? "text-slate-800" : "text-slate-400"}`}>{step.label}</p>
                   <p className={`text-[10px] mt-0.5 text-center ${done ? "text-green-500" : "text-slate-300"}`}>
@@ -144,11 +233,71 @@ const { user, token } = useSelector((state) => state.auth);
                       : index === currentIndex ? "Now" : "Upcoming"}
                   </p>
                 </div>
-                {!isLast && (
-                  <div className="flex-1 h-1 bg-slate-100 mx-1 mt-6 rounded-full overflow-hidden">
-                    <div ref={el => (lineRefs.current[index] = el)} className="h-full bg-green-500 rounded-full" style={{ width: index < currentIndex ? "100%" : "0%" }} />
-                  </div>
-                )}
+{!isLast && (
+
+  <div className="
+    relative
+    flex-1
+    h-1.5
+    bg-slate-200
+    mx-2
+    mt-6
+    rounded-full
+    overflow-hidden
+  ">
+
+    {/* COMPLETED LINE */}
+
+    <div
+
+      ref={(el) =>
+        (lineRefs.current[index] = el)
+      }
+
+      className="
+        h-full
+        bg-green-500
+        rounded-full
+        relative
+        overflow-hidden
+      "
+
+      style={{
+        width:
+          index < currentIndex
+            ? "100%"
+            : index === currentIndex
+            ? "60%"
+            : "0%",
+      }}
+    >
+
+      {/* MOVING LOADER EFFECT */}
+
+      {index === currentIndex && (
+
+        <div className="
+          absolute
+          top-0
+          left-[-40%]
+
+          h-full
+          w-[40%]
+
+          bg-gradient-to-r
+          from-transparent
+          via-white/80
+          to-transparent
+
+          animate-[loadingFlow_1.2s_linear_infinite]
+        " />
+
+      )}
+
+    </div>
+
+  </div>
+)}
               </div>
             );
           })}
@@ -162,67 +311,316 @@ const { user, token } = useSelector((state) => state.auth);
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
   {/* ORDER DETAILS — fixed height */}
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left flex flex-col"
-       style={{ height: 500 }}>
+ {/* ORDER DETAILS — fixed height */}
+<div
+  className="
+    bg-white
+    rounded-2xl
+    shadow-xl
+    border
+    border-slate-200
+    p-6
+    text-left
+    flex
+    flex-col
+  "
+  style={{ height: 500 }}
+>
 
-    <div className="flex items-center gap-2 mb-5">
-      <span className="text-4xl leading-none ml-[6px]">🧾</span>
-      <h2 className="text-3xl font-semibold text-slate-800 leading-none m-2 mr-[2px]">
+  {/* HEADER */}
+
+  <div className="flex items-center gap-3 mb-6">
+
+    <div className="
+      rounded-2xl
+      bg-slate-200
+      p-3
+    ">
+      <ReceiptText
+        size={30}
+        className="text-slate-700"
+      />
+    </div>
+
+    <div>
+
+      <h2 className="
+        text-3xl
+        font-semibold
+        text-slate-800
+        leading-none
+      ">
         Order Details
       </h2>
+
+      <p className="
+        mt-1
+        text-sm
+        text-slate-400
+      ">
+        Live order information
+      </p>
+
     </div>
 
-    <div className="space-y-3 w-full flex-1">
-      <div className="flex items-center gap-3 w-full p-4 bg-slate-50 rounded-xl mx-1">
-        <IconCircle emoji="🟢" bg="bg-green-100" />
-        <span className="text-sm text-slate-500 flex-1">Status</span>
-        <span className="text-sm font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-lg capitalize">
-          {order.status.replaceAll("_", " ")}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
-        <IconCircle emoji="₹" bg="bg-blue-100" />
-        <span className="text-sm text-slate-500 flex-1">Total Amount</span>
-        <span className="text-sm font-bold text-slate-800">₹{order.total_amount}</span>
-      </div>
-
-      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
-        <IconCircle emoji="📦" bg="bg-indigo-100" />
-        <span className="text-sm text-slate-500 flex-1">Number of items</span>
-        <span className="text-sm font-bold text-slate-800">
-          {order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
-        <IconCircle emoji="🕐" bg="bg-orange-100" />
-        <span className="text-sm text-slate-500 flex-1">ETA</span>
-        <span className="text-sm font-bold text-slate-800">
-          {new Date(order.eta).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl mx-1">
-        <IconCircle emoji="#" bg="bg-purple-100" />
-        <span className="text-sm text-slate-500 flex-1">Order ID</span>
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-xs text-slate-600 truncate max-w-[120px]">{params.id}</span>
-          <button onClick={copyId} className="text-slate-400 hover:text-slate-700 text-xs flex-shrink-0">
-            {copied ? "✓" : "⧉"}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 
+  {/* DETAILS */}
+
+  <div className="
+    space-y-3
+    w-full
+    flex-1
+  ">
+
+    {/* STATUS */}
+
+    <div className="
+      flex
+      items-center
+      gap-3
+      w-full
+      p-4
+      bg-slate-50
+      rounded-xl
+      transition
+      hover:bg-slate-100
+    ">
+
+      <IconCircle
+        icon={CircleDot}
+        bg="bg-green-100"
+      />
+
+      <span className="
+        text-sm
+        text-slate-500
+        flex-1
+      ">
+        Status
+      </span>
+
+      <span className="
+        text-sm
+        font-semibold
+        px-3
+        py-1
+        bg-green-100
+        text-green-700
+        rounded-lg
+        capitalize
+      ">
+        {order.status.replaceAll("_", " ")}
+      </span>
+
+    </div>
+
+    {/* TOTAL */}
+
+    <div className="
+      flex
+      items-center
+      gap-3
+      p-4
+      bg-slate-50
+      rounded-xl
+      transition
+      hover:bg-slate-100
+    ">
+
+      <IconCircle
+        icon={IndianRupee}
+        bg="bg-blue-100"
+      />
+
+      <span className="
+        text-sm
+        text-slate-500
+        flex-1
+      ">
+        Total Amount
+      </span>
+
+      <span className="
+        text-sm
+        font-bold
+        text-slate-800
+      ">
+        ₹{order.total_amount}
+      </span>
+
+    </div>
+
+    {/* ITEMS */}
+
+    <div className="
+      flex
+      items-center
+      gap-3
+      p-4
+      bg-slate-50
+      rounded-xl
+      transition
+      hover:bg-slate-100
+    ">
+
+      <IconCircle
+        icon={PackageCheck}
+        bg="bg-indigo-100"
+      />
+
+      <span className="
+        text-sm
+        text-slate-500
+        flex-1
+      ">
+        Number of Items
+      </span>
+
+      <span className="
+        text-sm
+        font-bold
+        text-slate-800
+      ">
+
+        {
+          order.items?.reduce(
+            (sum, item) =>
+              sum + item.quantity,
+            0
+          ) || 0
+        }
+
+      </span>
+
+    </div>
+
+    {/* ETA */}
+
+    <div className="
+      flex
+      items-center
+      gap-3
+      p-4
+      bg-slate-50
+      rounded-xl
+      transition
+      hover:bg-slate-100
+    ">
+
+      <IconCircle
+        icon={Clock3}
+        bg="bg-orange-100"
+      />
+
+      <span className="
+        text-sm
+        text-slate-500
+        flex-1
+      ">
+        ETA
+      </span>
+
+      <span className="
+        text-sm
+        font-bold
+        text-slate-800
+      ">
+
+        {new Date(order.eta)
+          .toLocaleTimeString(
+            [],
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+            }
+          )}
+
+      </span>
+
+    </div>
+
+    {/* ORDER ID */}
+
+    <div className="
+      flex
+      items-center
+      gap-3
+      p-4
+      bg-slate-50
+      rounded-xl
+      transition
+      hover:bg-slate-100
+    ">
+
+      <IconCircle
+        icon={Hash}
+        bg="bg-purple-100"
+      />
+
+      <span className="
+        text-sm
+        text-slate-500
+        flex-1
+      ">
+        Order ID
+      </span>
+
+      <div className="
+        flex
+        items-center
+        gap-2
+        min-w-0
+      ">
+
+        <span className="
+          font-mono
+          text-xs
+          text-slate-600
+          truncate
+          max-w-[120px]
+        ">
+          {params.id}
+        </span>
+
+        <button
+
+          onClick={copyId}
+
+          className="
+            text-slate-400
+            hover:text-slate-700
+            text-xs
+            flex-shrink-0
+            transition
+          "
+        >
+
+          {copied ? "✓" : "⧉"}
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
   {/* ITEMS — same fixed height, scrollable content */}
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-left flex flex-col"
+  <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 text-left flex flex-col"
        style={{ height: 500 }}>
 
-    <div className="flex items-center justify-between mb-5">
+    <div className="flex items-center  justify-between mb-5">
       <div className="flex items-center gap-2">
-        <span style={{ fontSize: 36 }}> 🍽️  </span>
+        {/* <span style={{ fontSize: 36 }}> 🍽️  </span> */}
+        <div className="rounded-2xl bg-orange-100 p-3">
+  <UtensilsCrossed
+    size={28}
+    className="text-orange-600"
+  />
+</div>
         {/* <h2 className="text-lg font-semibold text-slate-800"> */}
       <h2 className="text-3xl font-semibold text-slate-800 leading-none m-2 mr-[2px]">
 Dishes</h2>
@@ -301,7 +699,7 @@ Dishes</h2>
 </div>
 
       {/* STATUS BANNER */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+      <div className="bg-white rounded-2xl shadow-xl mt-3 border border-slate-200 p-5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div style={{ width: 48, height: 48, fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" }} className="rounded-full bg-green-100 flex-shrink-0">
             🛵
@@ -325,11 +723,25 @@ Dishes</h2>
     token={token}
   />
   */}
-<SupportWidget
-  orderId={params.id}
-  userId={user?._id || JSON.parse(atob((token || localStorage.getItem("token")).split(".")[1])).id}
-  token={token || localStorage.getItem("token")}
-/>
+  <SupportWidget
+    orderId={params.id}
+    userId={
+      user?._id ||
+      JSON.parse(
+        atob(
+          (
+            token ||
+            localStorage.getItem("token")
+          ).split(".")[1]
+        )
+      ).id
+    }
+    token={
+      token ||
+      localStorage.getItem("token")
+    }
+  />
+    </div>
     </div>
   );
 }
