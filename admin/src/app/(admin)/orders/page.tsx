@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
-
+import PermissionGuard from "../../../components/PermissionGuard";
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
 import Loader from "../../../components/ui/Loader";
@@ -130,6 +130,7 @@ const [updating, setUpdating] = useState(false);
   }
 
   return (
+        <PermissionGuard resource="orders" operation="view">
     <div className="space-y-6">
       {/* HEADER */}
       <h1 className="text-2xl font-bold text-zinc-950">
@@ -309,5 +310,7 @@ const [updating, setUpdating] = useState(false);
         </div>
       </div>
     </div>
+    </PermissionGuard>
+
   );
 }

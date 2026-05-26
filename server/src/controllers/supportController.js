@@ -89,8 +89,9 @@ export async function createTicket(req, res) {
 // ── GET /api/support/tickets (admin: all | user: own) ─────
 export async function getTickets(req, res) {
   try {
-    const isAdmin = req.user.role === "admin";
-    const filter = isAdmin ? {} : { userId: req.user._id };
+    // admin and any panel role with queries.view see all tickets
+    const isUser = req.user.role === "user";
+    const filter = isUser ? { userId: req.user._id } : {};
 
     const tickets = await SupportTicket.find(filter)
       .populate("userId", "name email")
@@ -114,9 +115,12 @@ export async function getTicketById(req, res) {
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
 
     // Check access
-    const isAdmin = req.user.role === "admin";
-    if (!isAdmin && ticket.userId._id.toString() !== req.user._id.toString())
-      return res.status(403).json({ message: "Access denied" });
+    // const isAdmin = req.user.role === "admin";
+    // if (!isAdmin && ticket.userId._id.toString() !== req.user._id.toString())
+    //   return res.status(403).json({ message: "Access denied" });
+
+     const isUser = req.user.role === "user";
+    const filter = isUser ? { userId: req.user._id } : {};
 
     // Fetch user stats
     const [totalOrders, totalTickets] = await Promise.all([

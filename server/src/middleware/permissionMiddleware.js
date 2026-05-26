@@ -45,6 +45,9 @@ async function getPermissionsForRole(roleName) {
     .select("permissions")
     .lean();
 
+    
+ console.log("[Permission] Looking for role:", roleName.toLowerCase(), "→ found:", role ? role._id : "NULL");  // ADD THIS
+  if (role) console.log("[Permission] queries perms:", role.permissions?.queries ?? role.permissions?.get?.("queries")); // ADD THIS
   if (!role) return null;
 
   // Convert permissions Map to plain object if needed

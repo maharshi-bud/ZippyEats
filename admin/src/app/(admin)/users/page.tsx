@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
 import Loader from "../../../components/ui/Loader";
-
+import PermissionGuard from "../../../components/PermissionGuard";
 const safe = (v: any) => Number(v) || 0;
 
 export default function UsersPage() {
@@ -61,6 +61,7 @@ export default function UsersPage() {
   if (!stats) return null;
 
   return (
+        <PermissionGuard resource="users" operation="view">
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-zinc-900">Users</h1>
 
@@ -160,5 +161,6 @@ export default function UsersPage() {
         )}
       </div>
     </div>
+    </PermissionGuard>
   );
 }

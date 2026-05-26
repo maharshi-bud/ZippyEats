@@ -3,7 +3,7 @@
 // ============================================================
 // FILE: admin/src/app/(admin)/queries/page.tsx
 // ============================================================
-
+import PermissionGuard from "../../../components/PermissionGuard";
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import AdminSupportPanel from "../../../components/support/AdminSupportPanel";
@@ -332,7 +332,9 @@ export default function QueriesPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setTickets(Array.isArray(data) ? data : []);
+      // setTickets(Array.isArray(data) ? data : []); 
+      // console.log("[Queries] response:", data);
+      setTickets(Array.isArray(data) ? data : Array.isArray(data.tickets) ? data.tickets : []);
     } catch (err) {
       console.error("[Queries] fetchTickets error:", err);
     } finally {
@@ -424,6 +426,8 @@ async function handleOpenTicket(ticket) {
   }
 
   return (
+            <PermissionGuard resource="queries" operation="view">
+
     <div style={s.page}>
       {/* Header */}
       <div style={s.pageHeader}>
@@ -497,6 +501,7 @@ async function handleOpenTicket(ticket) {
         </>
       )}
     </div>
+    </PermissionGuard>
   );
 }
 

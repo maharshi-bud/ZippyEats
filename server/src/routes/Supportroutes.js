@@ -29,8 +29,12 @@ router.post(
 );
 
 router.get(
-  "/tickets",
-  protect, requirePermission("queries", "view"),
+  "/tickets",protect,
+  (req, res, next) => {
+    console.log("[tickets] req.user.role:", req.user.role);
+    next();
+  },
+   requirePermission("queries", "view"),  
   getTickets
 );
 

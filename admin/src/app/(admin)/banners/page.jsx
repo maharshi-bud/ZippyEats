@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import api from "../../../lib/api";
-
+import PermissionGuard from "../../../components/PermissionGuard";
 const API_URL = api.defaults.baseURL || "http://localhost:5010/api";
 
 // ── Modal ─────────────────────────────────────────────────
 function Modal({ onClose, children }) {
   return (
+    <PermissionGuard resource="banners" operation="view">
     
-    // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    {/* // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"> */}
     <div
   className="
     fixed
@@ -37,6 +38,7 @@ function Modal({ onClose, children }) {
         {children}
       </div>
     </div>
+  </PermissionGuard>
   );
 }
 
@@ -83,6 +85,8 @@ function Collapsible({ title, count, children }) {
 // ── Toggle switch ─────────────────────────────────────────
 function Toggle({ checked, onChange, loading }) {
   return (
+  
+    <PermissionGuard resource="banners" operation="view">
     <button
       onClick={onChange}
       disabled={loading}
@@ -96,6 +100,7 @@ function Toggle({ checked, onChange, loading }) {
         }`}
       />
     </button>
+    </PermissionGuard>
   );
 }
 
@@ -115,6 +120,8 @@ function StablePromoForm({
   const previewImage = previewUrl || promoForm.image;
 
   return (
+        <PermissionGuard resource="banners" operation="view">
+
     <form onSubmit={handlePromoSubmit} className="grid gap-6 p-8">
       <div>
         <h2 className="text-2xl font-bold text-white">
@@ -179,7 +186,8 @@ function StablePromoForm({
         {promoModal === "edit" ? "Save Changes" : "Create Banner"}
       </button>
     </form>
-  );
+</PermissionGuard>  
+);
 }
 
 function StableRushForm({
@@ -195,6 +203,8 @@ function StableRushForm({
   handleRushSubmit,
 }) {
   return (
+        <PermissionGuard resource="banners" operation="view">
+
     <form onSubmit={handleRushSubmit} className="grid gap-6 p-8">
       <div>
         <h2 className="text-2xl font-bold text-white">
@@ -318,6 +328,7 @@ function StableRushForm({
         {rushModal === "edit" ? "Save Changes" : "Create Rush Deal"}
       </button>
     </form>
+    </PermissionGuard>
   );
 }
 
@@ -716,6 +727,8 @@ export default function BannersPage() {
   // RENDER
   // ─────────────────────────────────────────────────────────
   return (
+            <PermissionGuard resource="banners" operation="view">
+
     <div className="space-y-8     animate-in
     fade-in
     duration-500">
@@ -902,12 +915,14 @@ hover:shadow-orange-500/10 text-white transition ${
         </Modal>
       )}
     </div>
+    </PermissionGuard>
   );
 }
 
 // ── Deal card ─────────────────────────────────────────────
 function DealCard({ deal, onDelete, onEdit, onToggle, toggling, expired = false }) {
-  return (
+  return (        <PermissionGuard resource="banners" operation="view">
+
     <div className={`rounded-2xl p-5 space-y-3 transition-all
 duration-300
 hover:-translate-y-1
@@ -960,5 +975,6 @@ hover:shadow-orange-500/10 ${expired ? "bg-slate-800/50" : "bg-slate-900"} ${!de
         </div>
       </div>
     </div>
+    </PermissionGuard>
   );
 }

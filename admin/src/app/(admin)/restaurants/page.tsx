@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import api from "../../../lib/api";
 import Card from "../../../components/ui/Card";
 import Loader from "../../../components/ui/Loader";
-
+import PermissionGuard from "../../../components/PermissionGuard";
 const safe = (v: any) => Number(v) || 0;
 
 export default function RestaurantsPage() {
@@ -61,6 +61,8 @@ export default function RestaurantsPage() {
   const activeCount = restaurants.filter((r) => r.isActive).length;
 
   return (
+            <PermissionGuard resource="restaurants" operation="view">
+
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-zinc-900">Restaurants</h1>
 
@@ -157,5 +159,6 @@ export default function RestaurantsPage() {
         )}
       </div>
     </div>
+    </PermissionGuard>
   );
 }

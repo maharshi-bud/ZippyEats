@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import api from "../../../lib/api";
 import Loader from "../../../components/ui/Loader";
-
+import PermissionGuard from "../../../components/PermissionGuard";
 // ── Types ─────────────────────────────────────────────────────
 
 type PermissionMatrix = {
@@ -278,6 +278,8 @@ const toggleResourceAll = (resource: string) => {
   // ─────────────────────────────────────────────────────────
 
   return (
+            <PermissionGuard resource="banners" operation="view">
+
     <div className="space-y-6">
 
       {/* PAGE HEADER */}
@@ -616,6 +618,7 @@ const toggleResourceAll = (resource: string) => {
                         const anyChecked = Object.values(resourcePerms).some((v) => v);
 
                         return (
+                          
                           <tr key={resource} className="border-b border-zinc-200 hover:bg-zinc-50">
                             <td className="px-4 py-3 font-medium text-zinc-900 capitalize">
                               {resource}
@@ -679,5 +682,6 @@ const toggleResourceAll = (resource: string) => {
       )}
 
     </div>
+</PermissionGuard>
   );
 }

@@ -32,93 +32,52 @@ const links: MenuLink[] = [
   { name: "Banners", href: "/banners", resource: "banners", requiredOp: "view" },
   { name: "BI", href: "/BI", resource: "bi", requiredOp: "view" },
   { name: "Queries", href: "/queries", resource: "queries", requiredOp: "view" },
-  { name: "Roles", href: "/roles", resource: "dashboard", requiredOp: "view" }, // Only admins can manage roles
+  { name: "Roles", href: "/roles", resource: "users", requiredOp: "edit" }, // Only admins can manage roles
 ];
 
 export default function Sidebar() {
   const path = usePathname();
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
+useEffect(() => {
+  const fetchPermissions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) { setLoading(false); return; }
 
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      try {
-        // Decode role from JWT token
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("No token found");
-          setLoading(false);
-          return;
+      const res = await api.get("/admin/me/permissions");
+      const perms = res.data.data.permissions;
+
+      const fullPerms: UserPermissions = {
+        dashboard:   { add: false, view: false, edit: false, delete: false },
+        users:       { add: false, view: false, edit: false, delete: false },
+        restaurants: { add: false, view: false, edit: false, delete: false },
+        menu:        { add: false, view: false, edit: false, delete: false },
+        banners:     { add: false, view: false, edit: false, delete: false },
+        orders:      { add: false, view: false, edit: false, delete: false },
+        queries:     { add: false, view: false, edit: false, delete: false },
+        bi:          { add: false, view: false, edit: false, delete: false },
+      };
+
+      for (const [resource, ops] of Object.entries(perms)) {
+        if (fullPerms[resource as keyof UserPermissions]) {
+          fullPerms[resource as keyof UserPermissions] = {
+            ...fullPerms[resource as keyof UserPermissions],
+            ...(ops as any),
+          };
         }
-
-        // Decode JWT (simple base64 decode)
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const userRole = payload.role;
-
-        if (!userRole) {
-          console.error("No role in token");
-          setLoading(false);
-          return;
-        }
-
-        console.log("User role from token:", userRole);
-
-        // Fetch all roles from backend
-        const roleRes = await api.get("/admin/roles");
-        const roles = roleRes.data.data;
-
-        console.log("All roles from backend:", roles);
-
-        // Find user's role
-        const userRoleData = roles.find(
-          (r: any) => r.name.toLowerCase() === userRole.toLowerCase()
-        );
-
-        console.log("User role data:", userRoleData);
-
-        if (userRoleData && userRoleData.permissions) {
-          // Ensure permissions is an object
-          let perms = userRoleData.permissions;
-          
-          // If it's a Map-like object, convert it
-          if (perms && typeof perms === 'object') {
-            // Ensure all resources exist
-            const fullPerms: UserPermissions = {
-              dashboard: { add: false, view: false, edit: false, delete: false },
-              users: { add: false, view: false, edit: false, delete: false },
-              restaurants: { add: false, view: false, edit: false, delete: false },
-              menu: { add: false, view: false, edit: false, delete: false },
-              banners: { add: false, view: false, edit: false, delete: false },
-              orders: { add: false, view: false, edit: false, delete: false },
-              queries: { add: false, view: false, edit: false, delete: false },
-              bi: { add: false, view: false, edit: false, delete: false },
-            };
-
-            // Merge with fetched permissions
-            for (const [resource, ops] of Object.entries(perms)) {
-              if (fullPerms[resource as keyof UserPermissions]) {
-                fullPerms[resource as keyof UserPermissions] = {
-                  ...fullPerms[resource as keyof UserPermissions],
-                  ...(ops as any),
-                };
-              }
-            }
-
-            console.log("Final permissions:", fullPerms);
-            setPermissions(fullPerms);
-          }
-        } else {
-          console.error("Role not found or no permissions");
-        }
-      } catch (err) {
-        console.error("Failed to fetch permissions:", err);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchPermissions();
-  }, []);
+      setPermissions(fullPerms);
+    } catch (err) {
+      console.error("Failed to fetch permissions:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchPermissions();
+}, []);
+
 
   // Check if user has permission to access a menu item
   const hasAccess = (link: MenuLink): boolean => {

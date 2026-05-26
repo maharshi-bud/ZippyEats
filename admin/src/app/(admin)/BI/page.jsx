@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-
+import PermissionGuard from "../../../components/PermissionGuard";
 const SUGGESTED_QUERIES = [
   "How is revenue looking this month?",
   "Which restaurants are underperforming?",
@@ -99,6 +99,8 @@ export default function AIAnalytics() {
   }
 
   return (
+            <PermissionGuard resource="bi" operation="view">
+
     <div style={styles.page}>
 
       {/* ── Page Title ── */}
@@ -189,6 +191,7 @@ export default function AIAnalytics() {
         }
       `}</style>
     </div>
+    </PermissionGuard>
   );
 }
 
