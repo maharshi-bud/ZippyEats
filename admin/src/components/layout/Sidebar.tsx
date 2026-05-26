@@ -43,27 +43,72 @@ export default function Sidebar() {
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
-        // Get current user's permissions
-        const res = await api.get("/users/me");
-        const user = res.data.data;
-        
-        // Fetch the user's role to get permissions
-        console.log(user);
-        console.log("2")
-
-        if (user.role) {
-          console.log("2")
-          const roleRes = await api.get(`/admin/roles`);
-          const roles = roleRes.data.data;
-          const userRole = roles.find((r: any) => r.name === user.role);
-          
-          if (userRole && userRole.permissions) {
-            setPermissions(userRole.permissions);
-          }
-          console.log(userRole.permissions);
+        // Decode role from JWT token
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("No token found");
+          setLoading(false);
+          return;
         }
-        else{
-          console.log("1234")
+
+        // Decode JWT (simple base64 decode)
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userRole = payload.role;
+
+        if (!userRole) {
+          console.error("No role in token");
+          setLoading(false);
+          return;
+        }
+
+        console.log("User role from token:", userRole);
+
+        // Fetch all roles from backend
+        const roleRes = await api.get("/admin/roles");
+        const roles = roleRes.data.data;
+
+        console.log("All roles from backend:", roles);
+
+        // Find user's role
+        const userRoleData = roles.find(
+          (r: any) => r.name.toLowerCase() === userRole.toLowerCase()
+        );
+
+        console.log("User role data:", userRoleData);
+
+        if (userRoleData && userRoleData.permissions) {
+          // Ensure permissions is an object
+          let perms = userRoleData.permissions;
+          
+          // If it's a Map-like object, convert it
+          if (perms && typeof perms === 'object') {
+            // Ensure all resources exist
+            const fullPerms: UserPermissions = {
+              dashboard: { add: false, view: false, edit: false, delete: false },
+              users: { add: false, view: false, edit: false, delete: false },
+              restaurants: { add: false, view: false, edit: false, delete: false },
+              menu: { add: false, view: false, edit: false, delete: false },
+              banners: { add: false, view: false, edit: false, delete: false },
+              orders: { add: false, view: false, edit: false, delete: false },
+              queries: { add: false, view: false, edit: false, delete: false },
+              bi: { add: false, view: false, edit: false, delete: false },
+            };
+
+            // Merge with fetched permissions
+            for (const [resource, ops] of Object.entries(perms)) {
+              if (fullPerms[resource as keyof UserPermissions]) {
+                fullPerms[resource as keyof UserPermissions] = {
+                  ...fullPerms[resource as keyof UserPermissions],
+                  ...(ops as any),
+                };
+              }
+            }
+
+            console.log("Final permissions:", fullPerms);
+            setPermissions(fullPerms);
+          }
+        } else {
+          console.error("Role not found or no permissions");
         }
       } catch (err) {
         console.error("Failed to fetch permissions:", err);
@@ -75,9 +120,9 @@ export default function Sidebar() {
     fetchPermissions();
   }, []);
 
-  // Check if user has permission to view a menu item
+  // Check if user has permission to access a menu item
   const hasAccess = (link: MenuLink): boolean => {
-    if (loading || !permissions) return false;
+    if (!permissions) return false;
 
     const resourcePerms = permissions[link.resource];
     if (!resourcePerms) return false;
@@ -86,7 +131,7 @@ export default function Sidebar() {
     return resourcePerms[op as keyof typeof resourcePerms] === true;
   };
 
-  // Filter links based on permissions
+  // Filter links - only show tabs user has permission to access
   const visibleLinks = links.filter(hasAccess);
 
   return (
@@ -107,34 +152,32 @@ export default function Sidebar() {
 
       {/* NAV */}
       <nav className="flex-1 space-y-1.5 px-3 py-4">
-        {visibleLinks.map((link) => {
-          const active =
-            path === link.href ||
-            (link.href !== "/" && path.startsWith(link.href));
+        {loading ? (
+          <div className="px-3 py-2.5 text-xs text-slate-400">Loading...</div>
+        ) : visibleLinks.length > 0 ? (
+          visibleLinks.map((link) => {
+            const active =
+              path === link.href ||
+              (link.href !== "/" && path.startsWith(link.href));
 
-          return (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                active
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              {link.name}
-            </Link>
-          );
-        })}
-
-        {visibleLinks.length === 0 && !loading && (
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                  active
+                    ? "bg-white text-slate-950 shadow-sm"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })
+        ) : (
           <div className="px-3 py-2.5 text-xs text-slate-400">
             No pages available. Contact admin.
           </div>
-        )}
-
-        {loading && (
-          <div className="px-3 py-2.5 text-xs text-slate-400">Loading...</div>
         )}
       </nav>
 
