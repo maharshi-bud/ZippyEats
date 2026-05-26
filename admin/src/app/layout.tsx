@@ -1,7 +1,10 @@
-import type { ReactNode } from "react";
-  // import { useNotifications } from "../hooks/useNotifications";
-import NotificationInit from "../components/NotificationInit";
+// ============================================================
+// FILE: admin/src/app/layout.tsx
+// ============================================================
 
+import type { ReactNode } from "react";
+import NotificationInit from "../components/NotificationInit";
+import ModuleSync from "../components/ModuleSync";
 import "./global.css";
 
 export const metadata = {
@@ -9,20 +12,15 @@ export const metadata = {
   description: "ZippyEats operations dashboard",
 };
 
-  // useNotifications();
-
-
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-                <NotificationInit /> {/* ✅ client component handles the hook */}
-
-        {children}</body>
+        {/* Syncs module resources with server on every app load */}
+        <ModuleSync />
+        <NotificationInit />
+        {children}
+      </body>
     </html>
   );
 }

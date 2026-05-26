@@ -34,6 +34,7 @@ function hasBuiltInPanelAccess(roleName, checks) {
   );
 }
 
+
 async function getPermissionsForRole(roleName) {
   const cached = roleCache.get(roleName);
 

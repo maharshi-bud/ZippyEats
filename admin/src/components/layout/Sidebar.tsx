@@ -1,5 +1,14 @@
 "use client";
 
+// ============================================================
+// FILE: admin/src/components/layout/Sidebar.tsx
+// ── SIDEBAR IS THE SINGLE SOURCE OF TRUTH FOR MODULES ────────
+// To add a new module:
+//   1. Create the Next.js page
+//   2. Add one entry to SIDEBAR_LINKS below
+//   → DB sync, permissions matrix, sidebar all update automatically
+// ============================================================
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,6 +16,34 @@ import Image from "next/image";
 import api from "../../lib/api";
 
 import logo from "../../../../client/src/lib/imgs/logoText.png";
+
+// ── THE ONLY PLACE YOU DEFINE MODULES ────────────────────────
+export type SidebarLink = {
+  key: string;         // resource key used in permissions DB
+  label: string;       // display name
+  href: string;        // Next.js route
+  requiredOp?: string; // permission needed (default: "view")
+  resource?: string;   // override resource key (e.g. Roles uses "users")
+};
+
+export const SIDEBAR_LINKS: SidebarLink[] = [
+  { key: "dashboard",   label: "Dashboard",   href: "/",            requiredOp: "view" },
+  { key: "orders",      label: "Orders",      href: "/orders",      requiredOp: "view" },
+  { key: "users",       label: "Users",       href: "/users",       requiredOp: "view" },
+  { key: "restaurants", label: "Restaurants", href: "/restaurants", requiredOp: "view" },
+  { key: "banners",     label: "Banners",     href: "/banners",     requiredOp: "view" },
+  { key: "bi",          label: "BI",          href: "/BI",          requiredOp: "view" },
+  { key: "queries",     label: "Queries",     href: "/queries",     requiredOp: "view" },
+  { key: "roles",       label: "Roles",       href: "/roles",       requiredOp: "edit", resource: "users" },
+  // ── Add new modules here ─────────────────────────────────
+];
+
+// Derived: unique resource keys — used by ModuleSync and permissions matrix
+export const SIDEBAR_RESOURCES = [
+  ...new Set(SIDEBAR_LINKS.map((l) => l.resource ?? l.key)),
+];
+
+// ─────────────────────────────────────────────────────────────
 
 type UserPermissions = {
   [resource: string]: {
@@ -17,84 +54,61 @@ type UserPermissions = {
   };
 };
 
-type MenuLink = {
-  name: string;
-  href: string;
-  resource: string; // which resource this menu item requires
-  requiredOp?: string; // which operation (default: "view")
-};
-
-const links: MenuLink[] = [
-  { name: "Dashboard", href: "/", resource: "dashboard", requiredOp: "view" },
-  { name: "Orders", href: "/orders", resource: "orders", requiredOp: "view" },
-  { name: "Users", href: "/users", resource: "users", requiredOp: "view" },
-  { name: "Restaurants", href: "/restaurants", resource: "restaurants", requiredOp: "view" },
-  { name: "Banners", href: "/banners", resource: "banners", requiredOp: "view" },
-  { name: "BI", href: "/BI", resource: "bi", requiredOp: "view" },
-  { name: "Queries", href: "/queries", resource: "queries", requiredOp: "view" },
-  { name: "Roles", href: "/roles", resource: "users", requiredOp: "edit" }, // Only admins can manage roles
-];
-
 export default function Sidebar() {
   const path = usePathname();
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
-useEffect(() => {
-  const fetchPermissions = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) { setLoading(false); return; }
 
-      const res = await api.get("/admin/me/permissions");
-      const perms = res.data.data.permissions;
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) { setLoading(false); return; }
 
-      const fullPerms: UserPermissions = {
-        dashboard:   { add: false, view: false, edit: false, delete: false },
-        users:       { add: false, view: false, edit: false, delete: false },
-        restaurants: { add: false, view: false, edit: false, delete: false },
-        menu:        { add: false, view: false, edit: false, delete: false },
-        banners:     { add: false, view: false, edit: false, delete: false },
-        orders:      { add: false, view: false, edit: false, delete: false },
-        queries:     { add: false, view: false, edit: false, delete: false },
-        bi:          { add: false, view: false, edit: false, delete: false },
-      };
+        const res = await api.get("/admin/me/permissions");
+        const perms = res.data.data.permissions;
 
-      for (const [resource, ops] of Object.entries(perms)) {
-        if (fullPerms[resource as keyof UserPermissions]) {
-          fullPerms[resource as keyof UserPermissions] = {
-            ...fullPerms[resource as keyof UserPermissions],
+        // Build full permissions object — dynamic, no hardcoded keys
+        const fullPerms: UserPermissions = {};
+
+        // Seed all sidebar resources as false
+        for (const resource of SIDEBAR_RESOURCES) {
+          fullPerms[resource] = { add: false, view: false, edit: false, delete: false };
+        }
+
+        // Merge actual permissions from server
+        for (const [resource, ops] of Object.entries(perms)) {
+          fullPerms[resource] = {
+            add: false, view: false, edit: false, delete: false,
             ...(ops as any),
           };
         }
+
+        setPermissions(fullPerms);
+      } catch (err) {
+        console.error("Failed to fetch permissions:", err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setPermissions(fullPerms);
-    } catch (err) {
-      console.error("Failed to fetch permissions:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchPermissions();
-}, []);
+    fetchPermissions();
+  }, []);
 
-
-  // Check if user has permission to access a menu item
-  const hasAccess = (link: MenuLink): boolean => {
+  const hasAccess = (link: SidebarLink): boolean => {
     if (!permissions) return false;
-
-    const resourcePerms = permissions[link.resource];
+    const resource = link.resource ?? link.key;
+    const resourcePerms = permissions[resource];
     if (!resourcePerms) return false;
-
-    const op = link.requiredOp || "view";
+    const op = link.requiredOp ?? "view";
     return resourcePerms[op as keyof typeof resourcePerms] === true;
   };
 
-  // Filter links - only show tabs user has permission to access
-  const visibleLinks = links.filter(hasAccess);
+  const visibleLinks = SIDEBAR_LINKS.filter(hasAccess);
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-900 text-white">
+
       {/* LOGO */}
       <Link href="/">
         <div className="flex h-16 items-center border-b border-slate-800 px-5">
@@ -121,7 +135,7 @@ useEffect(() => {
 
             return (
               <Link
-                key={link.name}
+                key={link.key}
                 href={link.href}
                 className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                   active
@@ -129,7 +143,7 @@ useEffect(() => {
                     : "text-slate-300 hover:bg-slate-800 hover:text-white"
                 }`}
               >
-                {link.name}
+                {link.label}
               </Link>
             );
           })
