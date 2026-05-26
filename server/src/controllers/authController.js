@@ -73,7 +73,6 @@ export const register = async (req, res, next) => {
 //   }
 // };
 
-
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -81,25 +80,34 @@ export const login = async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+    
+    
+    
+    
 
     const token = generateToken(user._id, user.role, user.restaurant_id);
-
+    
     // ── Fetch this role's permissions from DB ────────────────
     // Same source of truth as permissionMiddleware — the Role collection.
-    const roleDoc = await Role.findOne({ name: user.role, isActive: true }).select("permissions").lean();
-    const permissions = roleDoc?.permissions || {};
-    const panelAccess = hasPanelAccess(user.role, permissions);
+    // const roleDoc = await Role.findOne({ name: user.role, isActive: true }).select("permissions").lean();
+    // const permissions = roleDoc?.permissions || {};
+    // const panelAccess = hasPanelAccess(user.role, permissions);
+    
+    const roleDoc = await Role.findOne({ name: user.role, isActive: true })
+      .select("permissions")
+      .lean();
+    
+    // .lean() converts Map to plain object, so use bracket notation
+    const dashPerms = roleDoc?.permissions?.dashboard;
+    const panelAccess = dashPerms?.view === true;
 
     res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      panelAccess, // ← client reads this, no hardcoding needed
-    });
+  token,
+  user: { id: user._id, name: user.name, email: user.email, role: user.role },
+  panelAccess,
+});
+
+
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

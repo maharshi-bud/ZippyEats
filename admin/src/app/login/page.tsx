@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); 
     setError("");
@@ -28,30 +28,40 @@ export default function LoginPage() {
         password,
       });
 
-      const token = res.data.token;
+      // const token = res.data.token;
+const { token, panelAccess } = res.data;
 
+// Check panel access BEFORE storing token
+if (!panelAccess) {
+  setError("You don't have access to this panel.");
+  return;
+}
       // store token
+      
       localStorage.setItem("token", token);
 
       // register FCM immediately after login
       try {
-        const payload = JSON.parse(atob(token.split(".")[1] || ""));
-        await requestNotificationPermission(token, payload?.role === "admin");
+
+          const payload = JSON.parse(atob(token.split(".")[1] || ""));
+          const isAdminTopic = ["admin", "super_admin"].includes(payload?.role);  
+          await requestNotificationPermission(token, isAdminTopic);
+
       } catch (err) {
         console.warn("[FCM] Login registration failed:", err);
       }
-
+      
       // decode role
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-      if (payload.role === "admin") {
+      // if (payload.role === "admin") {
         router.push("/");
-      } else if (payload.role === "restaurant") {
-        router.push("/restaurant");
-      } else {
-        alert("Access denied");
-        localStorage.removeItem("token");
-      }
+      // } else if (payload.role === "restaurant") {
+      //   router.push("/restaurant");
+      // } else {
+      //   alert("Access denied");
+      //   localStorage.removeItem("token");
+      // }
     } catch (err: unknown) {
       const message =
         typeof err === "object" && err !== null && "response" in err

@@ -182,32 +182,33 @@ export default function RolesPage() {
     setModalOpen(true);
   };
 
-  const togglePermissionOperation = (resource: string, operation: string) => {
-    setForm((f) => {
-      const updatedPerms = { ...f.permissions };
-      if (!updatedPerms[resource]) {
-        updatedPerms[resource] = { add: false, view: false, edit: false, delete: false };
-      }
-      updatedPerms[resource][operation as keyof typeof updatedPerms[resource]] =
-        !updatedPerms[resource][operation as keyof typeof updatedPerms[resource]];
-      return { ...f, permissions: updatedPerms };
-    });
-  };
+const togglePermissionOperation = (resource: string, operation: string) => {
+  setForm((f) => ({
+    ...f,
+    permissions: {
+      ...f.permissions,
+      [resource]: {
+        ...(f.permissions[resource] || { add: false, view: false, edit: false, delete: false }),
+        [operation]: !f.permissions[resource]?.[operation as keyof typeof f.permissions[string]],
+      },
+    },
+  }));
+};
 
-  const toggleResourceAll = (resource: string) => {
-    setForm((f) => {
-      const updatedPerms = { ...f.permissions };
-      if (!updatedPerms[resource]) {
-        updatedPerms[resource] = { add: false, view: false, edit: false, delete: false };
-      }
-      const allTrue = operations.every((op) => updatedPerms[resource][op as keyof typeof updatedPerms[resource]]);
-      const newValue = !allTrue;
-      operations.forEach((op) => {
-        updatedPerms[resource][op as keyof typeof updatedPerms[resource]] = newValue;
-      });
-      return { ...f, permissions: updatedPerms };
-    });
-  };
+const toggleResourceAll = (resource: string) => {
+  setForm((f) => {
+    const current = f.permissions[resource] || { add: false, view: false, edit: false, delete: false };
+    const allTrue = operations.every((op) => current[op as keyof typeof current]);
+    const newValue = !allTrue;
+    return {
+      ...f,
+      permissions: {
+        ...f.permissions,
+        [resource]: Object.fromEntries(operations.map((op) => [op, newValue])) as any,
+      },
+    };
+  });
+};
 
   const saveRole = async () => {
     if (!form.name.trim()) {

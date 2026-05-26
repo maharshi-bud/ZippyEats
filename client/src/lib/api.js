@@ -1,11 +1,11 @@
 import axios from "axios";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010"}/api`;
+
 
 const api = axios.create({
-  baseURL,
+  // baseURL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5010/api",
+
 });
 
 api.interceptors.request.use((config) => {

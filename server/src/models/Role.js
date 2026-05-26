@@ -152,7 +152,7 @@ roleSchema.statics.seedDefaults = async function () {
 
   for (const role of defaults) {
     const permMap = new Map(Object.entries(role.permissions));
-    await Role.findOneAndUpdate(
+    await this.findOneAndUpdate(
       { name: role.name },
       {
         $set: {
