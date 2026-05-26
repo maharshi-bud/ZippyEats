@@ -4,15 +4,17 @@ import User from "../models/User.js";
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("name email addresses");
+    const user = await User.findById(req.user.id).select("name email addresses role");
     if (!user) return res.status(404).json({ message: "User not found" });
-
+    console.log(user)
     res.json({
       data: {
         id: user._id,
         name: user.name,
         email: user.email,
         addresses: user.addresses,
+        role: user.role ,
+        // createdAt: user.createdAt,
       },
     });
   } catch (err) {

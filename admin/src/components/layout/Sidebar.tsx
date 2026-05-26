@@ -48,7 +48,11 @@ export default function Sidebar() {
         const user = res.data.data;
         
         // Fetch the user's role to get permissions
+        console.log(user);
+        console.log("2")
+
         if (user.role) {
+          console.log("2")
           const roleRes = await api.get(`/admin/roles`);
           const roles = roleRes.data.data;
           const userRole = roles.find((r: any) => r.name === user.role);
@@ -56,6 +60,10 @@ export default function Sidebar() {
           if (userRole && userRole.permissions) {
             setPermissions(userRole.permissions);
           }
+          console.log(userRole.permissions);
+        }
+        else{
+          console.log("1234")
         }
       } catch (err) {
         console.error("Failed to fetch permissions:", err);
