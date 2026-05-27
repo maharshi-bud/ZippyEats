@@ -10,7 +10,7 @@
 import { useEffect } from "react";
 import { SIDEBAR_RESOURCES } from "./layout/Sidebar";
 import api from "../lib/api";
-
+                                            
 export default function ModuleSync() {
   useEffect(() => {
     const token = localStorage.getItem("token");

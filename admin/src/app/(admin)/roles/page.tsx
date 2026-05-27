@@ -263,8 +263,9 @@ export default function RolesPage() {
           </div>
         )}
 
+        
         {/* ── TAB: USERS ─────────────────────────────────────── */}
-        {tab === "users" && (
+        {/* {tab === "users" && (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-3">
               <input
@@ -376,7 +377,7 @@ export default function RolesPage() {
               </>
             )}
           </div>
-        )}
+        )} */}
 
       </div>
     </PermissionGuard>

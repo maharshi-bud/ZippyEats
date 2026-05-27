@@ -35,6 +35,7 @@ export const SIDEBAR_LINKS: SidebarLink[] = [
   { key: "bi",          label: "BI",          href: "/BI",          requiredOp: "view" },
   { key: "queries",     label: "Queries",     href: "/queries",     requiredOp: "view" },
   { key: "roles",       label: "Roles",       href: "/roles",       requiredOp: "edit", resource: "users" },
+  { key: "staff",       label: "Staff",       href: "/staff",       requiredOp: "edit", resource: "users" },
   // ── Add new modules here ─────────────────────────────────
 ];
 
