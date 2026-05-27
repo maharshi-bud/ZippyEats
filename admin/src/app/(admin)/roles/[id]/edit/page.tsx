@@ -7,24 +7,19 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import api from "../../../../../lib/api";
-import RoleForm from "../..//RoleForm";
+import RoleForm from "../../RoleForm";
 import PermissionGuard from "../../../../../components/PermissionGuard";
 
-type PermissionMatrix = {
-  [resource: string]: { add: boolean; view: boolean; edit: boolean; delete: boolean };
-};
+type PermissionOps = { add: boolean; view: boolean; edit: boolean; delete: boolean };
+type PermissionMatrix = { [key: string]: PermissionOps };
+type ModuleTree = { key: string; name: string; index: number; children: any[] };
 
 export default function EditRolePage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const [resources, setResources] = useState<string[]>([]);
-  const [operations, setOperations] = useState<string[]>([]);
-  const [form, setForm] = useState({
-    name: "",
-    label: "",
-    description: "",
-    permissions: {} as PermissionMatrix,
-  });
+  const [tree, setTree] = useState<ModuleTree[]>([]);
+  const [operations, setOperations] = useState<string[]>(["add", "view", "edit", "delete"]);
+  const [form, setForm] = useState({ name: "", label: "", description: "", permissions: {} as PermissionMatrix });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,31 +29,36 @@ export default function EditRolePage() {
       api.get("/admin/roles/resources"),
       api.get("/admin/roles"),
     ]).then(([resRes, rolesRes]) => {
-      const { resources: r, operations: o } = resRes.data.data;
-      setResources(r);
-      setOperations(o);
+      const { tree: t, operations: o } = resRes.data.data;
+      setTree(t || []);
+      setOperations(o || ["add", "view", "edit", "delete"]);
 
-      const role = rolesRes.data.data.find((role: any) => role._id === id);
+      const role = rolesRes.data.data.find((r: any) => r._id === id);
       if (role) {
+        // Build permissions — ensure all parent keys exist
+        const perms: PermissionMatrix = {};
+        (t || []).forEach((mod: ModuleTree) => {
+          perms[mod.key] = role.permissions?.[mod.key] || { add: false, view: false, edit: false, delete: false };
+        });
         setForm({
           name: role.name,
           label: role.label || "",
           description: role.description || "",
-          permissions: { ...role.permissions },
+          permissions: perms,
         });
       }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
 
-  const toggle = (resource: string, op: string) => {
+  const toggle = (parentKey: string, op: string) => {
     setForm((f) => ({
       ...f,
       permissions: {
         ...f.permissions,
-        [resource]: {
-          ...f.permissions[resource],
-          [op]: !f.permissions[resource]?.[op as keyof typeof f.permissions[string]],
+        [parentKey]: {
+          ...f.permissions[parentKey],
+          [op]: !f.permissions[parentKey]?.[op as keyof PermissionOps],
         },
       },
     }));
@@ -81,9 +81,7 @@ export default function EditRolePage() {
     }
   };
 
-  if (loading) {
-    return <div className="p-8 text-sm text-zinc-400">Loading role...</div>;
-  }
+  if (loading) return <div className="p-8 text-sm text-zinc-400">Loading role...</div>;
 
   return (
     <PermissionGuard resource="users" operation="edit">
@@ -91,7 +89,7 @@ export default function EditRolePage() {
         title={`Edit "${form.label || form.name}"`}
         form={form}
         setForm={setForm}
-        resources={resources}
+        tree={tree}
         operations={operations}
         toggle={toggle}
         save={save}

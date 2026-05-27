@@ -40,6 +40,17 @@ import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
   import { initFirebase } from "./services/fcmService.js";
   import fcmRoutes from "./routes/fcmRoutes.js";
 import rolesRoutes from "./routes/admin/rolesRoutes.js";
+import Module from "./models/Module.js";
+import modulesRoutes from "./routes/admin/modulesRoutes.js";
+
+
+
+
+
+
+
+
+
 const app = express();
 const httpServer = http.createServer(app);
 
@@ -121,6 +132,7 @@ app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
   app.use("/api/support", supportRoutes);
   app.use("/api/fcm", fcmRoutes);
 app.use("/api/admin", rolesRoutes);
+app.use("/api/admin", modulesRoutes);
 app.use(errorHandler);
 app.use("/api/restaurant-owner", restaurantOwnerRoutes);
 
@@ -140,7 +152,11 @@ const startServer = async () => {
     SupportMessage.init(),
   ]);
 await Role.seedDefaults();
-  
+
+await Module.seedDefaults().catch(e => console.error("[Module] seedDefaults failed:", e));
+await Module.syncToRoles().catch(e => console.error("[Module] syncToRoles failed:", e));
+
+
   await reloadActiveOrders();
   initFirebase();
   

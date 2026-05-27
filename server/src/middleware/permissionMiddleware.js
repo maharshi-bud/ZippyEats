@@ -1,60 +1,96 @@
 // ============================================================
 // FILE: server/src/middleware/permissionMiddleware.js
-// NEW: Handles matrix-based (CRUD) permission checks
+// ── Matrix-based CRUD permission checks with parent resolution
 // ============================================================
 // Usage (must come AFTER protect):
 //
-// NEW API:
-//   import { requirePermission } from "../middleware/permissionMiddleware.js";
-//   router.get("/admin/menu", protect, requirePermission("menu", "view"), getMenu);
-//   router.post("/admin/menu", protect, requirePermission("menu", "add"), createMenu);
-//   router.put("/admin/menu/:id", protect, requirePermission("menu", "edit"), updateMenu);
-//   router.delete("/admin/menu/:id", protect, requirePermission("menu", "delete"), deleteMenu);
-//
-// Multiple operations (user must have ANY):
-//   router.get("/admin/items", protect, requirePermission("menu", ["view", "add"]), handler);
+//   requirePermission("orders", "view")
+//   requirePermission("roles", "edit")    // roles is child of users → checks users.edit
+//   requirePermission("menu", ["view", "add"])  // ANY operation
 //
 // ============================================================
 
 import Role from "../models/Role.js";
-import { PANEL_ACCESS, PANEL_ACCESS_ROLES, PERMISSIONS } from "../constants/permissions.js";
+import Module from "../models/Module.js";
+import { PANEL_ACCESS, PANEL_ACCESS_ROLES } from "../constants/permissions.js";
 
-// ── In-process role cache ─────────────────────────────────────
+// ── Caches ────────────────────────────────────────────────────
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const roleCache = new Map(); // Map<roleName, { permissions: Map, expiresAt: number }>
+
+// Role permissions cache: Map<roleName, { permissions, expiresAt }>
+const roleCache = new Map();
+
+// Module parent cache: Map<childKey, parentKey | null>
+// Populated once on first use, cleared when modules change
+const moduleParentCache = new Map();
+let moduleParentCacheLoaded = false;
+
 const builtInPanelAccessRoles = new Set(PANEL_ACCESS_ROLES);
 
-function hasBuiltInPanelAccess(roleName, checks) {
-  return (
-    builtInPanelAccessRoles.has(roleName) &&
-    checks.some(
-      ({ resource, operation }) =>
-        resource === PANEL_ACCESS.resource && operation === PANEL_ACCESS.operation
-    )
-  );
+// ── Cache invalidation ────────────────────────────────────────
+export function invalidateRoleCache(roleName) {
+  if (roleName) roleCache.delete(roleName);
+  else roleCache.clear();
 }
 
+export function invalidateModuleCache() {
+  moduleParentCache.clear();
+  moduleParentCacheLoaded = false;
+}
 
+// ── Internal: load module parent map from DB ──────────────────
+async function ensureModuleParentCache() {
+  if (moduleParentCacheLoaded) return;
+
+  const modules = await Module.find({ isActive: true }).select("key parentKey").lean();
+  for (const mod of modules) {
+    moduleParentCache.set(mod.key, mod.parentKey ?? null);
+  }
+  moduleParentCacheLoaded = true;
+}
+
+// ── Internal: resolve resource to the key stored in Role.permissions
+// If resource is a child module, returns its parentKey instead.
+// Role.permissions only stores parent-level keys.
+// Example: "roles" (child of "users") → resolves to "users"
+async function resolvePermissionKey(resourceKey) {
+  await ensureModuleParentCache();
+
+  const parentKey = moduleParentCache.get(resourceKey);
+
+  if (parentKey === undefined) {
+    // Not in module cache — treat as direct resource key
+    return resourceKey;
+  }
+
+  if (parentKey === null) {
+    // It's already a parent module
+    return resourceKey;
+  }
+
+  // It's a child — return parent key
+  return parentKey;
+}
+
+// ── Internal: get permissions for a role (with cache) ─────────
 async function getPermissionsForRole(roleName) {
   const cached = roleCache.get(roleName);
-
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.permissions;
-  }
+  if (cached && cached.expiresAt > Date.now()) return cached.permissions;
 
   const role = await Role.findOne({ name: roleName.toLowerCase(), isActive: true })
     .select("permissions")
     .lean();
 
-    
- console.log("[Permission] Looking for role:", roleName.toLowerCase(), "→ found:", role ? role._id : "NULL");  // ADD THIS
-  if (role) console.log("[Permission] queries perms:", role.permissions?.queries ?? role.permissions?.get?.("queries")); // ADD THIS
   if (!role) return null;
 
-  // Convert permissions Map to plain object if needed
+  // Convert Map to plain object if needed
   let permsObj = role.permissions;
   if (permsObj instanceof Map) {
     permsObj = Object.fromEntries(permsObj);
+  } else if (typeof permsObj === "object" && !(permsObj instanceof Map)) {
+    // Already plain object (from .lean())
+    // MongoDB stores Map as object when using .lean()
+    permsObj = permsObj;
   }
 
   roleCache.set(roleName, {
@@ -65,41 +101,45 @@ async function getPermissionsForRole(roleName) {
   return permsObj;
 }
 
-// ── Cache invalidation ────────────────────────────────────────
-export function invalidateRoleCache(roleName) {
-  if (roleName) {
-    roleCache.delete(roleName);
-  } else {
-    roleCache.clear();
-  }
+// ── Internal: built-in panel access bypass ────────────────────
+function hasBuiltInPanelAccess(roleName, checks) {
+  return (
+    builtInPanelAccessRoles.has(roleName) &&
+    checks.some(
+      ({ resource, operation }) =>
+        resource === PANEL_ACCESS.resource && operation === PANEL_ACCESS.operation
+    )
+  );
 }
 
-// ── NEW: requirePermission factory for CRUD operations ────────
+// ── requirePermission factory ─────────────────────────────────
 // Usage:
-//   requirePermission("menu", "view")       // single operation
-//   requirePermission("menu", ["view", "add"]) // ANY operation
-//   requirePermission({resource, operation}) // old object style for backward compat
+//   requirePermission("orders", "view")
+//   requirePermission("roles", "edit")        // child → resolves to users.edit
+//   requirePermission("menu", ["view", "add"]) // ANY of these operations
+//   requirePermission({ resource, operation }) // legacy object style
 //
 export function requirePermission(resourceOrPermObj, operationOrUndefined) {
   let checks = [];
 
-  // Handle legacy object style (backward compat with old PERMISSIONS object)
-  if (typeof resourceOrPermObj === "object" && resourceOrPermObj !== null && operationOrUndefined === undefined) {
+  if (
+    typeof resourceOrPermObj === "object" &&
+    resourceOrPermObj !== null &&
+    operationOrUndefined === undefined
+  ) {
     if (resourceOrPermObj.resource && resourceOrPermObj.operation) {
       checks.push(resourceOrPermObj);
     } else {
       throw new Error("[requirePermission] Invalid permission object format");
     }
   } else if (typeof resourceOrPermObj === "string") {
-    // NEW: (resource, operation) format
     const resource = resourceOrPermObj;
     const operations = Array.isArray(operationOrUndefined)
       ? operationOrUndefined
       : [operationOrUndefined];
-
     checks = operations.map((op) => ({ resource, operation: op }));
   } else {
-    throw new Error("[requirePermission] Invalid arguments. Use (resource, operation) or (resource, [operations])");
+    throw new Error("[requirePermission] Invalid arguments");
   }
 
   if (!checks.length) {
@@ -119,27 +159,23 @@ export function requirePermission(resourceOrPermObj, operationOrUndefined) {
       const permissions = await getPermissionsForRole(req.user.role);
 
       if (!permissions) {
-        console.warn(
-          `[Permission] Role "${req.user.role}" not found in DB. Did you run Role.seedDefaults()?`
-        );
-        return res.status(403).json({
-          message: "Forbidden — role not configured",
-        });
+        console.warn(`[Permission] Role "${req.user.role}" not found in DB`);
+        return res.status(403).json({ message: "Forbidden — role not configured" });
       }
 
-      // Check each required permission
       let hasAny = false;
       const failures = [];
 
       for (const check of checks) {
-        const { resource, operation } = check;
-        const resourcePerms = permissions[resource];
+        // Resolve child resource to parent key
+        const resolvedKey = await resolvePermissionKey(check.resource);
+        const resourcePerms = permissions[resolvedKey];
 
-        if (resourcePerms && resourcePerms[operation] === true) {
+        if (resourcePerms && resourcePerms[check.operation] === true) {
           hasAny = true;
-          break; // user has at least one required permission
+          break;
         } else {
-          failures.push({ resource, operation });
+          failures.push({ resource: check.resource, resolvedAs: resolvedKey, operation: check.operation });
         }
       }
 
@@ -162,10 +198,7 @@ export function requirePermission(resourceOrPermObj, operationOrUndefined) {
   };
 }
 
-// ── Legacy: REQUIRE ALL permissions for backward compat ─────
-// For code that calls requirePermission(PERMISSIONS.X, PERMISSIONS.Y, ...)
-// and expects ALL to be required
-//
+// ── requireAllPermissions (legacy) ───────────────────────────
 export function requireAllPermissions(...requiredPerms) {
   if (!requiredPerms.length) {
     throw new Error("[requireAllPermissions] At least one permission required");
@@ -177,61 +210,47 @@ export function requireAllPermissions(...requiredPerms) {
         return res.status(401).json({ message: "Not authorized" });
       }
 
+      const { PERMISSIONS } = await import("../constants/permissions.js");
+
       let checks = requiredPerms.map((permSlug) => {
         if (typeof permSlug === "object" && permSlug.resource && permSlug.operation) {
           return permSlug;
         }
         const mapped = PERMISSIONS[permSlug];
-        if (!mapped) {
-          throw new Error(`Unknown permission: ${permSlug}`);
-        }
+        if (!mapped) throw new Error(`Unknown permission: ${permSlug}`);
         return mapped;
       });
 
-      if (hasBuiltInPanelAccess(req.user.role, checks)) {
-        return next();
-      }
+      if (hasBuiltInPanelAccess(req.user.role, checks)) return next();
 
       const permissions = await getPermissionsForRole(req.user.role);
-
       if (!permissions) {
-        console.warn(
-          `[Permission] Role "${req.user.role}" not found in DB. Did you run Role.seedDefaults()?`
-        );
-        return res.status(403).json({
-          message: "Forbidden — role not configured",
-        });
+        return res.status(403).json({ message: "Forbidden — role not configured" });
       }
 
-      // ALL must be present
       let allPresent = true;
       const failures = [];
 
       for (const check of checks) {
-        const { resource, operation } = check;
-        const resourcePerms = permissions[resource];
-
-        if (!resourcePerms || resourcePerms[operation] !== true) {
+        const resolvedKey = await resolvePermissionKey(check.resource);
+        const resourcePerms = permissions[resolvedKey];
+        if (!resourcePerms || resourcePerms[check.operation] !== true) {
           allPresent = false;
-          failures.push({ resource, operation });
+          failures.push(check);
         }
       }
 
       if (!allPresent) {
         return res.status(403).json({
           message: "Forbidden — insufficient permissions",
-          ...(process.env.NODE_ENV !== "production" && {
-            required: checks,
-            failures,
-            role: req.user.role,
-          }),
+          ...(process.env.NODE_ENV !== "production" && { failures }),
         });
       }
 
       next();
     } catch (err) {
       console.error("[Permission] Middleware error:", err);
-      return res.status(500).json({ message: "Server error 12" });
+      return res.status(500).json({ message: "Server error" });
     }
   };
 }

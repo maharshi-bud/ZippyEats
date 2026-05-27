@@ -3,7 +3,7 @@
 // ============================================================
 
 import mongoose from "mongoose";
-import { RESOURCES, OPERATIONS, DEFAULT_PERMISSIONS } from "../constants/permissions.js";
+import { OPERATIONS, DEFAULT_PERMISSIONS } from "../constants/permissions.js";
 
 const roleSchema = new mongoose.Schema(
   {

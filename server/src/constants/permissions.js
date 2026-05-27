@@ -6,22 +6,12 @@
 // ============================================================
 
 // ── All resources available in the admin panel ──────────────
-export const RESOURCES = [
-  "dashboard",
-  "users",
-  "restaurants",
-  "menu",
-  "banners",
-  "orders",
-  "queries",
-  "bi",
-];
+
 
 // ── CRUD operations ─────────────────────────────────────────
 export const OPERATIONS = ["add", "view", "edit", "delete"];
-
 export const PANEL_ACCESS = { resource: "dashboard", operation: "view" };
-export const PANEL_ACCESS_ROLES = ["admin", "super_admin"];
+export const PANEL_ACCESS_ROLES = ["admin", "super_admin"]
 
 // ── Helper: Check if a role has a specific CRUD operation ────
 // Usage: hasOperation(role, "menu", "edit")
