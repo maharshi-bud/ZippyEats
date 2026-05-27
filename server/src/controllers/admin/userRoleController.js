@@ -63,7 +63,7 @@ export const assignRole = async (req, res) => {
 // Supports ?role=admin and ?search=john filters + pagination.
 export const getUsersWithRoles = async (req, res) => {
   try {
-    const { role, search, page = 1, limit = 20 } = req.query;
+    const { role, search, page = 1, limit = 100 } = req.query;
 
     const query = {};
     if (role) query.role = role;
