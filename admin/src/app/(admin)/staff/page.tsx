@@ -46,7 +46,7 @@ export default function StaffPage() {
       // uses your configured api.ts
 
       const res = await api.get(
-        "/users"
+        "admin/users"
       );
 
       console.log(
@@ -62,12 +62,9 @@ export default function StaffPage() {
         [];
 
       // only admin/staff
-
-      const staff =
-        allUsers.filter(
-          (u) =>
-            u.role === "admin"
-        );
+const staff = allUsers.filter(
+  (u) => !["user", "restaurant"].includes(u.role)
+);
 
       setUsers(staff);
 

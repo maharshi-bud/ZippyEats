@@ -41,7 +41,7 @@ import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
   import fcmRoutes from "./routes/fcmRoutes.js";
 import rolesRoutes from "./routes/admin/rolesRoutes.js";
 import Module from "./models/Module.js";
-import modulesRoutes from "./routes/admin/modulesRoutes.js";
+import modulesRoutes from "./routes/admin/Modulesroutes.js";
 
 
 

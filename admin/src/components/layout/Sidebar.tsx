@@ -17,33 +17,142 @@ import api from "../../lib/api";
 
 import logo from "../../../../client/src/lib/imgs/logoText.png";
 
-// ── THE ONLY PLACE YOU DEFINE MODULES ────────────────────────
+// // ── THE ONLY PLACE YOU DEFINE MODULES ────────────────────────
+// export type SidebarLink = {
+//   key: string;         // resource key used in permissions DB
+//   label: string;       // display name
+//   href: string;        // Next.js route
+//   requiredOp?: string; // permission needed (default: "view")
+//   resource?: string;   // override resource key (e.g. Roles uses "users")
+// };
+
+// export const SIDEBAR_LINKS: SidebarLink[] = [
+//   { key: "dashboard",   label: "Dashboard",   href: "/",            requiredOp: "view" },
+//   { key: "orders",      label: "Orders",      href: "/orders",      requiredOp: "view" },
+//   { key: "users",       label: "Users",       href: "/users",       requiredOp: "view" },
+//   { key: "restaurants", label: "Restaurants", href: "/restaurants", requiredOp: "view" },
+//   { key: "banners",     label: "Banners",     href: "/banners",     requiredOp: "view" },
+//   { key: "bi",          label: "BI",          href: "/BI",          requiredOp: "view" },
+//   { key: "queries",     label: "Queries",     href: "/queries",     requiredOp: "view" },
+//   { key: "roles",       label: "Roles",       href: "/roles",       requiredOp: "edit", resource: "users" },
+//   { key: "staff",       label: "Staff",       href: "/staff",       requiredOp: "edit", resource: "users" },
+//   // ── Add new modules here ─────────────────────────────────
+// ];
+
+
+export type SidebarChild = {
+  key: string;
+  label: string;
+  href: string;
+  requiredOp?: string;
+  resource?: string;
+};
+
 export type SidebarLink = {
-  key: string;         // resource key used in permissions DB
-  label: string;       // display name
-  href: string;        // Next.js route
-  requiredOp?: string; // permission needed (default: "view")
-  resource?: string;   // override resource key (e.g. Roles uses "users")
+  key: string;
+  label: string;
+  href?: string;
+  requiredOp?: string;
+  resource?: string;
+  children?: SidebarChild[];
 };
 
 export const SIDEBAR_LINKS: SidebarLink[] = [
-  { key: "dashboard",   label: "Dashboard",   href: "/",            requiredOp: "view" },
-  { key: "orders",      label: "Orders",      href: "/orders",      requiredOp: "view" },
-  { key: "users",       label: "Users",       href: "/users",       requiredOp: "view" },
-  { key: "restaurants", label: "Restaurants", href: "/restaurants", requiredOp: "view" },
-  { key: "banners",     label: "Banners",     href: "/banners",     requiredOp: "view" },
-  { key: "bi",          label: "BI",          href: "/BI",          requiredOp: "view" },
-  { key: "queries",     label: "Queries",     href: "/queries",     requiredOp: "view" },
-  { key: "roles",       label: "Roles",       href: "/roles",       requiredOp: "edit", resource: "users" },
-  { key: "staff",       label: "Staff",       href: "/staff",       requiredOp: "edit", resource: "users" },
-  // ── Add new modules here ─────────────────────────────────
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    href: "/",
+    requiredOp: "view",
+  },
+
+  {
+    key: "orders",
+    label: "Orders",
+    href: "/orders",
+    requiredOp: "view",
+  },
+
+  {
+    key: "users",
+    label: "Users",
+    href: "/users",
+    requiredOp: "view",
+  },
+
+  {
+    key: "restaurants",
+    label: "Restaurants",
+    href: "/restaurants",
+    requiredOp: "view",
+  },
+
+  {
+    key: "banners",
+    label: "Banners",
+    href: "/banners",
+    requiredOp: "view",
+  },
+
+  {
+    key: "bi",
+    label: "BI",
+    href: "/BI",
+    requiredOp: "view",
+  },
+
+  {
+    key: "queries",
+    label: "Queries",
+    href: "/queries",
+    requiredOp: "view",
+  },
+
+  // ── RBAC GROUP ─────────────────────────
+  {
+    key: "rbac",
+    label: "RBAC",
+
+    children: [
+      {
+        key: "roles",
+        label: "Roles",
+        href: "/roles",
+        requiredOp: "edit",
+        resource: "users",
+      },
+
+      {
+        key: "staff",
+        label: "Staff",
+        href: "/staff",
+        requiredOp: "edit",
+        resource: "users",
+      },
+    ],
+  },
 ];
+
+
+
 
 // Derived: unique resource keys — used by ModuleSync and permissions matrix
+// export const SIDEBAR_RESOURCES = [
+//   ...new Set(SIDEBAR_LINKS.map((l) => l.resource ?? l.key)),
+// ];
 export const SIDEBAR_RESOURCES = [
-  ...new Set(SIDEBAR_LINKS.map((l) => l.resource ?? l.key)),
-];
+  ...new Set(
+    SIDEBAR_LINKS.flatMap((link) => {
 
+      if (link.children) {
+        return link.children.map(
+          (child) => child.resource ?? child.key
+        );
+      }
+
+      return [link.resource ?? link.key];
+    })
+  ),
+];
 // ─────────────────────────────────────────────────────────────
 
 type UserPermissions = {
@@ -105,8 +214,15 @@ export default function Sidebar() {
     return resourcePerms[op as keyof typeof resourcePerms] === true;
   };
 
-  const visibleLinks = SIDEBAR_LINKS.filter(hasAccess);
+  // const visibleLinks = SIDEBAR_LINKS.filter(hasAccess);
+const visibleLinks = SIDEBAR_LINKS.filter((link) => {
 
+  if (link.children) {
+    return link.children.some(hasAccess);
+  }
+
+  return hasAccess(link);
+});
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-900 text-white">
 
@@ -125,35 +241,121 @@ export default function Sidebar() {
       </Link>
 
       {/* NAV */}
-      <nav className="flex-1 space-y-1.5 px-3 py-4">
-        {loading ? (
-          <div className="px-3 py-2.5 text-xs text-slate-400">Loading...</div>
-        ) : visibleLinks.length > 0 ? (
-          visibleLinks.map((link) => {
-            const active =
-              path === link.href ||
-              (link.href !== "/" && path.startsWith(link.href));
+ <nav className="flex-1 space-y-1.5 px-3 py-4">
+  {loading ? (
+    <div className="px-3 py-2.5 text-xs text-slate-400">
+      Loading...
+    </div>
+  ) : visibleLinks.length > 0 ? (
 
-            return (
-              <Link
-                key={link.key}
-                href={link.href}
-                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  active
-                    ? "bg-white text-slate-950 shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+    visibleLinks.map((link) => {
+
+      // ── DROPDOWN GROUP ──────────────────────────
+      if (link.children) {
+
+        const visibleChildren =
+          link.children.filter(hasAccess);
+
+        if (visibleChildren.length === 0) {
+          return null;
+        }
+
+        const isGroupActive = visibleChildren.some(
+          (child) =>
+            path === child.href ||
+            (child.href !== "/" &&
+              path.startsWith(child.href))
+        );
+
+        return (
+          <details
+            key={link.key}
+            open={isGroupActive}
+            className="group"
+          >
+
+            {/* DROPDOWN HEADER */}
+            <summary
+              className={`flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                isGroupActive
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <span>{link.label}</span>
+
+              <svg
+                className="h-4 w-4 transition-transform group-open:rotate-180"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
               >
-                {link.label}
-              </Link>
-            );
-          })
-        ) : (
-          <div className="px-3 py-2.5 text-xs text-slate-400">
-            No pages available. Contact admin.
-          </div>
-        )}
-      </nav>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </summary>
+
+            {/* CHILD LINKS */}
+            <div className="mt-1 ml-3 space-y-1 border-l border-slate-700 pl-3">
+
+              {visibleChildren.map((child) => {
+
+                const active =
+                  path === child.href ||
+                  (child.href !== "/" &&
+                    path.startsWith(child.href));
+
+                return (
+                  <Link
+                    key={child.key}
+                    href={child.href}
+                    className={`block rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      active
+                        ? "bg-white text-slate-950 shadow-sm"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    {child.label}
+                  </Link>
+                );
+              })}
+
+            </div>
+          </details>
+        );
+      }
+
+      // ── NORMAL LINK ─────────────────────────────
+      const active =
+        path === link.href ||
+        (link.href !== "/" &&
+          path.startsWith(link.href));
+
+      return (
+        <Link
+          key={link.key}
+          href={link.href!}
+          className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+            active
+              ? "bg-white text-slate-950 shadow-sm"
+              : "text-slate-300 hover:bg-slate-800 hover:text-white"
+          }`}
+        >
+          {link.label}
+        </Link>
+      );
+    })
+
+  ) : (
+    <div className="px-3 py-2.5 text-xs text-slate-400">
+      No pages available. Contact admin.
+    </div>
+  )}
+</nav>
 
       {/* FOOTER */}
       <div className="border-t border-slate-800 p-4 text-xs text-slate-400">

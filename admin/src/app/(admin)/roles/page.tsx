@@ -57,7 +57,8 @@ const roleColor = (role: string) =>
 
 export default function RolesPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"roles" | "users">("roles");
+  // const [tab, setTab] = useState<"roles" | "users">("roles");
+  const [tab] = useState<"roles">("roles");
 
   // ── Roles state ───────────────────────────────────────────
   const [roles, setRoles] = useState<Role[]>([]);
@@ -158,25 +159,9 @@ export default function RolesPage() {
           </div>
         </div>
 
-        {/* TABS */}
-        <div className="flex gap-1 rounded-xl border border-zinc-200 bg-white p-1 w-fit shadow-sm">
-          {(["roles", "users"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`rounded-lg px-5 py-2 text-sm font-medium capitalize transition ${
-                tab === t
-                  ? "bg-emerald-500 text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
 
         {/* ── TAB: ROLES ─────────────────────────────────────── */}
-        {tab === "roles" && (
+        {true && (
           <div className="space-y-4">
             <div className="flex justify-end">
               <button
@@ -264,120 +249,7 @@ export default function RolesPage() {
         )}
 
         
-        {/* ── TAB: USERS ─────────────────────────────────────── */}
-        {/* {tab === "users" && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <input
-                type="text"
-                placeholder="Search name or email..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 w-64"
-              />
-              <select
-                value={roleFilter}
-                onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400"
-              >
-                <option value="">All Roles</option>
-                {roles.map((r) => (
-                  <option key={r._id} value={r.name}>{r.label || r.name}</option>
-                ))}
-              </select>
-              <button
-                onClick={fetchUsers}
-                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition"
-              >
-                Search
-              </button>
-            </div>
-
-            {usersLoading && <Loader />}
-            {usersError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                {usersError}
-              </div>
-            )}
-
-            {!usersLoading && !usersError && (
-              <>
-                <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-zinc-50 text-zinc-500">
-                      <tr>
-                        <th className="p-3 text-left">User</th>
-                        <th className="p-3 text-left">Email</th>
-                        <th className="p-3 text-left">Current Role</th>
-                        <th className="p-3 text-left">Joined</th>
-                        <th className="p-3 text-left">Assign Role</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user) => (
-                        <tr key={user._id} className="border-t hover:bg-zinc-50">
-                          <td className="p-3 font-medium text-zinc-900">{user.name}</td>
-                          <td className="p-3 text-zinc-500">{user.email}</td>
-                          <td className="p-3">
-                            <span className={`rounded px-2 py-0.5 text-xs font-medium ${roleColor(user.role)}`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="p-3 text-zinc-400 text-xs">
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="p-3">
-                            <select
-                              value={user.role}
-                              disabled={assigningId === user._id}
-                              onChange={(e) => assignRole(user._id, e.target.value)}
-                              className="rounded-lg border border-zinc-300 px-2 py-1 text-xs focus:ring-2 focus:ring-emerald-400 disabled:opacity-50"
-                            >
-                              {roles.map((r) => (
-                                <option key={r._id} value={r.name}>
-                                  {r.label || r.name}
-                                </option>
-                              ))}
-                            </select>
-                            {assigningId === user._id && (
-                              <span className="ml-2 text-xs text-zinc-400">saving…</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {users.length === 0 && (
-                    <div className="p-8 text-center text-zinc-400">No users found</div>
-                  )}
-                </div>
-
-                {pagination && pagination.pages > 1 && (
-                  <div className="flex items-center justify-between text-sm text-zinc-500">
-                    <span>{pagination.total} users</span>
-                    <div className="flex gap-2">
-                      <button
-                        disabled={page === 1}
-                        onClick={() => setPage((p) => p - 1)}
-                        className="rounded-lg border px-3 py-1.5 hover:bg-zinc-100 disabled:opacity-40 transition"
-                      >
-                        ← Prev
-                      </button>
-                      <span className="flex items-center px-2">{page} / {pagination.pages}</span>
-                      <button
-                        disabled={page === pagination.pages}
-                        onClick={() => setPage((p) => p + 1)}
-                        className="rounded-lg border px-3 py-1.5 hover:bg-zinc-100 disabled:opacity-40 transition"
-                      >
-                        Next →
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )} */}
+       
 
       </div>
     </PermissionGuard>
