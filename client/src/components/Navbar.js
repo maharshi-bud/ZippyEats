@@ -128,8 +128,9 @@ export default function Navbar() {
       try {
         setLoadingSearch(true);
         setHasSearched(true);
+        const server = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
         const res = await fetch(
-          `http://localhost:5010/api/search?q=${encodeURIComponent(search)}`
+          `${server}/api/search?q=${encodeURIComponent(search)}`
         );
         const data = await res.json();
         setResults(data.data);

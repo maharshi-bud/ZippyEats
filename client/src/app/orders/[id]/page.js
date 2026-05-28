@@ -24,7 +24,7 @@ import { getSocket } from "../../../lib/socket";
 
 import { useSelector } from "react-redux";
 
-const BASE_URL = "http://localhost:5010";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
 
 // const steps = [
 //   { key: "placed",           label: "Placed",           icon: "📋" },

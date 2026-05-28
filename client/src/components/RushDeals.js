@@ -18,6 +18,7 @@ import {
 } from "../store/slices/cartSlice";
 
 const API =
+  process.env.NEXT_PUBLIC_API_BASE ||
   process.env.NEXT_PUBLIC_SERVER_URL ||
   "http://localhost:5010";
 

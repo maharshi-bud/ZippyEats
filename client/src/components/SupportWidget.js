@@ -7,7 +7,10 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { io } from "socket.io-client";
 
-const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
+const SERVER =
+  process.env.NEXT_PUBLIC_API_BASE ||
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  "http://localhost:5010";
 
 const CATEGORIES = [
   { key: "payment_issue", label: "💳 Payment issue" },

@@ -42,7 +42,7 @@ export default function ProfilePage() {
         try {
           const token = localStorage.getItem("token");
           const picRes = await fetch(
-            `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010"}/api/users/me/profile-pic`,
+            `${process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010"}/api/users/me/profile-pic`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (picRes.ok) {

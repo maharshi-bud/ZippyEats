@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API = "http://localhost:5010/api/auth";
-const SERVER = "http://localhost:5010";
+const SERVER = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
+const API = `${SERVER}/api/auth`;
 
 // ✅ Safe getter
 const getToken = () => {
