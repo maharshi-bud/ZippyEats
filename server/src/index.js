@@ -34,7 +34,7 @@ import restaurantOwnerRoutes from "./routes/restaurantOwnerRoutes.js";
 import bannerRoutes from "./routes/bannerRoutes.js";
 import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
 // import {createRestaurantOwners} from "./utils/createRestaurantOwner.js"
-  import SupportRoutes from "./routes/supportRoutes.js";
+  import SupportRoutes from "./routes/SupportRoutes.js";
   import SupportTicket from "./models/SupportTicket.js";
   import SupportMessage from "./models/SupportMessage.js";
   import { initFirebase } from "./services/fcmService.js";
