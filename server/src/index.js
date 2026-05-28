@@ -40,7 +40,7 @@ import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
   import { initFirebase } from "./services/fcmService.js";
   import fcmRoutes from "./routes/fcmRoutes.js";
 import rolesRoutes from "./routes/admin/rolesRoutes.js";
-import Module from "./models/Module.js";
+import Module from "./models/module.js";
 import modulesRoutes from "./routes/admin/Modulesroutes.js";
 
 
