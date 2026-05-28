@@ -129,7 +129,7 @@ app.use("/api", bannerRoutes);
 app.use("/api/ai", aiRoutes); // ← ADD THIS LINE
 // app.use("/api/restaurant-owner",  restaurantOwnerRoutes);
 
-  app.use("/api/support", supportRoutes);
+  app.use("/api/support", SupportRoutes);
   app.use("/api/fcm", fcmRoutes);
 app.use("/api/admin", rolesRoutes);
 app.use("/api/admin", modulesRoutes);
