@@ -16,8 +16,8 @@ export async function chatCompletion(messages) {
     model: 
     // "qwen/qwen-2.5-7b-instruct:free",
   //  "inclusionai/ring-2.6-1t:free"
-   "arcee-ai/trinity-large-thinking:free"
-  // "openrouter/owl-alpha"
+  //  "arcee-ai/trinity-large-thinking:free"
+  "openrouter/owl-alpha"
   // "nvidia/nemotron-3-nano-30b-a3b:free"
   // "poolside/laguna-xs.2:free"
    ,
