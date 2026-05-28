@@ -7,7 +7,7 @@ import Role from "../../models/Role.js";
 import User from "../../models/User.js";
 import {  OPERATIONS, DEFAULT_PERMISSIONS } from "../../constants/permissions.js";
 import { invalidateRoleCache } from "../../middleware/permissionMiddleware.js";
-import Module from "../../models/Module.js";
+import Module from "../../models/module.js";
 
 // ── GET /api/admin/roles ──────────────────────────────────────
 // List all roles with a user count and formatted permissions
