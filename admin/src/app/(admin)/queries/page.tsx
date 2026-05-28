@@ -5,10 +5,64 @@
 // ============================================================
 import PermissionGuard from "../../../components/PermissionGuard";
 import { useState, useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 import { io } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import AdminSupportPanel from "../../../components/support/AdminSupportPanel";
 
 const SERVER = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
+
+type TicketStatus =
+  | "open"
+  | "pending"
+  | "active"
+  | "resolved"
+  | "refund_completed"
+  | string;
+
+type TicketCategory =
+  | "payment_issue"
+  | "missing_items"
+  | "wrong_order"
+  | "order_not_received"
+  | "refund_issue"
+  | "delivery_issue"
+  | "other"
+  | string;
+
+type TicketPriority = "urgent" | "high" | "medium" | "low";
+
+type SupportTicket = {
+  _id: string;
+  ticketId?: string;
+  status: TicketStatus;
+  category: TicketCategory;
+  priority?: TicketPriority;
+  description?: string;
+  createdAt: string;
+  resolvedAt?: string;
+  isEscalated?: boolean;
+  unreadAdmin?: number;
+  userId?: {
+    name?: string;
+    totalSpent?: number;
+  };
+  orderId?: {
+    _id?: string;
+  };
+};
+
+type TicketCardProps = {
+  ticket: SupportTicket;
+  onOpen: (ticket: SupportTicket) => void;
+  onStatusChange: (ticketId: string, status: TicketStatus) => void;
+};
+
+type ElapsedTimerProps = {
+  createdAt: string;
+  resolvedAt?: string;
+  status: TicketStatus;
+};
 
 const PRIORITY_COLORS = {
   urgent: { bg: "#fef2f2", text: "#dc2626", border: "#fecaca" },
@@ -17,14 +71,14 @@ const PRIORITY_COLORS = {
   low: { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" },
 };
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   open: { bg: "#eff6ff", text: "#2563eb" },
   pending: { bg: "#fff7ed", text: "#ea580c" },
   active: { bg: "#f0fdf4", text: "#16a34a" },
   resolved: { bg: "#f1f5f9", text: "#64748b" },
 };
 
-const CATEGORY_LABELS = {
+const CATEGORY_LABELS: Record<string, string> = {
   payment_issue: "💳 Payment",
   missing_items: "📦 Missing Items",
   wrong_order: "❌ Wrong Order",
@@ -34,7 +88,7 @@ const CATEGORY_LABELS = {
   other: "💬 Other",
 };
 
-function calculatePriority(ticket) {
+function calculatePriority(ticket: SupportTicket): TicketPriority {
 
   let score = 0;
 
@@ -154,7 +208,7 @@ function ElapsedTimer({
   createdAt,
   resolvedAt,
   status,
-}) {
+}: ElapsedTimerProps) {
 
   const [elapsed, setElapsed] = useState(0);
 
@@ -244,7 +298,7 @@ function ElapsedTimer({
   );
 }
 
-function TicketCard({ ticket, onOpen, onStatusChange }) {
+function TicketCard({ ticket, onOpen, onStatusChange }: TicketCardProps) {
   // const priority = PRIORITY_COLORS[ticket.priority] || PRIORITY_COLORS.medium;
 const dynamicPriority =
   calculatePriority(ticket);
@@ -307,7 +361,7 @@ const priority =
       </div>
 
       {/* Unread badge */}
-      {ticket.unreadAdmin < 0 && (
+      {(ticket.unreadAdmin ?? 0) < 0 && (
         <div style={s.unreadBadge}></div>
       )}
     </div>
@@ -315,11 +369,11 @@ const priority =
 }
 
 export default function QueriesPage() {
-  const [tickets, setTickets] = useState([]);
-  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [closedOpen, setClosedOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const socketRef = useRef(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const token = typeof window !== "undefined"
     ? localStorage.getItem("token") || localStorage.getItem("adminToken") || ""
@@ -349,13 +403,13 @@ export default function QueriesPage() {
     socketRef.current = io(SERVER, { auth: { token } });
     socketRef.current.emit("admin:join_support");
 
-    socketRef.current.on("ticket:new", (ticket) => {
+    socketRef.current.on("ticket:new", (ticket: SupportTicket) => {
       setTickets((prev) => [ticket, ...prev]);
       // Sound notification
       // try { new Audio("/sounds/notify.mp3").play(); } catch {}
     });
 
-    socketRef.current.on("ticket:updated", (updated) => {
+    socketRef.current.on("ticket:updated", (updated: SupportTicket) => {
       setTickets((prev) =>
         prev.map((t) => (t._id === updated._id ? updated : t))
       );
@@ -364,7 +418,7 @@ export default function QueriesPage() {
       }
     });
 
-    socketRef.current.on("ticket:message", ({ ticketId }) => {
+    socketRef.current.on("ticket:message", ({ ticketId }: { ticketId: string }) => {
       setTickets((prev) =>
         prev.map((t) =>
           t._id === ticketId
@@ -374,11 +428,13 @@ export default function QueriesPage() {
       );
     });
 
-    return () => socketRef.current?.disconnect();
+    return () => {
+      socketRef.current?.disconnect();
+    };
   }, []);
 
   // ── Status change ────────────────────────────────────────
-  async function handleStatusChange(ticketId, status) {
+  async function handleStatusChange(ticketId: string, status: TicketStatus) {
     try {
       await fetch(`${SERVER}/api/support/tickets/${ticketId}/status`, {
         method: "PATCH",
@@ -394,7 +450,7 @@ export default function QueriesPage() {
   }
 
   // ── Open ticket (join + set active) ─────────────────────
-async function handleOpenTicket(ticket) {
+async function handleOpenTicket(ticket: SupportTicket) {
   setSelectedTicket(ticket);
 
   const socket = socketRef.current;
@@ -505,7 +561,7 @@ async function handleOpenTicket(ticket) {
   );
 }
 
-const s = {
+const s: Record<string, CSSProperties> = {
   page: { padding: "28px 32px", background: "#f8fafc", minHeight: "100vh" },
   pageHeader: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",

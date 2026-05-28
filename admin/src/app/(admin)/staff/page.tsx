@@ -12,6 +12,14 @@ import {
   Calendar,
 } from "lucide-react";
 
+type StaffUser = {
+  _id: string;
+  name?: string;
+  email?: string;
+  role: string;
+  createdAt?: string;
+};
+
 export default function StaffPage() {
 
   // =====================================================
@@ -19,7 +27,7 @@ export default function StaffPage() {
   // =====================================================
 
   const [users, setUsers] =
-    useState([]);
+    useState<StaffUser[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -63,7 +71,7 @@ export default function StaffPage() {
 
       // only admin/staff
 const staff = allUsers.filter(
-  (u) => !["user", "restaurant"].includes(u.role)
+  (u: StaffUser) => !["user", "restaurant"].includes(u.role)
 );
 
       setUsers(staff);

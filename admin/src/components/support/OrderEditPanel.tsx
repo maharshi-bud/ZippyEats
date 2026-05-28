@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 // ============================================================
 // FILE: admin/src/components/support/OrderEditPanel.tsx

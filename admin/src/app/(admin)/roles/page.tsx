@@ -58,7 +58,7 @@ const roleColor = (role: string) =>
 export default function RolesPage() {
   const router = useRouter();
   // const [tab, setTab] = useState<"roles" | "users">("roles");
-  const [tab] = useState<"roles">("roles");
+  const [tab] = useState<"roles" | "users">("roles");
 
   // ── Roles state ───────────────────────────────────────────
   const [roles, setRoles] = useState<Role[]>([]);

@@ -332,7 +332,8 @@ const visibleLinks = SIDEBAR_LINKS.filter((link) => {
       // ── NORMAL LINK ─────────────────────────────
       const active =
         path === link.href ||
-        (link.href !== "/" &&
+        (typeof link.href === "string" &&
+          link.href !== "/" &&
           path.startsWith(link.href));
 
       return (
