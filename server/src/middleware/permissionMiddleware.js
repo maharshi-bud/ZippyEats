@@ -11,7 +11,7 @@
 // ============================================================
 
 import Role from "../models/Role.js";
-import Module from "../models/Module.js";
+import Module from "../models/module.js";
 import { PANEL_ACCESS, PANEL_ACCESS_ROLES } from "../constants/permissions.js";
 
 // ── Caches ────────────────────────────────────────────────────
