@@ -69,8 +69,9 @@ export async function requestNotificationPermission(authToken) {
     if (!fcmToken) return null;
 
     // Save token to server
+    const serverBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
     await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010"}/api/fcm/token`,
+      `${serverBase}/api/fcm/token`,
       {
         method: "POST",
         headers: {

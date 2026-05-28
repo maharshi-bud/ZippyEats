@@ -2,9 +2,7 @@
 
 import axios from "axios";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010"}/api`;
+const baseURL = `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010"}/api`;
 
 const api = axios.create({
   baseURL,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "../../../lib/api";
 import PermissionGuard from "../../../components/PermissionGuard";
-const API_URL = api.defaults.baseURL || "http://localhost:5010/api";
+const API_URL = api.defaults.baseURL || `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010"}/api`;
 
 // ── Modal ─────────────────────────────────────────────────
 function Modal({ onClose, children }) {

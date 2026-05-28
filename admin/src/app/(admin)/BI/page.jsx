@@ -75,7 +75,8 @@ export default function AIAnalytics() {
 
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("adminToken") || "";
-      const res = await fetch("http://localhost:5010/api/ai/query", {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
+      const res = await fetch(`${API_BASE}/api/ai/query`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

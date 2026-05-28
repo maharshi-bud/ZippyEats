@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import OrderEditPanel from "./OrderEditPanel";
 
-const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
+const SERVER = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
 
 const RESOLUTION_TYPES = [
   { key: "refund_issued", label: "💰 Refund Issued" },

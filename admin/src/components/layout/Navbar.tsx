@@ -11,7 +11,8 @@ export default function Navbar() {
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
       if (token) {
-        await fetch("http://localhost:5010/api/fcm/token", {
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
+        await fetch(`${API_BASE}/api/fcm/token`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         }); 

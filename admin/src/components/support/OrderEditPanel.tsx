@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 
-const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
+const SERVER = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
 
 const ADDRESS_FIELDS = [
   { key: "delivery_address.full_name",    label: "Recipient Name",  type: "text" },

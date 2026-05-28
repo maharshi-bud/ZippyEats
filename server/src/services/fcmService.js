@@ -109,7 +109,7 @@ export async function notifyOrderCreated({ restaurantFcmToken, restaurantName, o
   // To restaurant (token) — send data-only payload; SW will display notification
   await sendToToken(restaurantFcmToken, {
     data: makeMessageData(
-      "🛎️ New Order!",
+      "🛎️youh ave  New Order!",
       `You have a new order — ${itemCount} items for ₹${total}`,
       { type: "ORDER_NEW", orderId: orderId?.toString(), role: "restaurant" }
     ),

@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import AdminSupportPanel from "../../../components/support/AdminSupportPanel";
 
-const SERVER = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5010";
+const SERVER = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
 
 const PRIORITY_COLORS = {
   urgent: { bg: "#fef2f2", text: "#dc2626", border: "#fecaca" },
