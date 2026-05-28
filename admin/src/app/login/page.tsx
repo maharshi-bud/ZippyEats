@@ -5,7 +5,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import api from "../../../../client/src/lib/api";
+// import api from "../../../../client/src/lib/api";
+import api from "../../lib/api";
+
 import { requestNotificationPermission } from "../../lib/firebase";
 
 export default function LoginPage() {
