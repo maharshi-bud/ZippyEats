@@ -5,10 +5,10 @@
 
 import Role from "../../models/Role.js";
 import User from "../../models/User.js";
-import {  OPERATIONS, DEFAULT_PERMISSIONS } from "../../constants/permissions.js";
+// import {  OPERATIONS, DEFAULT_PERMISSIONS } from "../../constants/permissions.js";
 import { invalidateRoleCache } from "../../middleware/permissionMiddleware.js";
 import Module from "../../models/module.js";
-
+import { RESOURCES, OPERATIONS } from "../../constants/permissions.js";
 // ── GET /api/admin/roles ──────────────────────────────────────
 // List all roles with a user count and formatted permissions
 export const getRoles = async (req, res) => {
@@ -144,7 +144,12 @@ export const createRole = async (req, res) => {
     res.status(201).json({ success: true, data: role });
   } catch (err) {
     console.error("[Roles] createRole:", err);
-    res.status(500).json({ message: "Failed to create role" });
+    // res.status(500).json({ message: "Failed to create role" });
+res.status(500).json({
+  message: "Failed to create role",
+  error: err.message,
+  stack: err.stack,
+});
   }
 };
 

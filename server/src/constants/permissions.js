@@ -13,6 +13,27 @@ export const OPERATIONS = ["add", "view", "edit", "delete"];
 export const PANEL_ACCESS = { resource: "dashboard", operation: "view" };
 export const PANEL_ACCESS_ROLES = ["admin", "super_admin"]
 
+
+
+
+
+
+
+export const RESOURCES = [
+  "dashboard",
+  "orders",
+  "users",
+  "restaurants",
+  "menu",
+  "banners",
+  "queries",
+  "bi",
+  "roles",
+  "staff",
+];
+
+
+
 // ── Helper: Check if a role has a specific CRUD operation ────
 // Usage: hasOperation(role, "menu", "edit")
 export function hasOperation(role, resource, operation) {
@@ -45,7 +66,7 @@ export const DEFAULT_PERMISSIONS = {
     menu: { add: false, view: true, edit: false, delete: false },
     banners: { add: false, view: true, edit: false, delete: false },
     orders: { add: true, view: true, edit: false, delete: false },
-    queries: { add: true, view: true, edit: false, delete: false },
+    queries: { add: false, view: false, edit: false, delete: false },
     bi: { add: false, view: false, edit: false, delete: false },
   },
 
