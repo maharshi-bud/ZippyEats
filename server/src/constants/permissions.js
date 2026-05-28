@@ -45,7 +45,7 @@ export const DEFAULT_PERMISSIONS = {
     menu: { add: false, view: true, edit: false, delete: false },
     banners: { add: false, view: true, edit: false, delete: false },
     orders: { add: true, view: true, edit: false, delete: false },
-    queries: { add: false, view: false, edit: false, delete: false },
+    queries: { add: true, view: true, edit: false, delete: false },
     bi: { add: false, view: false, edit: false, delete: false },
   },
 
