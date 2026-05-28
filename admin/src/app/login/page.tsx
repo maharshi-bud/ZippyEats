@@ -55,10 +55,13 @@ if (!panelAccess) {
       const payload = JSON.parse(atob(token.split(".")[1]));
 
       // if (payload.role === "admin") {
-        router.push("/");
-      // } else if (payload.role === "restaurant") {
-      //   router.push("/restaurant");
-      // } else {
+        if (payload.role === "restaurant") {
+          router.push("/restaurant");}
+          else{
+          router.push("/");
+
+        }
+        // } else {
       //   alert("Access denied");
       //   localStorage.removeItem("token");
       // }
