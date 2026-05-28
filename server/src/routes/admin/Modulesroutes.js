@@ -7,7 +7,7 @@ import express from "express";
 import { protect } from "../../middleware/authMiddleware.js";
 import { requirePermission, invalidateModuleCache } from "../../middleware/permissionMiddleware.js";
 import Role from "../../models/Role.js";
-import Module from "../../models/Module.js";
+import Module from "../../models/module.js";
 
 const router = express.Router();
 
