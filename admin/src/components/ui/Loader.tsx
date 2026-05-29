@@ -1,28 +1,39 @@
 export default function Loader() {
   return (
-    <div className="w-full flex justify-center items-center">
-      <div style={{ width: "200px", height: "60px", position: "relative", zIndex: 1 }}>
+    <div className="w-full flex justify-center items-center py-10">
+      <div style={{ width: "48px", height: "48px", margin: "auto", position: "relative" }}>
 
-        <div style={{ width: "20px", height: "20px", position: "absolute", borderRadius: "50%", backgroundColor: "#fff", left: "15%", transformOrigin: "50%", animation: "circle7124 .5s alternate infinite ease" }} />
-        <div style={{ width: "20px", height: "20px", position: "absolute", borderRadius: "50%", backgroundColor: "#fff", left: "45%", transformOrigin: "50%", animation: "circle7124 .5s alternate infinite ease", animationDelay: ".2s" }} />
-        <div style={{ width: "20px", height: "20px", position: "absolute", borderRadius: "50%", backgroundColor: "#fff", right: "15%", transformOrigin: "50%", animation: "circle7124 .5s alternate infinite ease", animationDelay: ".3s" }} />
+        {/* shadow */}
+        <div style={{
+          width: "48px", height: "5px",
+          background: "rgba(15, 23, 42, 0.2)",
+          position: "absolute", top: "60px", left: 0,
+          borderRadius: "50%",
+          animation: "shadow324 0.5s linear infinite",
+        }} />
 
-        <div style={{ width: "20px", height: "4px", borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.9)", position: "absolute", top: "62px", transformOrigin: "50%", zIndex: -1, left: "15%", filter: "blur(1px)", animation: "shadow046 .5s alternate infinite ease" }} />
-        <div style={{ width: "20px", height: "4px", borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.9)", position: "absolute", top: "62px", transformOrigin: "50%", zIndex: -1, left: "45%", filter: "blur(1px)", animation: "shadow046 .5s alternate infinite ease", animationDelay: ".2s" }} />
-        <div style={{ width: "20px", height: "4px", borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.9)", position: "absolute", top: "62px", transformOrigin: "50%", zIndex: -1, right: "15%", filter: "blur(1px)", animation: "shadow046 .5s alternate infinite ease", animationDelay: ".3s" }} />
+        {/* box */}
+        <div style={{
+          width: "100%", height: "100%",
+          background: "#0f172a",
+          position: "absolute", top: 0, left: 0,
+          borderRadius: "4px",
+          animation: "jump7456 0.5s linear infinite",
+        }} />
 
       </div>
 
       <style>{`
-        @keyframes circle7124 {
-          0%   { top: 60px; height: 5px; border-radius: 50px 50px 25px 25px; transform: scaleX(1.7); }
-          40%  { height: 20px; border-radius: 50%; transform: scaleX(1); }
-          100% { top: 0%; }
+        @keyframes jump7456 {
+          15%  { border-bottom-right-radius: 3px; }
+          25%  { transform: translateY(9px) rotate(22.5deg); }
+          50%  { transform: translateY(18px) scale(1, .9) rotate(45deg); border-bottom-right-radius: 40px; }
+          75%  { transform: translateY(9px) rotate(67.5deg); }
+          100% { transform: translateY(0) rotate(90deg); }
         }
-        @keyframes shadow046 {
-          0%   { transform: scaleX(1.5); }
-          40%  { transform: scaleX(1); opacity: .7; }
-          100% { transform: scaleX(.2); opacity: .4; }
+        @keyframes shadow324 {
+          0%, 100% { transform: scale(1, 1); }
+          50%       { transform: scale(1.2, 1); }
         }
       `}</style>
     </div>

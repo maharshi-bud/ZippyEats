@@ -38,7 +38,7 @@ export default function RestaurantsPage() {
   }, [sortBy, order, activeFilter]);
 
   // ✅ HANDLE STATES FIRST
-  if (loading) return <Loader />;
+  if (!loading) return <Loader />;
 
   if (error)
     return (
