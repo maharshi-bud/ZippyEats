@@ -5,9 +5,10 @@ import Role from "../models/Role.js";
 import { hasPanelAccess } from "../constants/permissions.js";
 
 
-const generateToken = (userId, role, restaurantId = null) => {
-  return jwt.sign({ id: userId, role, restaurant_id: restaurantId }, process.env.JWT_SECRET, {
-    expiresIn: "9h" , 
+// FIXED
+const generateToken = (userId, role, restaurantId = null, name = "") => {
+  return jwt.sign({ id: userId, role, restaurant_id: restaurantId, name }, process.env.JWT_SECRET, {
+    expiresIn: "9h",
   });
 };
 
@@ -33,7 +34,7 @@ export const register = async (req, res, next) => {
       password: hashed
     });
 
-    const token = generateToken(user._id, user.role, user.restaurant_id || null) ;
+    const token = generateToken(user._id, user.role, user.restaurant_id || null,  user.name) ;
 
     res.status(201).json({
       success: true,
@@ -85,7 +86,7 @@ export const login = async (req, res) => {
     
     
 
-    const token = generateToken(user._id, user.role, user.restaurant_id);
+    const token = generateToken(user._id, user.role, user.restaurant_id, user.name);
     
     // ── Fetch this role's permissions from DB ────────────────
     // Same source of truth as permissionMiddleware — the Role collection.

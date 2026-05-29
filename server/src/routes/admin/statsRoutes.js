@@ -23,7 +23,7 @@ import { requirePermission } from "../../middleware/permissionMiddleware.js";
 const router = express.Router();
 
 // All stats routes require BI (Business Intelligence) view permission
-router.use(protect, requirePermission("bi", "view"));
+router.use(protect, requirePermission("dashboard", "view"));
 
 router.get("/overview",         overview);
 router.get("/revenue",          revenueChart);

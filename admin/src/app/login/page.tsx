@@ -30,43 +30,41 @@ export default function LoginPage() {
         password,
       });
 
-      // const token = res.data.token;
-const { token, panelAccess } = res.data;
+      // ✅ also pull user from response
+      const { token, panelAccess, user } = res.data;
 
-// Check panel access BEFORE storing token
-if (!panelAccess) {
-  setError("You don't have access to this panel.");
-  return;
-}
+      // Check panel access BEFORE storing token
+      if (!panelAccess) {
+        setError("You don't have access to this panel.");
+        return;
+      }
+
       // store token
-      
       localStorage.setItem("token", token);
+
+      // ✅ store user so Navbar can read name + role instantly
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
 
       // register FCM immediately after login
       try {
-
           const payload = JSON.parse(atob(token.split(".")[1] || ""));
           const isAdminTopic = ["admin", "super_admin"].includes(payload?.role);  
           await requestNotificationPermission(token, isAdminTopic);
-
       } catch (err) {
         console.warn("[FCM] Login registration failed:", err);
       }
       
-      // decode role
+      // decode role for routing
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-      // if (payload.role === "admin") {
-        if (payload.role === "restaurant") {
-          router.push("/restaurant");}
-          else{
-          router.push("/");
+      if (payload.role === "restaurant") {
+        router.push("/restaurant");
+      } else {
+        router.push("/");
+      }
 
-        }
-        // } else {
-      //   alert("Access denied");
-      //   localStorage.removeItem("token");
-      // }
     } catch (err: unknown) {
       const message =
         typeof err === "object" && err !== null && "response" in err
@@ -157,7 +155,7 @@ if (!panelAccess) {
               Login ID
             </span>
             <input
-                type="text"
+              type="text"
               value={email}
               required
               placeholder="admin@zippyeats.com / r99"
