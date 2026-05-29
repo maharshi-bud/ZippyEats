@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "../lib/api";
-
+import Loader from "./ui/Loader.tsx";
 export default function PermissionGuard({
   resource,
   operation = "view",
@@ -38,7 +38,7 @@ export default function PermissionGuard({
 
   if (allowed === null) return (
     <div className="flex items-center justify-center h-64 text-slate-400">
-      Checking access...
+      {/* </Loader> */}<Loader />
     </div>
   );
   return <>{children}</>;
