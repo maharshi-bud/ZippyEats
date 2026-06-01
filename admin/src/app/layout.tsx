@@ -5,7 +5,7 @@
 import type { ReactNode } from "react";
 import NotificationInit from "../components/NotificationInit";
 import ModuleSync from "../components/ModuleSync";
-import AuthGuard from "../components/Authguard";
+import AuthGuard from "../components/AuthGuard";
 import "./global.css";
 
 export const metadata = {
