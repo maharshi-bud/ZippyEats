@@ -41,8 +41,8 @@ export type Coupon = {
 
   limits?: {
     total_usage_limit?: number | null;
-    current_usage_count?: number;
-    usage_per_user?: number;
+    current_usage_count?: number | null;
+    usage_per_user?: number | null;
   };
 
   visibility?: {

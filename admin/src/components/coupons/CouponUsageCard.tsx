@@ -227,11 +227,11 @@ export default function CouponUsageCard({
             </p>
 
             <p className="mt-1 text-lg font-semibold text-zinc-900">
-              {usedCount > 0
+              {(usedCount ?? 0) > 0
                 ? formatCurrency(
                     Number(
                       totalSavingsGiven
-                    ) / usedCount
+                    ) / (usedCount ?? 1)
                   )
                 : "₹0"}
             </p>

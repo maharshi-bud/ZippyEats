@@ -244,32 +244,31 @@ export default function CouponsPage() {
       typeFilter,
     ]);
 
-  const toggleCoupon =
-    async (
-      coupon: Coupon
-    ) => {
-      try {
-        setSaving(true);
-        setError("");
+  const toggleCoupon = (
+    coupon: Coupon
+  ) => {
+    setSaving(true);
+    setError("");
 
-        await api.patch(
-          `/admin/coupons/${coupon._id}/toggle`
-        );
-
+    api
+      .patch(
+        `/admin/coupons/${coupon._id}/toggle`
+      )
+      .then(() => {
         setCoupons((prev) =>
           prev.map((item) =>
             item._id ===
             coupon._id
               ? {
                   ...item,
-
                   is_active:
                     !item.is_active,
                 }
               : item
           )
         );
-      } catch (err: any) {
+      })
+      .catch((err: any) => {
         console.error(
           "[CouponsPage] toggle:",
           err
@@ -280,31 +279,31 @@ export default function CouponsPage() {
             ?.message ||
             "Failed to toggle coupon."
         );
-      } finally {
+      })
+      .finally(() => {
         setSaving(false);
-      }
-    };
+      });
+  };
 
-  const deleteCoupon =
-    async (
-      coupon: Coupon
-    ) => {
-      const confirmed =
-        window.confirm(
-          `Delete coupon "${coupon.code}"?`
-        );
+  const deleteCoupon = (
+    coupon: Coupon
+  ) => {
+    const confirmed =
+      window.confirm(
+        `Delete coupon "${coupon.code}"?`
+      );
 
-      if (!confirmed)
-        return;
+    if (!confirmed)
+      return;
 
-      try {
-        setSaving(true);
-        setError("");
+    setSaving(true);
+    setError("");
 
-        await api.delete(
-          `/admin/coupons/${coupon._id}`
-        );
-
+    api
+      .delete(
+        `/admin/coupons/${coupon._id}`
+      )
+      .then(() => {
         setCoupons((prev) =>
           prev.filter(
             (item) =>
@@ -312,7 +311,8 @@ export default function CouponsPage() {
               coupon._id
           )
         );
-      } catch (err: any) {
+      })
+      .catch((err: any) => {
         console.error(
           "[CouponsPage] delete:",
           err
@@ -323,10 +323,11 @@ export default function CouponsPage() {
             ?.message ||
             "Failed to delete coupon."
         );
-      } finally {
+      })
+      .finally(() => {
         setSaving(false);
-      }
-    };
+      });
+  };
 
   const activeCoupons =
     coupons.filter(
