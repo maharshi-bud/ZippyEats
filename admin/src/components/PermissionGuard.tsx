@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "../lib/api";
-import Loader from "./ui/Loader.tsx";
+import Loader from "./ui/Loader";
 export default function PermissionGuard({
   resource,
   operation = "view",

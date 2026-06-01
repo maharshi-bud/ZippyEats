@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import NotificationInit from "../components/NotificationInit";
 import ModuleSync from "../components/ModuleSync";
+import AuthGuard from "../components/Authguard";
 import "./global.css";
 
 export const metadata = {
@@ -16,6 +17,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
+        {/* Redirects to /login if token missing or expired */}
+        <AuthGuard />
         {/* Syncs module resources with server on every app load */}
         <ModuleSync />
         <NotificationInit />
