@@ -9,13 +9,9 @@ export type DiscountType =
 
 export interface Coupon {
   _id: string;
-
   code: string;
-
   title?: string;
-
   description?: string;
-
   is_active?: boolean;
 
   reward?: {
@@ -23,9 +19,7 @@ export interface Coupon {
       | "percentage"
       | "flat"
       | "free_delivery";
-
     value?: number | null;
-
     max_discount?:
       | number
       | null;
@@ -36,7 +30,6 @@ export interface Coupon {
       | string
       | Date
       | null;
-
     end_date?:
       | string
       | Date
@@ -47,52 +40,45 @@ export interface Coupon {
     total_usage_limit?:
       | number
       | null;
-
     usage_per_user?:
       | number
       | null;
-
     current_usage_count?:
       | number
       | null;
-  };
-
-  visibility?: {
-    first_order_only?: boolean;
-
-    new_user_only?: boolean;
-  };
-
-  stacking?: {
-    can_combine?: boolean;
   };
 
   conditions?: {
     min_order_amount?:
       | number
       | null;
+    first_order_only?: boolean;
+    new_user_only?: boolean;
+  };
+
+  visibility?: {
+    first_order_only?: boolean;
+    new_user_only?: boolean;
+  };
+
+  stacking?: {
+    can_combine?: boolean;
   };
 }
 
 interface CouponTableProps {
   coupons: Coupon[];
-
   loading?: boolean;
-
   onEdit?: (
     coupon: Coupon
   ) => void;
-
   onDelete?: (
     coupon: Coupon
   ) => void;
-
   onToggle?: (
     coupon: Coupon
   ) => void;
-
   actionLoading?: boolean;
-
   emptyMessage?: string;
 }
 
@@ -181,19 +167,31 @@ function getDiscountLabel(
   return "Free Delivery";
 }
 
+function getFirstOrderOnly(
+  coupon: Coupon
+): boolean {
+  return Boolean(
+    coupon.conditions?.first_order_only ??
+      coupon.visibility?.first_order_only
+  );
+}
+
+function getNewUserOnly(
+  coupon: Coupon
+): boolean {
+  return Boolean(
+    coupon.conditions?.new_user_only ??
+      coupon.visibility?.new_user_only
+  );
+}
+
 export default function CouponTable({
   coupons,
-
   loading = false,
-
   onEdit,
-
   onDelete,
-
   onToggle,
-
   actionLoading = false,
-
   emptyMessage = "No coupons found.",
 }: CouponTableProps) {
   return (
@@ -205,29 +203,23 @@ export default function CouponTable({
               <th className="px-5 py-4 font-medium">
                 Coupon
               </th>
-
               <th className="px-5 py-4 font-medium">
                 Discount
               </th>
-
               <th className="px-5 py-4 font-medium">
                 Usage
               </th>
-
               <th className="px-5 py-4 font-medium">
                 Validity
               </th>
-
               <th className="px-5 py-4 font-medium">
                 Status
               </th>
-
               <th className="px-5 py-4 text-right font-medium">
                 Actions
               </th>
             </tr>
           </thead>
-
           <tbody>
             {loading ? (
               Array.from({
@@ -261,13 +253,11 @@ export default function CouponTable({
                             coupon.code
                           }
                         </div>
-
                         <div>
                           <div className="font-semibold text-zinc-900">
                             {coupon.title ||
                               "Untitled Coupon"}
                           </div>
-
                           {coupon.description ? (
                             <p className="mt-1 max-w-[320px] text-xs leading-5 text-zinc-500">
                               {
@@ -275,24 +265,21 @@ export default function CouponTable({
                               }
                             </p>
                           ) : null}
-
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {coupon
-                              .visibility
-                              ?.first_order_only ? (
+                            {getFirstOrderOnly(
+                              coupon
+                            ) ? (
                               <Tag>
                                 First Order
                               </Tag>
                             ) : null}
-
-                            {coupon
-                              .visibility
-                              ?.new_user_only ? (
+                            {getNewUserOnly(
+                              coupon
+                            ) ? (
                               <Tag>
                                 New Users
                               </Tag>
                             ) : null}
-
                             {coupon
                               .stacking
                               ?.can_combine ? (
@@ -304,14 +291,12 @@ export default function CouponTable({
                         </div>
                       </div>
                     </td>
-
                     <td className="px-5 py-5 align-top">
                       <div className="font-semibold text-zinc-900">
                         {getDiscountLabel(
                           coupon
                         )}
                       </div>
-
                       <div className="mt-2 space-y-1 text-xs text-zinc-500">
                         <div>
                           Type:{" "}
@@ -321,7 +306,6 @@ export default function CouponTable({
                               ?.type
                           }
                         </div>
-
                         <div>
                           Min Order:{" "}
                           {formatCurrency(
@@ -330,7 +314,6 @@ export default function CouponTable({
                               ?.min_order_amount
                           )}
                         </div>
-
                         {coupon
                           .reward
                           ?.type ===
@@ -346,14 +329,12 @@ export default function CouponTable({
                         ) : null}
                       </div>
                     </td>
-
                     <td className="px-5 py-5 align-top">
                       <div className="font-semibold text-zinc-900">
                         {coupon
                           .limits
                           ?.current_usage_count ||
                           0}
-
                         {typeof coupon
                           .limits
                           ?.total_usage_limit ===
@@ -365,7 +346,6 @@ export default function CouponTable({
                           ? ` / ${coupon.limits.total_usage_limit}`
                           : ""}
                       </div>
-
                       <div className="mt-2 text-xs text-zinc-500">
                         Per user:{" "}
                         {coupon
@@ -374,7 +354,6 @@ export default function CouponTable({
                           1}
                       </div>
                     </td>
-
                     <td className="px-5 py-5 align-top text-zinc-700">
                       <div className="space-y-2 text-xs">
                         <div>
@@ -387,7 +366,6 @@ export default function CouponTable({
                               ?.start_date
                           )}
                         </div>
-
                         <div>
                           <span className="font-medium text-zinc-900">
                             Till:
@@ -400,7 +378,6 @@ export default function CouponTable({
                         </div>
                       </div>
                     </td>
-
                     <td className="px-5 py-5 align-top">
                       <CouponStatusBadge
                         isActive={
@@ -428,7 +405,6 @@ export default function CouponTable({
                         }
                       />
                     </td>
-
                     <td className="px-5 py-5 align-top">
                       <div className="flex justify-end gap-2">
                         {onEdit ? (
@@ -444,7 +420,6 @@ export default function CouponTable({
                             Edit
                           </button>
                         ) : null}
-
                         {onToggle ? (
                           <button
                             type="button"
@@ -463,7 +438,6 @@ export default function CouponTable({
                               : "Enable"}
                           </button>
                         ) : null}
-
                         {onDelete ? (
                           <button
                             type="button"
