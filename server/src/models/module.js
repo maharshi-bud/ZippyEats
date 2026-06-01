@@ -18,6 +18,15 @@ export const DEFAULT_MODULES = [
     platform: "web",
   },
   {
+  key: "coupons",
+  name: "Coupons",
+  parentKey: null,
+  index: 8,
+  icon: "ticket-percent",
+  description: "Manage coupon campaigns and discounts",
+  platform: "web",
+},
+  {
     key: "orders",
     name: "Orders",
     parentKey: null,
@@ -45,6 +54,7 @@ export const DEFAULT_MODULES = [
     description: "Manage admin panel staff accounts",
     platform: "web",
   },
+
   {
     key: "roles",
     name: "Roles & Permissions",

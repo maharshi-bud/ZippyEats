@@ -92,6 +92,12 @@ export const SIDEBAR_LINKS: SidebarLink[] = [
     href: "/banners",
     requiredOp: "view",
   },
+  {
+    key: "coupons",
+    label: "Coupons",
+    href: "/coupons",
+    // requiredOp: "view",
+  },
 
   {
     key: "bi",

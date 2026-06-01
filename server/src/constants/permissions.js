@@ -92,6 +92,8 @@ export const DEFAULT_PERMISSIONS = {
     orders: { add: false, view: true, edit: true, delete: false },
     queries: { add: true, view: true, edit: true, delete: true },
     bi: { add: false, view: true, edit: false, delete: false },
+      coupons: { add: true, view: true, edit: true, delete: true },
+
   },
 
   super_admin: {
@@ -103,6 +105,8 @@ export const DEFAULT_PERMISSIONS = {
     orders: { add: true, view: true, edit: true, delete: true },
     queries: { add: true, view: true, edit: true, delete: true },
     bi: { add: true, view: true, edit: true, delete: true },
+      coupons: { add: true, view: true, edit: true, delete: true },
+
   },
 };
 

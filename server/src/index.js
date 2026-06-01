@@ -44,6 +44,8 @@ import Module from "./models/module.js";
 import modulesRoutes from "./routes/admin/Modulesroutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 
+import adminCouponRoutes from "./routes/admin/couponRoutes.js";
+
 
 
 
@@ -137,6 +139,7 @@ app.use("/api/admin", modulesRoutes);
 app.use(errorHandler);
 app.use("/api/restaurant-owner", restaurantOwnerRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/admin", adminCouponRoutes);
 
 
 

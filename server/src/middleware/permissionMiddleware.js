@@ -134,22 +134,31 @@ export function requirePermission(resourceOrPermObj, operationOrUndefined) {
     }
   } else if (typeof resourceOrPermObj === "string") {
     const resource = resourceOrPermObj;
+
     const operations = Array.isArray(operationOrUndefined)
       ? operationOrUndefined
       : [operationOrUndefined];
-    checks = operations.map((op) => ({ resource, operation: op }));
+
+    checks = operations.map((op) => ({
+      resource,
+      operation: op,
+    }));
   } else {
     throw new Error("[requirePermission] Invalid arguments");
   }
 
   if (!checks.length) {
-    throw new Error("[requirePermission] At least one permission check required");
+    throw new Error(
+      "[requirePermission] At least one permission check required"
+    );
   }
 
   return async function permissionGuard(req, res, next) {
     try {
       if (!req.user?.role) {
-        return res.status(401).json({ message: "Not authorized" });
+        return res.status(401).json({
+          message: "Not authorized",
+        });
       }
 
       if (hasBuiltInPanelAccess(req.user.role, checks)) {
@@ -159,29 +168,48 @@ export function requirePermission(resourceOrPermObj, operationOrUndefined) {
       const permissions = await getPermissionsForRole(req.user.role);
 
       if (!permissions) {
-        console.warn(`[Permission] Role "${req.user.role}" not found in DB`);
-        return res.status(403).json({ message: "Forbidden — role not configured" });
+        console.warn(
+          `[Permission] Role "${req.user.role}" not found in DB`
+        );
+
+        return res.status(403).json({
+          message: "Forbidden — role not configured",
+        });
       }
 
       let hasAny = false;
+
       const failures = [];
 
       for (const check of checks) {
         // Resolve child resource to parent key
         const resolvedKey = await resolvePermissionKey(check.resource);
-        const resourcePerms = permissions[resolvedKey];
 
-        if (resourcePerms && resourcePerms[check.operation] === true) {
+        // Support both plain objects and Mongoose Maps
+        const resourcePerms =
+          typeof permissions?.get === "function"
+            ? permissions.get(resolvedKey)
+            : permissions?.[resolvedKey];
+
+        if (
+          resourcePerms &&
+          resourcePerms[check.operation] === true
+        ) {
           hasAny = true;
           break;
         } else {
-          failures.push({ resource: check.resource, resolvedAs: resolvedKey, operation: check.operation });
+          failures.push({
+            resource: check.resource,
+            resolvedAs: resolvedKey,
+            operation: check.operation,
+          });
         }
       }
 
       if (!hasAny) {
         return res.status(403).json({
           message: "Forbidden — insufficient permissions",
+
           ...(process.env.NODE_ENV !== "production" && {
             required: checks,
             failures,
@@ -193,7 +221,10 @@ export function requirePermission(resourceOrPermObj, operationOrUndefined) {
       next();
     } catch (err) {
       console.error("[Permission] Middleware error:", err);
-      return res.status(500).json({ message: "Server error" });
+
+      return res.status(500).json({
+        message: "Server error",
+      });
     }
   };
 }

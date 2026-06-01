@@ -119,52 +119,50 @@ roleSchema.methods.revoke = function (resource, operation) {
 
 // ── Static: seed default roles ────────────────────────────────
 roleSchema.statics.seedDefaults = async function () {
-  const defaults = [
-    {
-      name: "user",
-      label: "Customer",
-      description: "Regular app user — can browse, order, and raise support tickets.",
-      permissions: DEFAULT_PERMISSIONS.user,
-      isSystem: true,
-    },
-    {
-      name: "restaurant",
-      label: "Restaurant Owner",
-      description: "Manages their own restaurant menu and incoming orders.",
-      permissions: DEFAULT_PERMISSIONS.restaurant,
-      isSystem: true,
-    },
-    {
-      name: "admin",
-      label: "Admin",
-      description: "Full platform management.",
-      permissions: DEFAULT_PERMISSIONS.admin,
-      isSystem: true,
-    },
-    {
-      name: "super_admin",
-      label: "Super Admin",
-      description: "Unrestricted access. Can manage roles and users.",
-      permissions: DEFAULT_PERMISSIONS.super_admin,
-      isSystem: true,
-    },
-  ];
+  const seedRoles = Object.entries(DEFAULT_PERMISSIONS);
 
-  for (const role of defaults) {
-    const permMap = new Map(Object.entries(role.permissions));
-    await this.findOneAndUpdate(
-      { name: role.name },
-      {
-        $set: {
-          ...role,
-          permissions: permMap,
-        },
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+  for (const [roleName, permissionsObj] of seedRoles) {
+    let role = await this.findOne({ name: roleName });
+
+    const defaultPermissionsMap = new Map(
+      Object.entries(permissionsObj).map(([resource, ops]) => [resource, ops])
     );
+
+    if (!role) {
+      await this.create({
+        name: roleName,
+        label: roleName
+          .split("_")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" "),
+        description: "",
+        permissions: defaultPermissionsMap,
+        isSystem: true,
+        isActive: true,
+      });
+      continue;
+    }
+
+    let changed = false;
+
+    if (!role.permissions || typeof role.permissions.has !== "function") {
+      role.permissions = new Map(Object.entries(role.permissions || {}));
+      changed = true;
+    }
+
+    for (const [resource, ops] of defaultPermissionsMap.entries()) {
+      if (!role.permissions.has(resource)) {
+        role.permissions.set(resource, ops);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      await role.save();
+    }
   }
 
-  console.log("[Role] Default roles seeded ✓");
+  console.log("[Role] Default roles seeded / merged ✓");
 };
 
 const Role = mongoose.model("Role", roleSchema);
