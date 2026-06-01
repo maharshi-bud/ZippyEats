@@ -19,7 +19,7 @@ export interface Coupon {
       | "percentage"
       | "flat"
       | "free_delivery";
-    value?: number | null;
+    value?: number;
     max_discount?:
       | number
       | null;
