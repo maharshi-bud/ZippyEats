@@ -131,6 +131,7 @@ await api.post(
         </div>
       ) : (
         <CouponForm
+          mode="create"
           onSubmit={handleCreate}
           loading={loading}
         />
