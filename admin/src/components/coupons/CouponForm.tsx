@@ -8,7 +8,7 @@ export type DiscountType =
   | "FREE_DELIVERY";
 
 export type Coupon = {
-  _id?: string;
+  _id: string;
   code: string;
   title?: string;
   description?: string;
