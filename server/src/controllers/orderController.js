@@ -13,6 +13,9 @@ import {
   } from "../services/fcmService.js";
 import Restaurant from "../models/Restaurant.js";
 import User from "../models/User.js";
+import Coupon from "../models/Coupon.js";
+import CouponUsage from "../models/CouponUsage.js";
+
 
 
 export const createOrder = async (req, res) => {
@@ -87,10 +90,31 @@ export const createOrder = async (req, res) => {
       };
     });
 
-    const restaurantId =
-      restaurantIdFromBody || menuItems[0]?.restaurant_id || null;
-    const restaurantName =
-      restaurantNameFromBody || menuItems[0]?.restaurant_name || "Restaurant";
+const restaurantId =
+  restaurantIdFromBody ||
+  menuItems[0]?.restaurant_id ||
+  null;
+
+let restaurantName =
+  restaurantNameFromBody ||
+  "Restaurant";
+
+// Fetch actual restaurant name from DB
+
+if (restaurantId) {
+  const restaurant =
+    await Restaurant.findById(
+      restaurantId
+    )
+      .select("name")
+      .lean();
+
+  if (restaurant?.name) {
+    restaurantName =
+      restaurant.name;
+  }
+}
+
     const deliveryAddress =
       deliveryAddressFromBody || items[0]?.delivery_address || null;
 
@@ -127,8 +151,9 @@ if (useZipCoins) {
           timeout_at,
           eta,
           
-  total_amount: total + 40 - coinsDiscount,  // ← subtract coins discount
+  // total_amount: total + 40 - coinsDiscount,  // ← subtract coins discount
   coins_used: coinsUsed,                     // ← add this field to Order model too
+  total_amount: total + 40 - coinsDiscount - discountAmount,
   coins_discount: coinsDiscount,
           delivery_address: {
             full_name: deliveryAddress?.full_name || "Customer",
@@ -162,16 +187,63 @@ if (coinsUsed > 0) {
     emitNewOrder(order[0]);
     scheduleNextTransition(order[0]);
 
-    if (appliedCouponId) {
-      await redeemAppliedCoupon({
-        couponId: appliedCouponId,
-        userId,
-        orderId: order[0]._id,
-        discountAmount,
-        cashbackAmount,
-        rewardType,
-      });
+
+
+// ── Coupon usage tracking ─────────────────────
+
+if (appliedCouponId) {
+  // Create usage history row
+
+  await CouponUsage.create({
+    coupon_id:
+      appliedCouponId || null,
+
+    user_id:
+      userId,
+
+    order_id:
+      order[0]._id,
+
+    discount_amount:
+      discountAmount || 0,
+
+    cashback_amount:
+      cashbackAmount || 0,
+
+    reward_type:
+      rewardType || "",
+  });
+
+  // Increment global usage count
+
+  await Coupon.findByIdAndUpdate(
+    appliedCouponId,
+    {
+      $inc: {
+        "limits.current_usage_count": 1,
+      },
     }
+  );
+
+  // Existing redeem logic
+
+  await redeemAppliedCoupon({
+    couponId:
+      appliedCouponId,
+
+    userId,
+
+    orderId:
+      order[0]._id,
+
+    discountAmount,
+
+    cashbackAmount,
+
+    rewardType,
+  });
+}
+
 
     // ✅ FCM — single call, isolated, non-fatal
     try {

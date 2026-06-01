@@ -58,12 +58,20 @@ export const applyCoupon = async (req, res) => {
 
     // ── Validate ──────────────────────────────────────────────
     const validation = await validateCoupon(coupon, cartCtx);
-    if (!validation.valid) {
-      return res.status(422).json({
-        success: false,
-        message: validation.reason,
-      });
-    }
+if (!validation.valid) {
+  console.log(
+    "[Coupon Validation Failed]",
+    validation
+  );
+
+  return res.status(422).json({
+    success: false,
+    message:
+      validation.reason,
+    validation,
+  });
+}
+
 
     // ── Calculate reward ──────────────────────────────────────
     const reward  = calculateReward(coupon, cartCtx);
