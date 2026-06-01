@@ -4,6 +4,7 @@ import MenuItem from "../models/MenuItem.js";
 import {
   emitNewOrder,
   scheduleNextTransition,
+  redeemAppliedCoupon,
 } from "../services/orderEngine.js";
   import {
     notifyOrderCreated,
@@ -26,6 +27,10 @@ export const createOrder = async (req, res) => {
       restaurant_id: restaurantIdFromBody,
       restaurant_name: restaurantNameFromBody,
       delivery_address: deliveryAddressFromBody,
+      appliedCouponId,
+      discountAmount = 0,
+      cashbackAmount = 0,
+      rewardType = "",
     } = req.body || {};
 
     if (!userId) {
@@ -156,6 +161,17 @@ if (coinsUsed > 0) {
     // ✅ Emit realtime events
     emitNewOrder(order[0]);
     scheduleNextTransition(order[0]);
+
+    if (appliedCouponId) {
+      await redeemAppliedCoupon({
+        couponId: appliedCouponId,
+        userId,
+        orderId: order[0]._id,
+        discountAmount,
+        cashbackAmount,
+        rewardType,
+      });
+    }
 
     // ✅ FCM — single call, isolated, non-fatal
     try {

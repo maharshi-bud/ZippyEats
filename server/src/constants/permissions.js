@@ -30,6 +30,8 @@ export const RESOURCES = [
   "bi",
   "roles",
   "staff",
+    "coupons",   
+
 ];
 
 

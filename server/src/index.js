@@ -42,6 +42,7 @@ import aiRoutes from "./modules/ai/ai.routes.js"; // ← ADD THIS LINE
 import rolesRoutes from "./routes/admin/rolesRoutes.js";
 import Module from "./models/module.js";
 import modulesRoutes from "./routes/admin/Modulesroutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 
 
 
@@ -135,10 +136,25 @@ app.use("/api/admin", rolesRoutes);
 app.use("/api/admin", modulesRoutes);
 app.use(errorHandler);
 app.use("/api/restaurant-owner", restaurantOwnerRoutes);
+app.use("/api/coupons", couponRoutes);
+
+
+
+
+
+
+const router = express.Router();
+router.use("/", couponRoutes);
+export default router;
+
+
+
+
+
+
 
 
 const PORT = process.env.PORT || 5010;
-
 const startServer = async () => {
   await connectDB();
   

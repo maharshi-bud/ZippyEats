@@ -9,6 +9,8 @@ import { getIO } from "../lib/socket.js";
 
 import Restaurant from "../models/Restaurant.js";
 import User from "../models/User.js";
+import Coupon from "../models/Coupon.js";
+import CouponUsage from "../models/CouponUsage.js";
 
 
 // ================= STATUS FLOW =================
@@ -339,5 +341,39 @@ export const reloadActiveOrders = async () => {
   );
   for (const order of activeOrders) {
     scheduleNextTransition(order);
+  }
+};
+
+export const redeemAppliedCoupon = async ({
+  couponId,
+  userId,
+  orderId,
+  discountAmount = 0,
+  cashbackAmount = 0,
+  rewardType = "",
+}) => {
+  if (!couponId || !userId || !orderId) return;
+
+  try {
+    await Promise.all([
+      CouponUsage.create({
+        coupon_id: couponId,
+        user_id: userId,
+        order_id: orderId,
+        discount_amount: discountAmount,
+        cashback_amount: cashbackAmount,
+        reward_type: rewardType,
+      }),
+      Coupon.findByIdAndUpdate(couponId, {
+        $inc: {
+          "limits.current_usage_count": 1,
+          "analytics.total_used": 1,
+          "analytics.total_discount_given": discountAmount || 0,
+        },
+      }),
+    ]);
+  } catch (err) {
+    if (err?.code === 11000) return;
+    throw err;
   }
 };
