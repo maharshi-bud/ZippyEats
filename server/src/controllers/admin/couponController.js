@@ -20,17 +20,41 @@ function buildCouponPayload(body) {
     code, title, description, type,
     visibility, validity, targeting,
     conditions, reward, limits, stacking,
+    isActive, is_active, disabled,
   } = body;
+
+  let normalizedVisibility = visibility ? { ...visibility } : undefined;
+  const normalizedConditions = conditions ? { ...conditions } : undefined;
+
+  if (normalizedConditions) {
+    if (normalizedConditions.first_order_only !== undefined) {
+      normalizedConditions.first_order = Boolean(normalizedConditions.first_order_only);
+      if (!normalizedVisibility) {
+        normalizedVisibility = {};
+      }
+      normalizedVisibility.first_order_only = Boolean(normalizedConditions.first_order_only);
+    }
+  }
+
+  let normalizedIsActive;
+  if (is_active !== undefined) {
+    normalizedIsActive = Boolean(is_active);
+  } else if (isActive !== undefined) {
+    normalizedIsActive = Boolean(isActive);
+  } else if (disabled !== undefined) {
+    normalizedIsActive = !Boolean(disabled);
+  }
 
   return {
     ...(code        !== undefined && { code:        code.trim().toUpperCase() }),
     ...(title       !== undefined && { title:       title.trim() }),
     ...(description !== undefined && { description: description.trim() }),
     ...(type        !== undefined && { type }),
-    ...(visibility  !== undefined && { visibility }),
+    ...(normalizedIsActive !== undefined && { is_active: normalizedIsActive }),
+    ...(normalizedVisibility !== undefined && { visibility: normalizedVisibility }),
     ...(validity    !== undefined && { validity }),
     ...(targeting   !== undefined && { targeting }),
-    ...(conditions  !== undefined && { conditions }),
+    ...(normalizedConditions !== undefined && { conditions: normalizedConditions }),
     ...(reward      !== undefined && { reward }),
     ...(limits      !== undefined && { limits }),
     ...(stacking    !== undefined && { stacking }),
@@ -207,7 +231,7 @@ export const updateCoupon = async (req, res) => {
     const updated = await Coupon.findByIdAndUpdate(
       req.params.id,
       { $set: updates },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     return res.json({ success: true, data: updated });

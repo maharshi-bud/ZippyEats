@@ -11,32 +11,67 @@ export interface Coupon {
   _id: string;
 
   code: string;
+
   title?: string;
+
   description?: string;
 
-  discountType: DiscountType;
+  is_active?: boolean;
 
-  discountValue?: number | null;
-  maxDiscount?: number | null;
+  reward?: {
+    type?:
+      | "percentage"
+      | "flat"
+      | "free_delivery";
 
-  minimumOrderValue?: number | null;
+    value?: number | null;
 
-  usageLimit?: number | null;
-  usagePerUserLimit?: number | null;
+    max_discount?:
+      | number
+      | null;
+  };
 
-  usedCount?: number | null;
+  validity?: {
+    start_date?:
+      | string
+      | Date
+      | null;
 
-  validFrom?: string | Date | null;
-  validTill?: string | Date | null;
+    end_date?:
+      | string
+      | Date
+      | null;
+  };
 
-  isActive?: boolean;
+  limits?: {
+    total_usage_limit?:
+      | number
+      | null;
 
-  firstOrderOnly?: boolean;
-  newUserOnly?: boolean;
-  stackable?: boolean;
+    usage_per_user?:
+      | number
+      | null;
 
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
+    current_usage_count?:
+      | number
+      | null;
+  };
+
+  visibility?: {
+    first_order_only?: boolean;
+
+    new_user_only?: boolean;
+  };
+
+  stacking?: {
+    can_combine?: boolean;
+  };
+
+  conditions?: {
+    min_order_amount?:
+      | number
+      | null;
+  };
 }
 
 interface CouponTableProps {
@@ -61,11 +96,22 @@ interface CouponTableProps {
   emptyMessage?: string;
 }
 
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
+function cn(
+  ...classes: Array<
+    | string
+    | false
+    | null
+    | undefined
+  >
+) {
+  return classes
+    .filter(Boolean)
+    .join(" ");
 }
 
-function formatCurrency(value?: number | null) {
+function formatCurrency(
+  value?: number | null
+) {
   if (
     value === null ||
     value === undefined ||
@@ -74,18 +120,29 @@ function formatCurrency(value?: number | null) {
     return "—";
   }
 
-  return `₹${Number(value).toLocaleString("en-IN")}`;
+  return `₹${Number(
+    value
+  ).toLocaleString("en-IN")}`;
 }
 
-function formatDate(value?: string | Date | null) {
+function formatDate(
+  value?:
+    | string
+    | Date
+    | null
+) {
   if (!value) {
     return "—";
   }
 
-  const date = new Date(value);
+  const date = new Date(
+    value
+  );
 
   if (
-    Number.isNaN(date.getTime())
+    Number.isNaN(
+      date.getTime()
+    )
   ) {
     return "—";
   }
@@ -104,18 +161,20 @@ function getDiscountLabel(
   coupon: Coupon
 ) {
   if (
-    coupon.discountType ===
-    "PERCENTAGE"
+    coupon.reward?.type ===
+    "percentage"
   ) {
-    return `${coupon.discountValue || 0}% OFF`;
+    return `${
+      coupon.reward?.value || 0
+    }% OFF`;
   }
 
   if (
-    coupon.discountType ===
-    "FLAT"
+    coupon.reward?.type ===
+    "flat"
   ) {
     return `${formatCurrency(
-      coupon.discountValue
+      coupon.reward?.value
     )} OFF`;
   }
 
@@ -124,10 +183,13 @@ function getDiscountLabel(
 
 export default function CouponTable({
   coupons,
+
   loading = false,
 
   onEdit,
+
   onDelete,
+
   onToggle,
 
   actionLoading = false,
@@ -215,19 +277,25 @@ export default function CouponTable({
                           ) : null}
 
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {coupon.firstOrderOnly ? (
+                            {coupon
+                              .visibility
+                              ?.first_order_only ? (
                               <Tag>
                                 First Order
                               </Tag>
                             ) : null}
 
-                            {coupon.newUserOnly ? (
+                            {coupon
+                              .visibility
+                              ?.new_user_only ? (
                               <Tag>
                                 New Users
                               </Tag>
                             ) : null}
 
-                            {coupon.stackable ? (
+                            {coupon
+                              .stacking
+                              ?.can_combine ? (
                               <Tag>
                                 Stackable
                               </Tag>
@@ -248,23 +316,31 @@ export default function CouponTable({
                         <div>
                           Type:{" "}
                           {
-                            coupon.discountType
+                            coupon
+                              .reward
+                              ?.type
                           }
                         </div>
 
                         <div>
                           Min Order:{" "}
                           {formatCurrency(
-                            coupon.minimumOrderValue
+                            coupon
+                              .conditions
+                              ?.min_order_amount
                           )}
                         </div>
 
-                        {coupon.discountType ===
-                        "PERCENTAGE" ? (
+                        {coupon
+                          .reward
+                          ?.type ===
+                        "percentage" ? (
                           <div>
                             Max Discount:{" "}
                             {formatCurrency(
-                              coupon.maxDiscount
+                              coupon
+                                .reward
+                                ?.max_discount
                             )}
                           </div>
                         ) : null}
@@ -273,60 +349,30 @@ export default function CouponTable({
 
                     <td className="px-5 py-5 align-top">
                       <div className="font-semibold text-zinc-900">
-                        {coupon.usedCount ||
+                        {coupon
+                          .limits
+                          ?.current_usage_count ||
                           0}
 
-                        {typeof coupon.usageLimit ===
+                        {typeof coupon
+                          .limits
+                          ?.total_usage_limit ===
                           "number" &&
-                        coupon.usageLimit >
-                          0
-                          ? ` / ${coupon.usageLimit}`
+                        coupon
+                          .limits
+                          ?.total_usage_limit >
+                            0
+                          ? ` / ${coupon.limits.total_usage_limit}`
                           : ""}
                       </div>
 
                       <div className="mt-2 text-xs text-zinc-500">
                         Per user:{" "}
-                        {coupon.usagePerUserLimit ||
+                        {coupon
+                          .limits
+                          ?.usage_per_user ||
                           1}
                       </div>
-
-                      {typeof coupon.usageLimit ===
-                        "number" &&
-                      coupon.usageLimit >
-                        0 ? (
-                        <div className="mt-3">
-                          <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
-                            <div
-                              className={cn(
-                                "h-full rounded-full",
-
-                                ((coupon.usedCount ||
-                                  0) /
-                                  coupon.usageLimit) *
-                                  100 >=
-                                  90
-                                  ? "bg-rose-500"
-                                  : ((coupon.usedCount ||
-                                      0) /
-                                      coupon.usageLimit) *
-                                      100 >=
-                                    70
-                                  ? "bg-amber-500"
-                                  : "bg-emerald-500"
-                              )}
-                              style={{
-                                width: `${Math.min(
-                                  ((coupon.usedCount ||
-                                    0) /
-                                    coupon.usageLimit) *
-                                    100,
-                                  100
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ) : null}
                     </td>
 
                     <td className="px-5 py-5 align-top text-zinc-700">
@@ -336,7 +382,9 @@ export default function CouponTable({
                             From:
                           </span>{" "}
                           {formatDate(
-                            coupon.validFrom
+                            coupon
+                              .validity
+                              ?.start_date
                           )}
                         </div>
 
@@ -345,7 +393,9 @@ export default function CouponTable({
                             Till:
                           </span>{" "}
                           {formatDate(
-                            coupon.validTill
+                            coupon
+                              .validity
+                              ?.end_date
                           )}
                         </div>
                       </div>
@@ -354,19 +404,27 @@ export default function CouponTable({
                     <td className="px-5 py-5 align-top">
                       <CouponStatusBadge
                         isActive={
-                          coupon.isActive
+                          coupon.is_active
                         }
                         validFrom={
-                          coupon.validFrom
+                          coupon
+                            .validity
+                            ?.start_date
                         }
                         validTill={
-                          coupon.validTill
+                          coupon
+                            .validity
+                            ?.end_date
                         }
                         usageLimit={
-                          coupon.usageLimit
+                          coupon
+                            .limits
+                            ?.total_usage_limit
                         }
                         usedCount={
-                          coupon.usedCount
+                          coupon
+                            .limits
+                            ?.current_usage_count
                         }
                       />
                     </td>
@@ -400,7 +458,7 @@ export default function CouponTable({
                             }
                             className="rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {coupon.isActive
+                            {coupon.is_active
                               ? "Disable"
                               : "Enable"}
                           </button>

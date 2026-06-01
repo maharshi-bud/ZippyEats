@@ -1,31 +1,53 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { useRouter } from "next/navigation";
 
 import api from "../../../lib/api";
 
-import CouponForm, {
-  type Coupon,
-  type CouponPayload,
-  type DiscountType,
+import type {
+  Coupon,
+  DiscountType,
 } from "../../../components/coupons/CouponForm";
 
 import CouponTable from "../../../components/coupons/CouponTable";
 
 import CouponUsageCard from "../../../components/coupons/CouponUsageCard";
 
-function unwrapList<T>(payload: any): T[] {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.data))
+function unwrapList<T>(
+  payload: any
+): T[] {
+  if (Array.isArray(payload))
+    return payload;
+
+  if (
+    Array.isArray(payload?.data)
+  )
+    return payload.data;
+
+  if (
+    Array.isArray(
+      payload?.data?.data
+    )
+  )
     return payload.data.data;
-  if (Array.isArray(payload?.items))
+
+  if (
+    Array.isArray(payload?.items)
+  )
     return payload.items;
 
   return [];
 }
 
 export default function CouponsPage() {
+  const router = useRouter();
+
   const [coupons, setCoupons] =
     useState<Coupon[]>([]);
 
@@ -56,41 +78,37 @@ export default function CouponsPage() {
       "all" | DiscountType
     >("all");
 
-  const [showForm, setShowForm] =
-    useState(false);
+  const fetchCoupons =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const [editingCoupon, setEditingCoupon] =
-    useState<Coupon | null>(null);
+        const res =
+          await api.get(
+            "/admin/coupons"
+          );
 
-  const fetchCoupons = async () => {
-    try {
-      setLoading(true);
-      setError("");
+        setCoupons(
+          unwrapList<Coupon>(
+            res.data
+          )
+        );
+      } catch (err: any) {
+        console.error(
+          "[CouponsPage] fetch:",
+          err
+        );
 
-      const res = await api.get(
-        "/admin/coupons"
-      );
-
-      setCoupons(
-        unwrapList<Coupon>(
-          res.data
-        )
-      );
-    } catch (err: any) {
-      console.error(
-        "[CouponsPage] fetchCoupons:",
-        err
-      );
-
-      setError(
-        err?.response?.data
-          ?.message ||
-          "Failed to load coupons."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(
+          err?.response?.data
+            ?.message ||
+            "Failed to load coupons."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchCoupons();
@@ -109,16 +127,18 @@ export default function CouponsPage() {
             Date.now();
 
           const from =
-            coupon.validFrom
+            coupon.validity
+              ?.start_date
               ? new Date(
-                  coupon.validFrom
+                  coupon.validity.start_date
                 ).getTime()
               : null;
 
           const till =
-            coupon.validTill
+            coupon.validity
+              ?.end_date
               ? new Date(
-                  coupon.validTill
+                  coupon.validity.end_date
                 ).getTime()
               : null;
 
@@ -130,23 +150,39 @@ export default function CouponsPage() {
             till !== null &&
             till < now;
 
+          const usageLimit =
+            coupon.limits
+              ?.total_usage_limit ||
+            0;
+
+          const usedCount =
+            coupon.limits
+              ?.current_usage_count ||
+            0;
+
           const exhausted =
-            typeof coupon.usageLimit ===
-              "number" &&
-            coupon.usageLimit >
-              0 &&
-            typeof coupon.usedCount ===
-              "number" &&
-            coupon.usedCount >=
-              coupon.usageLimit;
+            usageLimit > 0 &&
+            usedCount >=
+              usageLimit;
 
           const active =
             Boolean(
-              coupon.isActive
+              coupon.is_active
             ) &&
             !scheduled &&
             !expired &&
             !exhausted;
+
+          const rewardType =
+            coupon.reward
+              ?.type ===
+            "percentage"
+              ? "PERCENTAGE"
+              : coupon.reward
+                    ?.type ===
+                  "flat"
+                ? "FLAT"
+                : "FREE_DELIVERY";
 
           const matchesQuery =
             !needle ||
@@ -169,7 +205,7 @@ export default function CouponsPage() {
           const matchesType =
             typeFilter ===
               "all" ||
-            coupon.discountType ===
+            rewardType ===
               typeFilter;
 
           const matchesStatus =
@@ -208,65 +244,6 @@ export default function CouponsPage() {
       typeFilter,
     ]);
 
-  const openCreate = () => {
-    setEditingCoupon(null);
-    setShowForm(true);
-  };
-
-  const openEdit = (
-    coupon: Coupon
-  ) => {
-    setEditingCoupon(coupon);
-    setShowForm(true);
-  };
-
-  const closeForm = () => {
-    setShowForm(false);
-    setEditingCoupon(null);
-  };
-
-  const handleSave = async (
-    payload: CouponPayload
-  ) => {
-    try {
-      setSaving(true);
-      setError("");
-
-      if (
-        editingCoupon?._id
-      ) {
-        await api.put(
-          `/admin/coupons/${editingCoupon._id}`,
-          payload
-        );
-      } else {
-        await api.post(
-          "/admin/coupons",
-          payload
-        );
-      }
-
-      await fetchCoupons();
-
-      closeForm();
-    } catch (err: any) {
-      console.error(
-        "[CouponsPage] saveCoupon:",
-        err
-      );
-
-      setError(
-        err?.response?.data
-          ?.message ||
-          "Failed to save coupon."
-      );
-
-      throw err;
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const toggleCoupon =
     async (
       coupon: Coupon
@@ -275,26 +252,33 @@ export default function CouponsPage() {
         setSaving(true);
         setError("");
 
-        await api.put(
-          `/admin/coupons/${coupon._id}`,
-          {
-            ...coupon,
-            isActive:
-              !coupon.isActive,
-          }
+        await api.patch(
+          `/admin/coupons/${coupon._id}/toggle`
         );
 
-        await fetchCoupons();
+        setCoupons((prev) =>
+          prev.map((item) =>
+            item._id ===
+            coupon._id
+              ? {
+                  ...item,
+
+                  is_active:
+                    !item.is_active,
+                }
+              : item
+          )
+        );
       } catch (err: any) {
         console.error(
-          "[CouponsPage] toggleCoupon:",
+          "[CouponsPage] toggle:",
           err
         );
 
         setError(
           err?.response?.data
             ?.message ||
-            "Failed to update coupon."
+            "Failed to toggle coupon."
         );
       } finally {
         setSaving(false);
@@ -321,17 +305,16 @@ export default function CouponsPage() {
           `/admin/coupons/${coupon._id}`
         );
 
-        setCoupons(
-          (prev) =>
-            prev.filter(
-              (item) =>
-                item._id !==
-                coupon._id
-            )
+        setCoupons((prev) =>
+          prev.filter(
+            (item) =>
+              item._id !==
+              coupon._id
+          )
         );
       } catch (err: any) {
         console.error(
-          "[CouponsPage] deleteCoupon:",
+          "[CouponsPage] delete:",
           err
         );
 
@@ -348,7 +331,7 @@ export default function CouponsPage() {
   const activeCoupons =
     coupons.filter(
       (coupon) =>
-        coupon.isActive
+        coupon.is_active
     ).length;
 
   return (
@@ -356,7 +339,8 @@ export default function CouponsPage() {
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-medium text-zinc-500">
-            Admin / Promotions
+            Admin /
+            Promotions
           </p>
 
           <h1 className="text-3xl font-semibold text-zinc-900">
@@ -373,7 +357,11 @@ export default function CouponsPage() {
 
         <button
           type="button"
-          onClick={openCreate}
+          onClick={() =>
+            router.push(
+              "/coupons/new"
+            )
+          }
           className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800"
         >
           + New Coupon
@@ -389,7 +377,8 @@ export default function CouponsPage() {
               item
             ) =>
               acc +
-              (item.usedCount ||
+              (item.limits
+                ?.current_usage_count ||
                 0),
             0
           )}
@@ -399,7 +388,8 @@ export default function CouponsPage() {
               item
             ) =>
               acc +
-              (item.usageLimit ||
+              (item.limits
+                ?.total_usage_limit ||
                 0),
             0
           )}
@@ -522,7 +512,13 @@ export default function CouponsPage() {
           filteredCoupons
         }
         loading={loading}
-        onEdit={openEdit}
+        onEdit={(
+          coupon
+        ) =>
+          router.push(
+            `/coupons/${coupon._id}/edit`
+          )
+        }
         onDelete={
           deleteCoupon
         }
@@ -533,30 +529,6 @@ export default function CouponsPage() {
           saving
         }
       />
-
-      {showForm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-            <CouponForm
-              mode={
-                editingCoupon
-                  ? "edit"
-                  : "create"
-              }
-              initialData={
-                editingCoupon
-              }
-              loading={saving}
-              onSubmit={
-                handleSave
-              }
-              onCancel={
-                closeForm
-              }
-            />
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

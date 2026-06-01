@@ -13,6 +13,7 @@ export type Coupon = {
   title?: string;
   description?: string;
 
+  
   discountType: DiscountType;
   discountValue?: number | null;
   maxDiscount?: number | null;
@@ -342,79 +343,69 @@ export default function CouponForm({
     [form]
   );
 
-  const validate = () => {
-    if (!payload.code) {
-      return "Coupon code is required.";
-    }
+const validate = () => {
+  if (!payload.code) {
+    return "Coupon code is required.";
+  }
 
-    if (
-      payload.discountType !==
-        "FREE_DELIVERY" &&
-      payload.discountValue === null
-    ) {
-      return "Discount value is required.";
-    }
+  if (
+    payload.reward.type !== "free_delivery" &&
+    payload.reward.value === null
+  ) {
+    return "Discount value is required.";
+  }
 
-    if (
-      payload.discountType ===
-        "PERCENTAGE" &&
-      payload.discountValue !== null &&
-      payload.discountValue > 100
-    ) {
-      return "Percentage discount cannot exceed 100%.";
-    }
+  if (
+    payload.reward.type === "percentage" &&
+    payload.reward.value > 100
+  ) {
+    return "Percentage discount cannot exceed 100%.";
+  }
 
-    if (
-      payload.discountValue !== null &&
-      payload.discountValue < 0
-    ) {
-      return "Discount value cannot be negative.";
-    }
+  if (payload.reward.value < 0) {
+    return "Discount value cannot be negative.";
+  }
 
-    if (
-      payload.maxDiscount !== null &&
-      payload.maxDiscount < 0
-    ) {
-      return "Max discount cannot be negative.";
-    }
+  if (
+    payload.reward.max_discount !== null &&
+    payload.reward.max_discount < 0
+  ) {
+    return "Max discount cannot be negative.";
+  }
 
-    if (
-      payload.minimumOrderValue !==
-        null &&
-      payload.minimumOrderValue < 0
-    ) {
-      return "Minimum order value cannot be negative.";
-    }
+  if (
+    payload.conditions.minimum_order_value !== null &&
+    payload.conditions.minimum_order_value < 0
+  ) {
+    return "Minimum order value cannot be negative.";
+  }
 
-    if (
-      payload.usageLimit !== null &&
-      payload.usageLimit < 0
-    ) {
-      return "Usage limit cannot be negative.";
-    }
+  if (
+    payload.limits.total_usage_limit !== null &&
+    payload.limits.total_usage_limit < 0
+  ) {
+    return "Usage limit cannot be negative.";
+  }
 
-    if (
-      payload.usagePerUserLimit <
-      1
-    ) {
-      return "Usage per user must be at least 1.";
-    }
+  if (
+    payload.limits.usage_per_user < 1
+  ) {
+    return "Usage per user must be at least 1.";
+  }
 
-    if (
-      payload.validFrom &&
-      payload.validTill &&
-      new Date(
-        payload.validTill
-      ).getTime() <
-        new Date(
-          payload.validFrom
-        ).getTime()
-    ) {
-      return "Valid till date must be after valid from date.";
-    }
+  if (
+    payload.validity.start_date &&
+    payload.validity.end_date &&
+    new Date(payload.validity.end_date).getTime() <
+      new Date(payload.validity.start_date).getTime()
+  ) {
+    return "Valid till date must be after valid from date.";
+  }
 
-    return null;
-  };
+  return null;
+};
+
+
 
   const handleSubmit = async (
     e: React.FormEvent
@@ -450,9 +441,10 @@ export default function CouponForm({
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-zinc-900">
+            {/* {title} */}
             {mode === "edit"
-              ? "Edit Coupon"
-              : "Create Coupon"}
+  ? "Edit Coupon"
+  : "Create Coupon"}
           </h2>
 
           <p className="mt-1 text-sm text-zinc-600">
