@@ -399,9 +399,26 @@ items: items.map(
 
               useZipCoins,
 
-              coupon_code:
-                appliedCoupon?.code ||
-                null,
+coupon_code:
+  appliedCoupon?.code ||
+  null,
+
+appliedCouponId:
+  appliedCoupon?._id ||
+  null,
+
+discountAmount:
+  appliedCoupon?.discount_amount ||
+  0,
+
+cashbackAmount:
+  appliedCoupon?.cashback_amount ||
+  0,
+
+rewardType:
+  appliedCoupon?.reward_type ||
+  "",
+
             }
           );
 
@@ -414,6 +431,10 @@ items: items.map(
 console.log(
   "ORDER RESPONSE:",
   res.data
+);
+console.log(
+  "APPLIED COUPON:",
+  appliedCoupon
 );
 
 router.push(
@@ -894,9 +915,9 @@ router.push(
           </div>
 
           <div className="border-t border-dashed border-slate-200 pt-3 space-y-1.5">
-            <div className="flex justify-between text-sm text-slate-500">
+            <div className="flex justify-between text-sm text-slate-700 font-medium">
               <span>
-                Subtotal
+                Total
               </span>
 
               <span>
@@ -938,11 +959,7 @@ router.push(
             {appliedCoupon && (
               <div className="flex justify-between text-sm text-green-600 font-medium">
                 <span>
-                  🎟 Coupon (
-                  {
-                    appliedCoupon.code
-                  }
-                  )
+                  🎟 Coupon discount
                 </span>
 
                 <span>
@@ -954,71 +971,61 @@ router.push(
               </div>
             )}
 
-            <div className="flex justify-between font-bold text-slate-900 text-base pt-1 border-t border-slate-100">
+            <div className="flex justify-between font-bold text-slate-900 text-base pt-2 border-t border-slate-200">
               <span>
-                Total
+                Amount to Pay
               </span>
 
-              <div className="text-right">
-                {(useZipCoins &&
-                  coinsDiscount >
-                    0) ||
-                appliedCoupon ? (
-                  <p className="text-xs text-slate-400 line-through font-normal">
-                    ₹
-                    {
-                      subtotal
-                    }
-                  </p>
-                ) : null}
-
-                <span>
-                  ₹
-                  {
-                    finalTotal
-                  }
-                </span>
-              </div>
+              <span>
+                ₹
+                {
+                  finalTotal
+                }
+              </span>
             </div>
           </div>
-
-          {error && (
-            <p className="text-red-500 text-sm mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
-
-          <button
-            onClick={
-              handleCheckout
-            }
-            disabled={
-              loading ||
-              items.length ===
-                0
-            }
-            className="mt-5 w-full py-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-
-                <span>
-                  Placing
-                  order…
-                </span>
-              </>
-            ) : (
-              `Place order · ₹${finalTotal}`
-            )}
-          </button>
-
-          <p className="text-center text-xs text-slate-400 mt-3">
-            🔒 Your
-            information is
-            secure
-          </p>
         </div>
+
+        {error && (
+          <p className="text-red-500 text-sm mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <button
+          onClick={
+            handleCheckout
+          }
+          disabled={
+            loading ||
+            items.length ===
+              0
+          }
+          className="mt-5 w-full py-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+
+              <span>
+                Placing
+                order…
+              </span>
+            </>
+          ) : (
+            <>
+              <span>
+                Place order · ₹{finalTotal}
+              </span>
+            </>
+          )}
+        </button>
+
+        <p className="text-center text-xs text-slate-400 mt-3">
+          🔒 Your
+          information is
+          secure
+        </p>
       </div>
     </div>
   );

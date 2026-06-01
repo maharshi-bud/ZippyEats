@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import MenuItem from "../models/MenuItem.js";
+import { createCouponUsage } from "../services/couponUsageService.js";
 import {
   emitNewOrder,
   scheduleNextTransition,
-  redeemAppliedCoupon,
 } from "../services/orderEngine.js";
   import {
     notifyOrderCreated,
@@ -153,8 +153,12 @@ if (useZipCoins) {
           
   // total_amount: total + 40 - coinsDiscount,  // ← subtract coins discount
   coins_used: coinsUsed,                     // ← add this field to Order model too
-  total_amount: total + 40 - coinsDiscount - discountAmount,
   coins_discount: coinsDiscount,
+  coupon_id: appliedCouponId || null,
+  coupon_code: req.body.coupon_code || null,
+  coupon_discount: discountAmount,
+  coupon_cashback: cashbackAmount,
+  total_amount: total + 40 - coinsDiscount - discountAmount,
           delivery_address: {
             full_name: deliveryAddress?.full_name || "Customer",
             phone: deliveryAddress?.phone || "0000000000",
@@ -187,62 +191,37 @@ if (coinsUsed > 0) {
     emitNewOrder(order[0]);
     scheduleNextTransition(order[0]);
 
+    // ── Coupon usage tracking ─────────────────────
+    console.log("[Order] appliedCouponId:", appliedCouponId);
+    console.log("[Order] discountAmount:", discountAmount);
+    console.log("[Order] Coupon fields in order:", {
+      coupon_id: order[0].coupon_id,
+      coupon_code: order[0].coupon_code,
+      coupon_discount: order[0].coupon_discount,
+    });
 
+    if (appliedCouponId) {
+      try {
+        console.log("[Order] Creating coupon usage...");
+        
+        await createCouponUsage({
+          couponId: appliedCouponId,
+          userId,
+          orderId: order[0]._id,
+          discountAmount,
+          cashbackAmount,
+          rewardType,
+        });
 
-// ── Coupon usage tracking ─────────────────────
-
-if (appliedCouponId) {
-  // Create usage history row
-
-  await CouponUsage.create({
-    coupon_id:
-      appliedCouponId || null,
-
-    user_id:
-      userId,
-
-    order_id:
-      order[0]._id,
-
-    discount_amount:
-      discountAmount || 0,
-
-    cashback_amount:
-      cashbackAmount || 0,
-
-    reward_type:
-      rewardType || "",
-  });
-
-  // Increment global usage count
-
-  await Coupon.findByIdAndUpdate(
-    appliedCouponId,
-    {
-      $inc: {
-        "limits.current_usage_count": 1,
-      },
+        console.log("[Order] Coupon usage created and tracked successfully");
+      } catch (couponErr) {
+        console.error("[Order] Coupon tracking failed:", couponErr.message);
+        // Don't fail the entire order if coupon tracking fails
+      }
+    } else {
+      console.log("[Order] No coupon applied");
     }
-  );
 
-  // Existing redeem logic
-
-  await redeemAppliedCoupon({
-    couponId:
-      appliedCouponId,
-
-    userId,
-
-    orderId:
-      order[0]._id,
-
-    discountAmount,
-
-    cashbackAmount,
-
-    rewardType,
-  });
-}
 
 
     // ✅ FCM — single call, isolated, non-fatal

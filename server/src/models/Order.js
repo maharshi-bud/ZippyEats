@@ -60,8 +60,31 @@ const orderSchema = new mongoose.Schema(
     },
     
     coins_used: { type: Number, default: 0, min: 0 },
-coins_discount: { type: Number, default: 0, min: 0 },
-  
+    coins_discount: { type: Number, default: 0, min: 0 },
+    
+    // 🔹 COUPON
+    coupon_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Coupon",
+      default: null,
+    },
+    
+    coupon_code: {
+      type: String,
+      default: null,
+    },
+    
+    coupon_discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    
+    coupon_cashback: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
     // 🔹 ITEMS
     items: {
