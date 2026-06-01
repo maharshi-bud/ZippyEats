@@ -13,29 +13,67 @@ export type Coupon = {
   title?: string;
   description?: string;
 
-  
-  discountType: DiscountType;
+  type?: "coupon" | "auto_apply" | "reward";
+  is_active?: boolean;
+
+  // Structured backend format
+  validity?: {
+    start_date?: string | Date | null;
+    end_date?: string | Date | null;
+  };
+
+  targeting?: {
+    restaurants?: string[];
+    cuisines?: string[];
+  };
+
+  conditions?: {
+    minimum_order_value?: number | null;
+    first_order_only?: boolean;
+    new_user_only?: boolean;
+  };
+
+  reward?: {
+    type?: "percentage" | "flat" | "free_delivery";
+    value?: number;
+    max_discount?: number | null;
+  };
+
+  limits?: {
+    total_usage_limit?: number | null;
+    current_usage_count?: number;
+    usage_per_user?: number;
+  };
+
+  visibility?: {
+    public?: boolean;
+  };
+
+  stacking?: {
+    can_combine?: boolean;
+    excludes?: string[];
+  };
+
+  analytics?: {
+    total_used?: number;
+    total_discount_given?: number;
+  };
+
+  // Legacy format (for backward compatibility)
+  discountType?: DiscountType;
   discountValue?: number | null;
   maxDiscount?: number | null;
-
   minimumOrderValue?: number | null;
-
   applicableRestaurants?: Array<
     string | { _id?: string; name?: string }
   >;
-
   applicableCuisines?: string[];
-
   validFrom?: string | Date | null;
   validTill?: string | Date | null;
-
   usageLimit?: number | null;
   usagePerUserLimit?: number | null;
-
   usedCount?: number;
-
   isActive?: boolean;
-
   firstOrderOnly?: boolean;
   newUserOnly?: boolean;
   stackable?: boolean;
@@ -49,8 +87,8 @@ export type CouponPayload = {
   title: string;
   description: string;
 
-  type: "coupon";
-  isActive: boolean;
+  type: "coupon" | "auto_apply" | "reward";
+  is_active: boolean;
 
   validity: {
     start_date: string | null;
@@ -63,7 +101,7 @@ export type CouponPayload = {
   };
 
   conditions: {
-    minimum_order_value: number | null;
+    min_order_amount: number | null;
     first_order_only: boolean;
     new_user_only: boolean;
   };
@@ -189,28 +227,41 @@ function hydrateForm(
     description: coupon.description || "",
 
     discountType:
-      coupon.discountType || "PERCENTAGE",
+      coupon.reward?.type === "percentage"
+        ? "PERCENTAGE"
+        : coupon.reward?.type === "flat"
+          ? "FLAT"
+          : coupon.discountType || "PERCENTAGE",
 
     discountValue:
-      coupon.discountValue === null ||
-      coupon.discountValue === undefined
-        ? ""
-        : String(coupon.discountValue),
+      coupon.reward?.value === null ||
+      coupon.reward?.value === undefined
+        ? coupon.discountValue === null ||
+          coupon.discountValue === undefined
+          ? ""
+          : String(coupon.discountValue)
+        : String(coupon.reward.value),
 
     maxDiscount:
-      coupon.maxDiscount === null ||
-      coupon.maxDiscount === undefined
-        ? ""
-        : String(coupon.maxDiscount),
+      coupon.reward?.max_discount === null ||
+      coupon.reward?.max_discount === undefined
+        ? coupon.maxDiscount === null ||
+          coupon.maxDiscount === undefined
+          ? ""
+          : String(coupon.maxDiscount)
+        : String(coupon.reward.max_discount),
 
     minimumOrderValue:
-      coupon.minimumOrderValue === null ||
-      coupon.minimumOrderValue === undefined
-        ? ""
-        : String(coupon.minimumOrderValue),
+      coupon.conditions?.min_order_amount === null ||
+      coupon.conditions?.min_order_amount === undefined
+        ? coupon.minimumOrderValue === null ||
+          coupon.minimumOrderValue === undefined
+          ? ""
+          : String(coupon.minimumOrderValue)
+        : String(coupon.conditions.min_order_amount),
 
     applicableRestaurants: listToCsv(
-      (coupon.applicableRestaurants || []).map(
+      (coupon.targeting?.restaurants || coupon.applicableRestaurants || []).map(
         (item: any) =>
           typeof item === "string"
             ? item
@@ -220,48 +271,71 @@ function hydrateForm(
       )
     ),
 
-    applicableCuisines:
-      (coupon.applicableCuisines || []).join(
-        ", "
-      ),
+    applicableCuisines: (
+      coupon.targeting?.cuisines || coupon.applicableCuisines || []
+    ).join(", "),
 
-    validFrom: coupon.validFrom
-      ? new Date(coupon.validFrom)
-          .toISOString()
-          .slice(0, 16)
-      : "",
+    validFrom:
+      coupon.validity?.start_date
+        ? new Date(
+            coupon.validity.start_date
+          )
+            .toISOString()
+            .slice(0, 16)
+        : coupon.validFrom
+          ? new Date(coupon.validFrom)
+              .toISOString()
+              .slice(0, 16)
+          : "",
 
-    validTill: coupon.validTill
-      ? new Date(coupon.validTill)
-          .toISOString()
-          .slice(0, 16)
-      : "",
+    validTill:
+      coupon.validity?.end_date
+        ? new Date(
+            coupon.validity.end_date
+          )
+            .toISOString()
+            .slice(0, 16)
+        : coupon.validTill
+          ? new Date(coupon.validTill)
+              .toISOString()
+              .slice(0, 16)
+          : "",
 
     usageLimit:
-      coupon.usageLimit === null ||
-      coupon.usageLimit === undefined
-        ? ""
-        : String(coupon.usageLimit),
+      coupon.limits?.total_usage_limit === null ||
+      coupon.limits?.total_usage_limit === undefined
+        ? coupon.usageLimit === null ||
+          coupon.usageLimit === undefined
+          ? ""
+          : String(coupon.usageLimit)
+        : String(coupon.limits.total_usage_limit),
 
     usagePerUserLimit:
-      coupon.usagePerUserLimit === null ||
-      coupon.usagePerUserLimit === undefined
-        ? "1"
-        : String(coupon.usagePerUserLimit),
+      coupon.limits?.usage_per_user === null ||
+      coupon.limits?.usage_per_user === undefined
+        ? coupon.usagePerUserLimit === null ||
+          coupon.usagePerUserLimit === undefined
+          ? "1"
+          : String(coupon.usagePerUserLimit)
+        : String(coupon.limits.usage_per_user),
 
     firstOrderOnly: Boolean(
-      coupon.firstOrderOnly
+      coupon.conditions?.first_order_only ??
+        coupon.firstOrderOnly
     ),
 
     newUserOnly: Boolean(
-      coupon.newUserOnly
+      coupon.conditions?.new_user_only ??
+        coupon.newUserOnly
     ),
 
     stackable: Boolean(
-      coupon.stackable
+      coupon.stacking?.can_combine ??
+        coupon.stackable
     ),
 
-    isActive: coupon.isActive !== false,
+    isActive:
+      coupon.is_active !== false && coupon.isActive !== false,
   };
 }
 
@@ -278,7 +352,7 @@ function buildPayload(form: CouponFormState): CouponPayload {
     title: form.title.trim(),
     description: form.description.trim(),
     type: "coupon",
-    isActive: form.isActive,
+    is_active: form.isActive,
 
     validity: {
       start_date: form.validFrom || null,
@@ -291,7 +365,7 @@ function buildPayload(form: CouponFormState): CouponPayload {
     },
 
     conditions: {
-      minimum_order_value: toNumber(form.minimumOrderValue),
+      min_order_amount: toNumber(form.minimumOrderValue),
       first_order_only: form.firstOrderOnly,
       new_user_only: form.newUserOnly,
     },
