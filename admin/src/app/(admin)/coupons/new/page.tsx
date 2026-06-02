@@ -18,65 +18,13 @@ export default function NewCouponPage() {
     try {
       setLoading(true);
       setError("");
-const formattedPayload = {
-  code: payload.code.trim().toUpperCase(),
+console.log(
+  "CREATE PAYLOAD:",
+  payload
+);
 
-  title: payload.title,
+const formattedPayload = payload;
 
-  description: payload.description,
-
-  discountType: payload.discountType,
-
-  discountValue:
-    payload.discountType ===
-    "FREE_DELIVERY"
-      ? 0
-      : Number(payload.discountValue),
-
-  maxDiscount:
-    payload.discountType ===
-    "PERCENTAGE"
-      ? Number(payload.maxDiscount)
-      : null,
-
-  minimumOrderValue:
-    Number(payload.minimumOrderValue) || 0,
-
-  usageLimit:
-    Number(payload.usageLimit) || 0,
-
-  usagePerUserLimit:
-    Number(payload.usagePerUserLimit) || 1,
-
-  validFrom:
-    payload.validFrom || null,
-
-  validTill:
-    payload.validTill || null,
-
-  applicableRestaurants:
-    payload.applicableRestaurants
-      ?.split(",")
-      .map((v: string) => v.trim())
-      .filter(Boolean) || [],
-
-  applicableCuisines:
-    payload.applicableCuisines
-      ?.split(",")
-      .map((v: string) => v.trim())
-      .filter(Boolean) || [],
-
-  isActive: payload.isActive,
-
-  firstOrderOnly:
-    payload.firstOrderOnly,
-
-  newUserOnly:
-    payload.newUserOnly,
-
-  stackable:
-    payload.stackable,
-};
 
     //   await api.post("/admin/coupons", payload);
 await api.post(
@@ -102,7 +50,7 @@ await api.post(
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-black">
             Create Coupon
           </h1>
 
