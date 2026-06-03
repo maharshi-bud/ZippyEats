@@ -412,6 +412,15 @@ export default function CouponForm({
   const [error, setError] =
     useState("");
 
+  const [expandedSections, setExpandedSections] = useState({
+    description: true,
+    reward: true,
+    validity: true,
+    conditions: true,
+    limits: true,
+    targeting: true,
+  });
+
   useEffect(() => {
     setForm(hydrateForm(initialData));
   }, [initialData]);
@@ -424,6 +433,10 @@ export default function CouponForm({
   const validate = () => {
     if (!payload.code) {
       return "Coupon code is required.";
+    }
+
+    if (!payload.title) {
+      return "Coupon title is required.";
     }
 
     if (
@@ -509,6 +522,13 @@ export default function CouponForm({
     }
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section as keyof typeof prev]
+    }));
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -523,10 +543,7 @@ export default function CouponForm({
           </h2>
 
           <p className="mt-1 text-sm text-zinc-600">
-            Configure discount
-            rules, restrictions,
-            usage limits, and
-            validity windows.
+            Configure discount rules, restrictions, usage limits, and validity windows.
           </p>
         </div>
 
@@ -541,347 +558,341 @@ export default function CouponForm({
         ) : null}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Coupon code">
-          <input
-            value={form.code}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                code: e.target.value.toUpperCase(),
-              }))
-            }
-            placeholder="SAVE200"
-            required
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Title">
-          <input
-            value={form.title}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                title:
-                  e.target.value,
-              }))
-            }
-            placeholder="Summer special offer"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Discount type">
-          <select
-            value={
-              form.discountType
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                discountType:
-                  e.target
-                    .value as DiscountType,
-              }))
-            }
-            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          >
-            <option value="PERCENTAGE">
-              Percentage
-            </option>
-
-            <option value="FLAT">
-              Flat
-            </option>
-
-            <option value="FREE_DELIVERY">
-              Free delivery
-            </option>
-          </select>
-        </Field>
-
-        {form.discountType !==
-        "FREE_DELIVERY" ? (
-          <Field label="Discount value">
+      {/* ──────── DESCRIPTION SECTION ──────── */}
+      <Section
+        title="Description"
+        isOpen={expandedSections.description}
+        onToggle={() => toggleSection('description')}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Coupon Code" hint="Unique identifier (e.g., SAVE200)">
             <input
-              value={
-                form.discountValue
-              }
+              value={form.code}
               onChange={(e) =>
-                setForm(
-                  (prev) => ({
-                    ...prev,
-                    discountValue:
-                      e.target
-                        .value,
-                  })
-                )
+                setForm((prev) => ({
+                  ...prev,
+                  code: e.target.value.toUpperCase(),
+                }))
               }
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder={
-                form.discountType ===
-                "PERCENTAGE"
-                  ? "20"
-                  : "200"
-              }
+              placeholder="SAVE200"
+              required
               className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             />
           </Field>
-        ) : null}
 
-        {form.discountType ===
-        "PERCENTAGE" ? (
-          <Field label="Max discount">
+          <Field label="Title" hint="Display name for users">
             <input
-              value={
-                form.maxDiscount
-              }
+              value={form.title}
               onChange={(e) =>
-                setForm(
-                  (prev) => ({
-                    ...prev,
-                    maxDiscount:
-                      e.target
-                        .value,
-                  })
-                )
+                setForm((prev) => ({
+                  ...prev,
+                  title: e.target.value,
+                }))
               }
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="500"
+              placeholder="Summer special offer"
+              required
               className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             />
           </Field>
-        ) : null}
 
-        <Field label="Minimum order value">
-          <input
-            value={
-              form.minimumOrderValue
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                minimumOrderValue:
-                  e.target.value,
-              }))
-            }
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="999"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Usage limit">
-          <input
-            value={
-              form.usageLimit
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                usageLimit:
-                  e.target.value,
-              }))
-            }
-            type="number"
-            min="0"
-            step="1"
-            placeholder="1000"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Usage per user">
-          <input
-            value={
-              form.usagePerUserLimit
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                usagePerUserLimit:
-                  e.target.value,
-              }))
-            }
-            type="number"
-            min="1"
-            step="1"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Valid from">
-          <input
-            value={
-              form.validFrom
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                validFrom:
-                  e.target.value,
-              }))
-            }
-            type="datetime-local"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Valid till">
-          <input
-            value={
-              form.validTill
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                validTill:
-                  e.target.value,
-              }))
-            }
-            type="datetime-local"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Applicable restaurants">
-          <input
-            value={
-              form.applicableRestaurants
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                applicableRestaurants:
-                  e.target.value,
-              }))
-            }
-            placeholder="r1, r2, r3"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <Field label="Applicable cuisines">
-          <input
-            value={
-              form.applicableCuisines
-            }
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                applicableCuisines:
-                  e.target.value,
-              }))
-            }
-            placeholder="Indian, Italian"
-            className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </Field>
-
-        <div className="md:col-span-2">
-          <Field label="Description">
-            <textarea
-              rows={4}
-              value={
-                form.description
-              }
-              onChange={(e) =>
-                setForm(
-                  (prev) => ({
+          <div className="md:col-span-2">
+            <Field label="Description" hint="Internal notes (admin only)">
+              <textarea
+                rows={4}
+                value={form.description}
+                onChange={(e) =>
+                  setForm((prev) => ({
                     ...prev,
-                    description:
-                      e.target
-                        .value,
-                  })
-                )
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="e.g. Summer promo for new users, valid only on weekends..."
+                className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
+              />
+            </Field>
+          </div>
+
+          <div className="md:col-span-2">
+            <CheckField
+              label="Active"
+              checked={form.isActive}
+              onChange={(checked) =>
+                setForm((prev) => ({
+                  ...prev,
+                  isActive: checked,
+                }))
               }
-              placeholder="Optional admin description..."
-              className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
+              hint="Enable/disable this coupon"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* ──────── REWARD SECTION ──────── */}
+      <Section
+        title="Reward"
+        isOpen={expandedSections.reward}
+        onToggle={() => toggleSection('reward')}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Discount Type" hint="How the discount is applied">
+            <select
+              value={form.discountType}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  discountType:
+                    e.target.value as DiscountType,
+                }))
+              }
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            >
+              <option value="PERCENTAGE">
+                Percentage (%)
+              </option>
+              <option value="FLAT">
+                Flat Amount (₹)
+              </option>
+              <option value="FREE_DELIVERY">
+                Free Delivery
+              </option>
+            </select>
+          </Field>
+
+          {form.discountType !== "FREE_DELIVERY" ? (
+            <Field 
+              label="Discount Value" 
+              hint={form.discountType === "PERCENTAGE" ? "0-100%" : "Amount in ₹"}
+            >
+              <input
+                value={form.discountValue}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    discountValue: e.target.value,
+                  }))
+                }
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder={
+                  form.discountType ===
+                    "PERCENTAGE"
+                    ? "20"
+                    : "200"
+                }
+                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+              />
+            </Field>
+          ) : null}
+
+          {form.discountType === "PERCENTAGE" ? (
+            <Field 
+              label="Max Discount Cap" 
+              hint="Maximum amount user can save (₹)"
+            >
+              <input
+                value={form.maxDiscount}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    maxDiscount: e.target.value,
+                  }))
+                }
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="500"
+                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+              />
+            </Field>
+          ) : null}
+        </div>
+      </Section>
+
+      {/* ──────── VALIDITY SECTION ──────── */}
+      <Section
+        title="Validity"
+        isOpen={expandedSections.validity}
+        onToggle={() => toggleSection('validity')}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Valid From" hint="Start date & time">
+            <input
+              value={form.validFrom}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  validFrom: e.target.value,
+                }))
+              }
+              type="datetime-local"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <Field label="Valid Till" hint="End date & time">
+            <input
+              value={form.validTill}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  validTill: e.target.value,
+                }))
+              }
+              type="datetime-local"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             />
           </Field>
         </div>
+      </Section>
 
-        <div className="md:col-span-2 grid gap-3 md:grid-cols-4">
-          <CheckField
-            label="Active"
-            checked={
-              form.isActive
-            }
-            onChange={(
-              checked
-            ) =>
-              setForm(
-                (prev) => ({
+      {/* ──────── CONDITIONS SECTION ──────── */}
+      <Section
+        title="Conditions"
+        isOpen={expandedSections.conditions}
+        onToggle={() => toggleSection('conditions')}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Minimum Order Value" hint="Minimum cart amount required (₹)">
+            <input
+              value={form.minimumOrderValue}
+              onChange={(e) =>
+                setForm((prev) => ({
                   ...prev,
-                  isActive:
-                    checked,
-                })
-              )
-            }
-          />
+                  minimumOrderValue:
+                    e.target.value,
+                }))
+              }
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="999"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
 
-          <CheckField
-            label="First order only"
-            checked={
-              form.firstOrderOnly
-            }
-            onChange={(
-              checked
-            ) =>
-              setForm(
-                (prev) => ({
+          <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+            <CheckField
+              label="First Order Only"
+              checked={form.firstOrderOnly}
+              onChange={(checked) =>
+                setForm((prev) => ({
                   ...prev,
-                  firstOrderOnly:
-                    checked,
-                })
-              )
-            }
-          />
+                  firstOrderOnly: checked,
+                }))
+              }
+              hint="Only for users making their first order"
+            />
 
-          <CheckField
-            label="New user only"
-            checked={
-              form.newUserOnly
-            }
-            onChange={(
-              checked
-            ) =>
-              setForm(
-                (prev) => ({
+            <CheckField
+              label="New User Only"
+              checked={form.newUserOnly}
+              onChange={(checked) =>
+                setForm((prev) => ({
                   ...prev,
-                  newUserOnly:
-                    checked,
-                })
-              )
-            }
-          />
+                  newUserOnly: checked,
+                }))
+              }
+              hint="Only for users registered in the last 30 days"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* ──────── LIMITS SECTION ──────── */}
+      <Section
+        title="Usage Limits"
+        isOpen={expandedSections.limits}
+        onToggle={() => toggleSection('limits')}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Total Usage Limit" hint="Max times coupon can be used (leave empty for unlimited)">
+            <input
+              value={form.usageLimit}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  usageLimit: e.target.value,
+                }))
+              }
+              type="number"
+              min="0"
+              step="1"
+              placeholder="1000"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <Field label="Usage Per User" hint="Times each user can use this coupon">
+            <input
+              value={form.usagePerUserLimit}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  usagePerUserLimit:
+                    e.target.value,
+                }))
+              }
+              type="number"
+              min="1"
+              step="1"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ──────── TARGETING SECTION ──────── */}
+      <Section
+        title="Targeting"
+        isOpen={expandedSections.targeting}
+        onToggle={() => toggleSection('targeting')}
+      >
+        <div className="grid gap-4">
+          <Field label="Applicable Restaurants" hint="IDs separated by commas (leave empty for all)">
+            <input
+              value={form.applicableRestaurants}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  applicableRestaurants:
+                    e.target.value,
+                }))
+              }
+              placeholder="r1, r2, r3"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <Field label="Applicable Cuisines" hint="Types separated by commas (leave empty for all)">
+            <input
+              value={form.applicableCuisines}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  applicableCuisines:
+                    e.target.value,
+                }))
+              }
+              placeholder="Indian, Italian, Chinese"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
 
           <CheckField
             label="Stackable"
-            checked={
-              form.stackable
+            checked={form.stackable}
+            onChange={(checked) =>
+              setForm((prev) => ({
+                ...prev,
+                stackable: checked,
+              }))
             }
-            onChange={(
-              checked
-            ) =>
-              setForm(
-                (prev) => ({
-                  ...prev,
-                  stackable:
-                    checked,
-                })
-              )
-            }
+            hint="Can be combined with other coupons"
           />
         </div>
-      </div>
+      </Section>
 
       {error ? (
         <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -916,17 +927,61 @@ export default function CouponForm({
   );
 }
 
+function Section({
+  title,
+  children,
+  isOpen,
+  onToggle,
+}: {
+  title: string;
+  children: ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="mb-5 border border-zinc-200 rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition"
+      >
+        <h3 className="text-sm font-semibold text-zinc-900">
+          {title}
+        </h3>
+        <span className={`text-lg text-zinc-500 transition transform ${isOpen ? 'rotate-180' : ''}`}>
+          ▼
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="p-4 border-t border-zinc-200">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Field({
   label,
   children,
+  hint,
 }: {
   label: string;
   children: ReactNode;
+  hint?: string;
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-zinc-700">
-        {label}
+      <span className="mb-2 flex items-center gap-2">
+        <span className="text-sm font-medium text-zinc-700">
+          {label}
+        </span>
+        {hint && (
+          <span className="text-xs text-zinc-500">
+            ({hint})
+          </span>
+        )}
       </span>
 
       {children}
@@ -938,27 +993,31 @@ function CheckField({
   label,
   checked,
   onChange,
+  hint,
 }: {
   label: string;
   checked: boolean;
-  onChange: (
-    checked: boolean
-  ) => void;
+  onChange: (checked: boolean) => void;
+  hint?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-700">
+    <label className="flex items-start gap-3 cursor-pointer">
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) =>
-          onChange(
-            e.target.checked
-          )
-        }
-        className="h-4 w-4 rounded border-zinc-300"
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 rounded border border-zinc-300 cursor-pointer"
       />
-
-      <span>{label}</span>
+      <div>
+        <span className="text-sm font-medium text-zinc-700">
+          {label}
+        </span>
+        {hint && (
+          <p className="text-xs text-zinc-500 mt-0.5">
+            {hint}
+          </p>
+        )}
+      </div>
     </label>
   );
 }

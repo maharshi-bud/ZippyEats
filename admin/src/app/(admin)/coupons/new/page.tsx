@@ -1,89 +1,40 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-import CouponForm from "../../../../components/coupons/CouponForm";
-import Loader from "../../../../components/ui/Loader";
-
+import { useState } from "react";
+import CouponForm, { type CouponPayload } from "../../../../components/coupons/CouponForm";
 import api from "../../../../lib/api";
 
 export default function NewCouponPage() {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleCreate = async (payload: any) => {
+  const handleSubmit = async (payload: CouponPayload) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError("");
-console.log(
-  "CREATE PAYLOAD:",
-  payload
-);
-
-const formattedPayload = payload;
-
-
-    //   await api.post("/admin/coupons", payload);
-await api.post(
-  "/admin/coupons",
-  formattedPayload
-);
-
-
+      await api.post("/admin/coupons", payload);
       router.push("/coupons");
-    } catch (err: any) {
-      console.error(err);
-
-      setError(
-        err?.response?.data?.message ||
-          "Failed to create coupon"
-      );
+    } catch (error: any) {
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    router.push("/coupons");
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-black">
-            Create Coupon
-          </h1>
-
-          <p className="text-sm text-zinc-400 mt-1">
-            Create a new coupon for ZippyEats
-          </p>
-        </div>
-
-        <button
-          onClick={() => router.push("/coupons")}
-          className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-400 hover:bg-zinc-800 transition"
-        >
-          Back
-        </button>
-      </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader />
-        </div>
-      ) : (
+    <div className="min-h-screen bg-zinc-50 p-6">
+      <div className="mx-auto max-w-4xl">
         <CouponForm
           mode="create"
-          onSubmit={handleCreate}
           loading={loading}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
         />
-      )}
+      </div>
     </div>
   );
 }

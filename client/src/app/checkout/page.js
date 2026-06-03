@@ -75,6 +75,8 @@ export default function CheckoutPage() {
     setUseCustom,
   ] = useState(false);
 
+  const [ saveAddress, setSaveAddress, ] = useState(false);
+
   const [
     zipCoins,
     setZipCoins,
@@ -99,6 +101,7 @@ const [
   appliedCoupon,
   setAppliedCoupon,
 ] = useState(null);
+
 
 
   const [
@@ -131,6 +134,7 @@ const [
 
   const [error, setError] =
     useState("");
+
 
   // ── Computed totals ──────────────────────────────────────
 
@@ -364,6 +368,48 @@ items: items.map(
         delivery_address =
           form;
       }
+
+// ── Save address if requested ─────────────────
+
+if (saveAddress) {
+  try {
+
+    const addressPayload = {
+      ...form,
+
+      label: "Other",
+
+      is_default:
+        savedAddresses.length === 0,
+    };
+
+    const saveRes =
+      await api.post(
+        "/users/addresses",
+        addressPayload
+      );
+
+    // Add immediately to local state
+
+    if (saveRes.data?.data) {
+
+      setSavedAddresses(
+        (prev) => [
+          ...prev,
+          saveRes.data.data,
+        ]
+      );
+    }
+
+  } catch (saveErr) {
+
+    console.error(
+      "SAVE ADDRESS ERROR:",
+      saveErr
+    );
+  }
+}
+
 
       setLoading(true);
 
@@ -707,6 +753,25 @@ router.push(
                   }
                   className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
+
+<label className="flex items-center gap-3 mt-2">
+  <input
+    type="checkbox"
+    checked={saveAddress}
+    onChange={(e) =>
+      setSaveAddress(
+        e.target.checked
+      )
+    }
+    className="w-4 h-4"
+  />
+
+  <span className="text-sm text-slate-600">
+    Save this address
+    for future orders
+  </span>
+</label>
+
               </div>
             </div>
           )}
@@ -941,7 +1006,7 @@ router.push(
             {useZipCoins &&
               coinsDiscount >
                 0 && (
-                <div className="flex justify-between text-sm text-amber-600 font-medium">
+                <div className="flex justify-between text-sm text-green-600 font-medium">
                   <span>
                     🪙 ZipCoins
                     discount
@@ -1001,16 +1066,16 @@ router.push(
             items.length ===
               0
           }
-          className="mt-5 w-full py-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="mt-5 w-full p-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
 
               <span>
                 Placing
                 order…
               </span>
+              <span className="w-4 h-4 border-2 p-4 border-white border-t-transparent rounded-full animate-spin" />
             </>
           ) : (
             <>
