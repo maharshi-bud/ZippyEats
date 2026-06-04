@@ -54,7 +54,7 @@ function getStatusBadgeColor(
   bg: string;
   text: string;
   label: string;
-    dot: string;
+  dot: string;
 
 } {
   const now = Date.now();
