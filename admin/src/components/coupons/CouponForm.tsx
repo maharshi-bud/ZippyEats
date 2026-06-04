@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-export type DiscountType =
-  | "PERCENTAGE"
-  | "FLAT"
-  | "FREE_DELIVERY";
+// ════════════════════════════════════════════════════════════════
+// TYPES
+// ════════════════════════════════════════════════════════════════
+
+export type DiscountType = "PERCENTAGE" | "FLAT" | "FREE_DELIVERY";
+export type CouponType = "coupon" | "auto_apply" | "reward";
+export type PaymentMethod = "UPI" | "CARD" | "WALLET" | "NET_BANKING" | "CASH";
+export type Platform = "WEB" | "MOBILE" | "APP";
 
 export type Coupon = {
   _id: string;
@@ -13,43 +17,65 @@ export type Coupon = {
   title?: string;
   description?: string;
 
-  type?: "coupon" | "auto_apply" | "reward";
+  type?: CouponType;
   is_active?: boolean;
 
-  // Structured backend format
+  // ── VALIDITY ──
   validity?: {
     start_date?: string | Date | null;
     end_date?: string | Date | null;
+    timezone?: string;
+    days_allowed?: number[]; // 0=Sun, 1=Mon, etc
+    time_ranges?: Array<{ start: string; end: string }>;
   };
 
+  // ── TARGETING ──
   targeting?: {
     restaurants?: string[];
     cuisines?: string[];
+    cities?: string[];
+    user_ids?: string[];
   };
 
+  // ── CONDITIONS ──
   conditions?: {
     min_order_amount?: number | null;
-    first_order_only?: boolean;
-    new_user_only?: boolean;
+    max_order_amount?: number | null;
+    min_items?: number | null;
+    first_order?: boolean;
+    second_order?: boolean;
+    order_number?: { min: number | null; max: number | null };
+    min_restaurant_spend?: number | null;
+    payment_methods?: PaymentMethod[];
+    allowed_platforms?: Platform[];
+    requires_items?: Array<{ item_id: string; qty: number }>;
+    buy_x_get_y?: {
+      buy_item: string;
+      buy_qty: number;
+      get_item: string;
+      get_qty: number;
+    };
   };
 
+  // ── REWARD ──
   reward?: {
     type?: "percentage" | "flat" | "free_delivery";
     value?: number;
     max_discount?: number | null;
+    bxgy_reward?: {
+      item_id: string;
+      qty: number;
+    };
   };
 
+  // ── LIMITS ──
   limits?: {
     total_usage_limit?: number | null;
     current_usage_count?: number | null;
     usage_per_user?: number | null;
   };
 
-  visibility?: {
-    first_order_only?: boolean;
-    new_user_only?: boolean;
-  };
-
+  // ── STACKING ──
   stacking?: {
     can_combine?: boolean;
     excludes?: string[];
@@ -60,25 +86,6 @@ export type Coupon = {
     total_discount_given?: number;
   };
 
-  // Legacy format (for backward compatibility)
-  discountType?: DiscountType;
-  discountValue?: number | null;
-  maxDiscount?: number | null;
-  minimumOrderValue?: number | null;
-  applicableRestaurants?: Array<
-    string | { _id?: string; name?: string }
-  >;
-  applicableCuisines?: string[];
-  validFrom?: string | Date | null;
-  validTill?: string | Date | null;
-  usageLimit?: number | null;
-  usagePerUserLimit?: number | null;
-  usedCount?: number;
-  isActive?: boolean;
-  firstOrderOnly?: boolean;
-  newUserOnly?: boolean;
-  stackable?: boolean;
-
   createdAt?: string | Date;
   updatedAt?: string | Date;
 };
@@ -88,29 +95,51 @@ export type CouponPayload = {
   title: string;
   description: string;
 
-  type: "coupon" | "auto_apply" | "reward";
+  type: CouponType;
   is_active: boolean;
 
   validity: {
     start_date: string | null;
     end_date: string | null;
+    timezone: string;
+    days_allowed: number[];
+    time_ranges: Array<{ start: string; end: string }>;
   };
 
   targeting: {
     restaurants: string[];
     cuisines: string[];
+    cities: string[];
+    user_ids: string[];
   };
 
   conditions: {
     min_order_amount: number | null;
-    first_order_only: boolean;
-    new_user_only: boolean;
+    max_order_amount: number | null;
+    min_items: number | null;
+    first_order: boolean;
+    second_order: boolean;
+    order_number: { min: number | null; max: number | null };
+    min_restaurant_spend: number | null;
+    payment_methods: PaymentMethod[];
+    allowed_platforms: Platform[];
+    requires_items: Array<{ item_id: string; qty: number }>;
+    buy_x_get_y: {
+      buy_item: string;
+      buy_qty: number;
+      get_item: string;
+      get_qty: number;
+    } | null;
   };
 
   reward: {
     type: "percentage" | "flat" | "free_delivery";
     value: number;
     max_discount: number | null;
+    bxgy_reward: {
+      item_id: string;
+      qty: number;
+    } | null;
   };
 
   limits: {
@@ -129,97 +158,135 @@ type CouponFormState = {
   title: string;
   description: string;
 
+  couponType: CouponType;
   discountType: DiscountType;
 
   discountValue: string;
   maxDiscount: string;
 
-  minimumOrderValue: string;
-
-  applicableRestaurants: string;
-  applicableCuisines: string;
-
+  // ── VALIDITY ──
   validFrom: string;
   validTill: string;
+  timezone: string;
+  daysAllowed: boolean[];
+  timeRangesJson: string;
 
+  // ── CONDITIONS ──
+  minOrderAmount: string;
+  maxOrderAmount: string;
+  minItems: string;
+  firstOrder: boolean;
+  secondOrder: boolean;
+  minRestaurantSpend: string;
+  paymentMethods: string[];
+  allowedPlatforms: string[];
+  requiresItemsJson: string;
+
+  // ── TARGETING ──
+  applicableRestaurants: string;
+  applicableCuisines: string;
+  applicableCities: string;
+  applicableUserIds: string;
+
+  // ── BUY X GET Y ──
+  buyXGetYEnabled: boolean;
+  buyXItem: string;
+  buyXQty: string;
+  getYItem: string;
+  getYQty: string;
+
+  // ── LIMITS ──
   usageLimit: string;
   usagePerUserLimit: string;
 
-  firstOrderOnly: boolean;
-  newUserOnly: boolean;
-  stackable: boolean;
-
   isActive: boolean;
+  stackable: boolean;
 };
 
 interface CouponFormProps {
   mode: "create" | "edit";
   initialData?: Coupon | null;
-
   loading?: boolean;
-
-  onSubmit: (
-    payload: CouponPayload
-  ) => Promise<void>;
-
+  onSubmit: (payload: CouponPayload) => Promise<void>;
   onCancel?: () => void;
 }
+
+// ════════════════════════════════════════════════════════════════
+// EMPTY FORM STATE
+// ════════════════════════════════════════════════════════════════
 
 const EMPTY_FORM: CouponFormState = {
   code: "",
   title: "",
   description: "",
 
+  couponType: "coupon",
   discountType: "PERCENTAGE",
 
   discountValue: "",
   maxDiscount: "",
 
-  minimumOrderValue: "",
+  validFrom: "",
+  validTill: "",
+  timezone: "Asia/Kolkata",
+  daysAllowed: [false, false, false, false, false, false, false],
+  timeRangesJson: "",
+
+  minOrderAmount: "",
+  maxOrderAmount: "",
+  minItems: "",
+  firstOrder: false,
+  secondOrder: false,
+  minRestaurantSpend: "",
+  paymentMethods: [],
+  allowedPlatforms: [],
+  requiresItemsJson: "",
 
   applicableRestaurants: "",
   applicableCuisines: "",
+  applicableCities: "",
+  applicableUserIds: "",
 
-  validFrom: "",
-  validTill: "",
+  buyXGetYEnabled: false,
+  buyXItem: "",
+  buyXQty: "1",
+  getYItem: "",
+  getYQty: "1",
 
   usageLimit: "",
   usagePerUserLimit: "1",
 
-  firstOrderOnly: false,
-  newUserOnly: false,
-  stackable: false,
-
   isActive: true,
+  stackable: false,
 };
+
+// ════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ════════════════════════════════════════════════════════════════
 
 function toNumber(value: string) {
   if (value.trim() === "") return null;
-
   const parsed = Number(value);
-
-  return Number.isFinite(parsed)
-    ? parsed
-    : null;
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function csvToList(value: string) {
-  return value
-    .split(",")
-    .map((v) => v.trim())
-    .filter(Boolean);
+  return value.split(",").map((v) => v.trim()).filter(Boolean);
 }
 
 function listToCsv(values: string[]) {
-  return values
-    .map((v) => v.trim())
-    .filter(Boolean)
-    .join(", ");
+  return values.map((v) => v.trim()).filter(Boolean).join(", ");
 }
 
-function hydrateForm(
-  coupon?: Coupon | null
-): CouponFormState {
+function tryParseJson(json: string, fallback: any = null) {
+  try {
+    return json.trim() ? JSON.parse(json) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function hydrateForm(coupon?: Coupon | null): CouponFormState {
   if (!coupon) return EMPTY_FORM;
 
   return {
@@ -227,118 +294,55 @@ function hydrateForm(
     title: coupon.title || "",
     description: coupon.description || "",
 
+    couponType: coupon.type || "coupon",
     discountType:
       coupon.reward?.type === "percentage"
         ? "PERCENTAGE"
         : coupon.reward?.type === "flat"
           ? "FLAT"
-          : coupon.discountType || "PERCENTAGE",
+          : "FREE_DELIVERY",
 
-    discountValue:
-      coupon.reward?.value === null ||
-      coupon.reward?.value === undefined
-        ? coupon.discountValue === null ||
-          coupon.discountValue === undefined
-          ? ""
-          : String(coupon.discountValue)
-        : String(coupon.reward.value),
+    discountValue: String(coupon.reward?.value || ""),
+    maxDiscount: String(coupon.reward?.max_discount || ""),
 
-    maxDiscount:
-      coupon.reward?.max_discount === null ||
-      coupon.reward?.max_discount === undefined
-        ? coupon.maxDiscount === null ||
-          coupon.maxDiscount === undefined
-          ? ""
-          : String(coupon.maxDiscount)
-        : String(coupon.reward.max_discount),
-
-    minimumOrderValue:
-      coupon.conditions?.min_order_amount === null ||
-      coupon.conditions?.min_order_amount === undefined
-        ? coupon.minimumOrderValue === null ||
-          coupon.minimumOrderValue === undefined
-          ? ""
-          : String(coupon.minimumOrderValue)
-        : String(coupon.conditions.min_order_amount),
-
-    applicableRestaurants: listToCsv(
-      (coupon.targeting?.restaurants || coupon.applicableRestaurants || []).map(
-        (item: any) =>
-          typeof item === "string"
-            ? item
-            : item?._id ||
-              item?.name ||
-              ""
-      )
+    validFrom: coupon.validity?.start_date
+      ? new Date(coupon.validity.start_date).toISOString().slice(0, 16)
+      : "",
+    validTill: coupon.validity?.end_date
+      ? new Date(coupon.validity.end_date).toISOString().slice(0, 16)
+      : "",
+    timezone: coupon.validity?.timezone || "Asia/Kolkata",
+    daysAllowed: Array(7).fill(false).map((_, i) =>
+      coupon.validity?.days_allowed?.includes(i) || false
     ),
+    timeRangesJson: JSON.stringify(coupon.validity?.time_ranges || []),
 
-    applicableCuisines: (
-      coupon.targeting?.cuisines || coupon.applicableCuisines || []
-    ).join(", "),
+    minOrderAmount: String(coupon.conditions?.min_order_amount || ""),
+    maxOrderAmount: String(coupon.conditions?.max_order_amount || ""),
+    minItems: String(coupon.conditions?.min_items || ""),
+    firstOrder: coupon.conditions?.first_order || false,
+    secondOrder: coupon.conditions?.second_order || false,
+    minRestaurantSpend: String(coupon.conditions?.min_restaurant_spend || ""),
+    paymentMethods: coupon.conditions?.payment_methods || [],
+    allowedPlatforms: coupon.conditions?.allowed_platforms || [],
+    requiresItemsJson: JSON.stringify(coupon.conditions?.requires_items || []),
 
-    validFrom:
-      coupon.validity?.start_date
-        ? new Date(
-            coupon.validity.start_date
-          )
-            .toISOString()
-            .slice(0, 16)
-        : coupon.validFrom
-          ? new Date(coupon.validFrom)
-              .toISOString()
-              .slice(0, 16)
-          : "",
+    applicableRestaurants: listToCsv(coupon.targeting?.restaurants || []),
+    applicableCuisines: listToCsv(coupon.targeting?.cuisines || []),
+    applicableCities: listToCsv(coupon.targeting?.cities || []),
+    applicableUserIds: listToCsv(coupon.targeting?.user_ids || []),
 
-    validTill:
-      coupon.validity?.end_date
-        ? new Date(
-            coupon.validity.end_date
-          )
-            .toISOString()
-            .slice(0, 16)
-        : coupon.validTill
-          ? new Date(coupon.validTill)
-              .toISOString()
-              .slice(0, 16)
-          : "",
+    buyXGetYEnabled: !!coupon.conditions?.buy_x_get_y,
+    buyXItem: coupon.conditions?.buy_x_get_y?.buy_item || "",
+    buyXQty: String(coupon.conditions?.buy_x_get_y?.buy_qty || "1"),
+    getYItem: coupon.conditions?.buy_x_get_y?.get_item || "",
+    getYQty: String(coupon.conditions?.buy_x_get_y?.get_qty || "1"),
 
-    usageLimit:
-      coupon.limits?.total_usage_limit === null ||
-      coupon.limits?.total_usage_limit === undefined
-        ? coupon.usageLimit === null ||
-          coupon.usageLimit === undefined
-          ? ""
-          : String(coupon.usageLimit)
-        : String(coupon.limits.total_usage_limit),
+    usageLimit: String(coupon.limits?.total_usage_limit || ""),
+    usagePerUserLimit: String(coupon.limits?.usage_per_user || "1"),
 
-    usagePerUserLimit:
-      coupon.limits?.usage_per_user === null ||
-      coupon.limits?.usage_per_user === undefined
-        ? coupon.usagePerUserLimit === null ||
-          coupon.usagePerUserLimit === undefined
-          ? "1"
-          : String(coupon.usagePerUserLimit)
-        : String(coupon.limits.usage_per_user),
-
-    firstOrderOnly: Boolean(
-      coupon.conditions?.first_order_only ??
-        coupon.visibility?.first_order_only ??
-        coupon.firstOrderOnly
-    ),
-
-    newUserOnly: Boolean(
-      coupon.conditions?.new_user_only ??
-        coupon.visibility?.new_user_only ??
-        coupon.newUserOnly
-    ),
-
-    stackable: Boolean(
-      coupon.stacking?.can_combine ??
-        coupon.stackable
-    ),
-
-    isActive:
-      coupon.is_active !== false && coupon.isActive !== false,
+    isActive: coupon.is_active !== false,
+    stackable: coupon.stacking?.can_combine || false,
   };
 }
 
@@ -354,23 +358,46 @@ function buildPayload(form: CouponFormState): CouponPayload {
     code: form.code.trim().toUpperCase(),
     title: form.title.trim(),
     description: form.description.trim(),
-    type: "coupon",
+
+    type: form.couponType,
     is_active: form.isActive,
 
     validity: {
       start_date: form.validFrom || null,
       end_date: form.validTill || null,
+      timezone: form.timezone,
+      days_allowed: form.daysAllowed
+        .map((checked, i) => (checked ? i : null))
+        .filter((i) => i !== null) as number[],
+      time_ranges: tryParseJson(form.timeRangesJson, []),
     },
 
     targeting: {
       restaurants: csvToList(form.applicableRestaurants),
       cuisines: csvToList(form.applicableCuisines),
+      cities: csvToList(form.applicableCities),
+      user_ids: csvToList(form.applicableUserIds),
     },
 
     conditions: {
-      min_order_amount: toNumber(form.minimumOrderValue),
-      first_order_only: form.firstOrderOnly,
-      new_user_only: form.newUserOnly,
+      min_order_amount: toNumber(form.minOrderAmount),
+      max_order_amount: toNumber(form.maxOrderAmount),
+      min_items: toNumber(form.minItems),
+      first_order: form.firstOrder,
+      second_order: form.secondOrder,
+      order_number: { min: null, max: null },
+      min_restaurant_spend: toNumber(form.minRestaurantSpend),
+      payment_methods: form.paymentMethods as PaymentMethod[],
+      allowed_platforms: form.allowedPlatforms as Platform[],
+      requires_items: tryParseJson(form.requiresItemsJson, []),
+      buy_x_get_y: form.buyXGetYEnabled
+        ? {
+            buy_item: form.buyXItem,
+            buy_qty: toNumber(form.buyXQty) || 1,
+            get_item: form.getYItem,
+            get_qty: toNumber(form.getYQty) || 1,
+          }
+        : null,
     },
 
     reward: {
@@ -383,6 +410,7 @@ function buildPayload(form: CouponFormState): CouponPayload {
         rewardType === "percentage"
           ? toNumber(form.maxDiscount)
           : null,
+      bxgy_reward: null,
     },
 
     limits: {
@@ -397,6 +425,10 @@ function buildPayload(form: CouponFormState): CouponPayload {
   };
 }
 
+// ════════════════════════════════════════════════════════════════
+// COMPONENT
+// ════════════════════════════════════════════════════════════════
+
 export default function CouponForm({
   mode,
   initialData,
@@ -404,40 +436,29 @@ export default function CouponForm({
   onSubmit,
   onCancel,
 }: CouponFormProps) {
-  const [form, setForm] =
-    useState<CouponFormState>(
-      EMPTY_FORM
-    );
-
-  const [error, setError] =
-    useState("");
+  const [form, setForm] = useState<CouponFormState>(EMPTY_FORM);
+  const [error, setError] = useState("");
 
   const [expandedSections, setExpandedSections] = useState({
     description: true,
     reward: true,
     validity: true,
     conditions: true,
-    limits: true,
     targeting: true,
+    limits: true,
   });
+
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   useEffect(() => {
     setForm(hydrateForm(initialData));
   }, [initialData]);
 
-  const payload = useMemo(
-    () => buildPayload(form),
-    [form]
-  );
+  const payload = useMemo(() => buildPayload(form), [form]);
 
   const validate = () => {
-    if (!payload.code) {
-      return "Coupon code is required.";
-    }
-
-    if (!payload.title) {
-      return "Coupon title is required.";
-    }
+    if (!payload.code) return "Coupon code is required.";
+    if (!payload.title) return "Coupon title is required.";
 
     if (
       payload.reward.type !== "free_delivery" &&
@@ -450,38 +471,11 @@ export default function CouponForm({
       payload.reward.type === "percentage" &&
       payload.reward.value > 100
     ) {
-      return "Percentage discount cannot exceed 100%.";
+      return "Percentage cannot exceed 100%.";
     }
 
     if (payload.reward.value < 0) {
       return "Discount value cannot be negative.";
-    }
-
-    if (
-      payload.reward.max_discount !== null &&
-      payload.reward.max_discount < 0
-    ) {
-      return "Max discount cannot be negative.";
-    }
-
-    if (
-      payload.conditions.min_order_amount !== null &&
-      payload.conditions.min_order_amount < 0
-    ) {
-      return "Minimum order value cannot be negative.";
-    }
-
-    if (
-      payload.limits.total_usage_limit !== null &&
-      payload.limits.total_usage_limit < 0
-    ) {
-      return "Usage limit cannot be negative.";
-    }
-
-    if (
-      payload.limits.usage_per_user < 1
-    ) {
-      return "Usage per user must be at least 1.";
     }
 
     if (
@@ -490,20 +484,16 @@ export default function CouponForm({
       new Date(payload.validity.end_date).getTime() <
         new Date(payload.validity.start_date).getTime()
     ) {
-      return "Valid till date must be after valid from date.";
+      return "End date must be after start date.";
     }
 
     return null;
   };
 
-  const handleSubmit = async (
-    e: React.FormEvent
-  ) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationError =
-      validate();
-
+    const validationError = validate();
     if (validationError) {
       setError(validationError);
       return;
@@ -514,8 +504,7 @@ export default function CouponForm({
       await onSubmit(payload);
     } catch (err: any) {
       setError(
-        err?.response?.data
-          ?.message ||
+        err?.response?.data?.message ||
           err?.message ||
           "Failed to save coupon."
       );
@@ -523,9 +512,9 @@ export default function CouponForm({
   };
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section as keyof typeof prev]
+      [section]: !prev[section as keyof typeof prev],
     }));
   };
 
@@ -537,16 +526,12 @@ export default function CouponForm({
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-zinc-900">
-            {mode === "edit"
-              ? "Edit Coupon"
-              : "Create Coupon"}
+            {mode === "edit" ? "Edit Coupon" : "Create Coupon"}
           </h2>
-
           <p className="mt-1 text-sm text-zinc-600">
-            Configure discount rules, restrictions, usage limits, and validity windows.
+            Configure all conditions, rewards, targeting, and validity rules.
           </p>
         </div>
-
         {onCancel ? (
           <button
             type="button"
@@ -558,14 +543,16 @@ export default function CouponForm({
         ) : null}
       </div>
 
-      {/* ──────── DESCRIPTION SECTION ──────── */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* SECTION: DESCRIPTION */}
+      {/* ══════════════════════════════════════════════════════ */}
       <Section
         title="Description"
         isOpen={expandedSections.description}
-        onToggle={() => toggleSection('description')}
+        onToggle={() => toggleSection("description")}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Coupon Code" hint="Unique identifier (e.g., SAVE200)">
+          <Field label="Code" hint="Unique identifier (e.g., SAVE200)">
             <input
               value={form.code}
               onChange={(e) =>
@@ -595,24 +582,24 @@ export default function CouponForm({
             />
           </Field>
 
-          <div className="md:col-span-2">
-            <Field label="Description" hint="Internal notes (admin only)">
-              <textarea
-                rows={4}
-                value={form.description}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="e.g. Summer promo for new users, valid only on weekends..."
-                className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
-              />
-            </Field>
-          </div>
+          <Field label="Coupon Type" hint="Manual, auto-apply, or reward">
+            <select
+              value={form.couponType}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  couponType: e.target.value as CouponType,
+                }))
+              }
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            >
+              <option value="coupon">Manual Coupon</option>
+              <option value="auto_apply">Auto-Apply</option>
+              <option value="reward">Reward</option>
+            </select>
+          </Field>
 
-          <div className="md:col-span-2">
+          <div>
             <CheckField
               label="Active"
               checked={form.isActive}
@@ -625,45 +612,54 @@ export default function CouponForm({
               hint="Enable/disable this coupon"
             />
           </div>
+
+          <div className="md:col-span-2">
+            <Field label="Description" hint="Internal notes (admin only)">
+              <textarea
+                rows={3}
+                value={form.description}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="Summer promo for new users..."
+                className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
+              />
+            </Field>
+          </div>
         </div>
       </Section>
 
-      {/* ──────── REWARD SECTION ──────── */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* SECTION: REWARD */}
+      {/* ══════════════════════════════════════════════════════ */}
       <Section
         title="Reward"
         isOpen={expandedSections.reward}
-        onToggle={() => toggleSection('reward')}
+        onToggle={() => toggleSection("reward")}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Discount Type" hint="How the discount is applied">
+          <Field label="Discount Type" hint="How reward is given">
             <select
               value={form.discountType}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  discountType:
-                    e.target.value as DiscountType,
+                  discountType: e.target.value as DiscountType,
                 }))
               }
               className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             >
-              <option value="PERCENTAGE">
-                Percentage (%)
-              </option>
-              <option value="FLAT">
-                Flat Amount (₹)
-              </option>
-              <option value="FREE_DELIVERY">
-                Free Delivery
-              </option>
+              <option value="PERCENTAGE">Percentage (%)</option>
+              <option value="FLAT">Flat Amount (₹)</option>
+              <option value="FREE_DELIVERY">Free Delivery</option>
             </select>
           </Field>
 
           {form.discountType !== "FREE_DELIVERY" ? (
-            <Field 
-              label="Discount Value" 
-              hint={form.discountType === "PERCENTAGE" ? "0-100%" : "Amount in ₹"}
-            >
+            <Field label="Discount Value">
               <input
                 value={form.discountValue}
                 onChange={(e) =>
@@ -675,22 +671,14 @@ export default function CouponForm({
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder={
-                  form.discountType ===
-                    "PERCENTAGE"
-                    ? "20"
-                    : "200"
-                }
+                placeholder={form.discountType === "PERCENTAGE" ? "20" : "500"}
                 className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
               />
             </Field>
           ) : null}
 
           {form.discountType === "PERCENTAGE" ? (
-            <Field 
-              label="Max Discount Cap" 
-              hint="Maximum amount user can save (₹)"
-            >
+            <Field label="Max Discount Cap" hint="Max amount user saves (₹)">
               <input
                 value={form.maxDiscount}
                 onChange={(e) =>
@@ -707,17 +695,95 @@ export default function CouponForm({
               />
             </Field>
           ) : null}
+
+          <div className="md:col-span-2">
+            <CheckField
+              label="Buy X Get Y"
+              checked={form.buyXGetYEnabled}
+              onChange={(checked) =>
+                setForm((prev) => ({
+                  ...prev,
+                  buyXGetYEnabled: checked,
+                }))
+              }
+              hint="Special bundle promotion"
+            />
+          </div>
+
+          {form.buyXGetYEnabled ? (
+            <>
+              <Field label="Buy Item ID">
+                <input
+                  value={form.buyXItem}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      buyXItem: e.target.value,
+                    }))
+                  }
+                  placeholder="Item ID to buy"
+                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+                />
+              </Field>
+
+              <Field label="Buy Quantity">
+                <input
+                  value={form.buyXQty}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      buyXQty: e.target.value,
+                    }))
+                  }
+                  type="number"
+                  min="1"
+                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+                />
+              </Field>
+
+              <Field label="Get Item ID">
+                <input
+                  value={form.getYItem}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      getYItem: e.target.value,
+                    }))
+                  }
+                  placeholder="Item ID to get free"
+                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+                />
+              </Field>
+
+              <Field label="Get Quantity">
+                <input
+                  value={form.getYQty}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      getYQty: e.target.value,
+                    }))
+                  }
+                  type="number"
+                  min="1"
+                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+                />
+              </Field>
+            </>
+          ) : null}
         </div>
       </Section>
 
-      {/* ──────── VALIDITY SECTION ──────── */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* SECTION: VALIDITY (Date/Time/Day) */}
+      {/* ══════════════════════════════════════════════════════ */}
       <Section
         title="Validity"
         isOpen={expandedSections.validity}
-        onToggle={() => toggleSection('validity')}
+        onToggle={() => toggleSection("validity")}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Valid From" hint="Start date & time">
+          <Field label="Valid From">
             <input
               value={form.validFrom}
               onChange={(e) =>
@@ -731,7 +797,7 @@ export default function CouponForm({
             />
           </Field>
 
-          <Field label="Valid Till" hint="End date & time">
+          <Field label="Valid Till">
             <input
               value={form.validTill}
               onChange={(e) =>
@@ -744,70 +810,328 @@ export default function CouponForm({
               className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             />
           </Field>
-        </div>
-      </Section>
 
-      {/* ──────── CONDITIONS SECTION ──────── */}
-      <Section
-        title="Conditions"
-        isOpen={expandedSections.conditions}
-        onToggle={() => toggleSection('conditions')}
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Minimum Order Value" hint="Minimum cart amount required (₹)">
-            <input
-              value={form.minimumOrderValue}
+          <Field label="Timezone" hint="For day/time calculations">
+            <select
+              value={form.timezone}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  minimumOrderValue:
-                    e.target.value,
+                  timezone: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            >
+              <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+              <option value="Asia/Bangalore">Asia/Bangalore (IST)</option>
+              <option value="UTC">UTC</option>
+            </select>
+          </Field>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-zinc-700 mb-3">
+              Valid Days of Week
+            </label>
+            <div className="grid grid-cols-7 gap-2">
+              {DAYS.map((day, i) => (
+                <label key={i} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.daysAllowed[i]}
+                    onChange={(e) => {
+                      const newDays = [...form.daysAllowed];
+                      newDays[i] = e.target.checked;
+                      setForm((prev) => ({
+                        ...prev,
+                        daysAllowed: newDays,
+                      }));
+                    }}
+                    className="rounded border-zinc-300 cursor-pointer"
+                  />
+                  <span className="text-xs text-zinc-600">{day.slice(0, 3)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <Field label="Time Ranges (JSON)" hint="[{start: '09:00', end: '17:00'}]">
+              <textarea
+                rows={2}
+                value={form.timeRangesJson}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    timeRangesJson: e.target.value,
+                  }))
+                }
+                placeholder='[{"start": "09:00", "end": "17:00"}]'
+                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-xs outline-none transition focus:border-zinc-400 font-mono"
+              />
+            </Field>
+          </div>
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* SECTION: CONDITIONS */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <Section
+        title="Conditions"
+        isOpen={expandedSections.conditions}
+        onToggle={() => toggleSection("conditions")}
+      >
+        <div className="space-y-4">
+          {/* Order Amount */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Min Order Amount">
+              <input
+                value={form.minOrderAmount}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    minOrderAmount: e.target.value,
+                  }))
+                }
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="500"
+                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+              />
+            </Field>
+
+            <Field label="Max Order Amount">
+              <input
+                value={form.maxOrderAmount}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    maxOrderAmount: e.target.value,
+                  }))
+                }
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="5000"
+                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+              />
+            </Field>
+          </div>
+
+          {/* Item Count */}
+          <Field label="Min Items in Cart">
+            <input
+              value={form.minItems}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  minItems: e.target.value,
+                }))
+              }
+              type="number"
+              min="0"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          {/* Order History */}
+          <div className="grid gap-3 md:grid-cols-2">
+            <CheckField
+              label="First Order Only"
+              checked={form.firstOrder}
+              onChange={(checked) =>
+                setForm((prev) => ({
+                  ...prev,
+                  firstOrder: checked,
+                }))
+              }
+            />
+            <CheckField
+              label="Second Order Only"
+              checked={form.secondOrder}
+              onChange={(checked) =>
+                setForm((prev) => ({
+                  ...prev,
+                  secondOrder: checked,
+                }))
+              }
+            />
+          </div>
+
+          {/* Restaurant Spend */}
+          <Field label="Min Restaurant Spend" hint="Lifetime spend required (₹)">
+            <input
+              value={form.minRestaurantSpend}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  minRestaurantSpend: e.target.value,
                 }))
               }
               type="number"
               min="0"
               step="0.01"
-              placeholder="999"
+              placeholder="2000"
               className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             />
           </Field>
 
-          <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
-            <CheckField
-              label="First Order Only"
-              checked={form.firstOrderOnly}
-              onChange={(checked) =>
-                setForm((prev) => ({
-                  ...prev,
-                  firstOrderOnly: checked,
-                }))
-              }
-              hint="Only for users making their first order"
-            />
+          {/* Payment Methods */}
+          <Field label="Payment Methods" hint="Leave empty for all">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {["UPI", "CARD", "WALLET", "NET_BANKING", "CASH"].map((method) => (
+                <label key={method} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.paymentMethods.includes(method)}
+                    onChange={(e) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        paymentMethods: e.target.checked
+                          ? [...prev.paymentMethods, method]
+                          : prev.paymentMethods.filter((m) => m !== method),
+                      }));
+                    }}
+                    className="rounded border-zinc-300 cursor-pointer"
+                  />
+                  <span className="text-sm text-zinc-700">{method}</span>
+                </label>
+              ))}
+            </div>
+          </Field>
 
-            <CheckField
-              label="New User Only"
-              checked={form.newUserOnly}
-              onChange={(checked) =>
+          {/* Platforms */}
+          <Field label="Allowed Platforms" hint="Leave empty for all">
+            <div className="grid grid-cols-3 gap-2">
+              {["WEB", "MOBILE", "APP"].map((platform) => (
+                <label key={platform} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.allowedPlatforms.includes(platform)}
+                    onChange={(e) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        allowedPlatforms: e.target.checked
+                          ? [...prev.allowedPlatforms, platform]
+                          : prev.allowedPlatforms.filter((p) => p !== platform),
+                      }));
+                    }}
+                    className="rounded border-zinc-300 cursor-pointer"
+                  />
+                  <span className="text-sm text-zinc-700">{platform}</span>
+                </label>
+              ))}
+            </div>
+          </Field>
+
+          {/* Required Items */}
+          <Field label="Required Items (JSON)" hint="[{item_id: '...', qty: 2}]">
+            <textarea
+              rows={2}
+              value={form.requiresItemsJson}
+              onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  newUserOnly: checked,
+                  requiresItemsJson: e.target.value,
                 }))
               }
-              hint="Only for users registered in the last 30 days"
+              placeholder='[{"item_id": "507f1f77bcf86cd799439011", "qty": 2}]'
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-xs outline-none transition focus:border-zinc-400 font-mono"
             />
-          </div>
+          </Field>
         </div>
       </Section>
 
-      {/* ──────── LIMITS SECTION ──────── */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* SECTION: TARGETING */}
+      {/* ══════════════════════════════════════════════════════ */}
       <Section
-        title="Usage Limits"
+        title="Targeting"
+        isOpen={expandedSections.targeting}
+        onToggle={() => toggleSection("targeting")}
+      >
+        <div className="grid gap-4">
+          <Field label="Applicable Restaurants" hint="IDs, comma-separated">
+            <input
+              value={form.applicableRestaurants}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  applicableRestaurants: e.target.value,
+                }))
+              }
+              placeholder="r1, r2, r3"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <Field label="Applicable Cuisines" hint="Names, comma-separated">
+            <input
+              value={form.applicableCuisines}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  applicableCuisines: e.target.value,
+                }))
+              }
+              placeholder="Indian, Italian, Chinese"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <Field label="Applicable Cities" hint="Names, comma-separated">
+            <input
+              value={form.applicableCities}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  applicableCities: e.target.value,
+                }))
+              }
+              placeholder="Vadodara, Mumbai, Delhi"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <Field label="Applicable User IDs" hint="User IDs, comma-separated">
+            <input
+              value={form.applicableUserIds}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  applicableUserIds: e.target.value,
+                }))
+              }
+              placeholder="user1, user2, user3"
+              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </Field>
+
+          <CheckField
+            label="Stackable"
+            checked={form.stackable}
+            onChange={(checked) =>
+              setForm((prev) => ({
+                ...prev,
+                stackable: checked,
+              }))
+            }
+            hint="Can combine with other coupons"
+          />
+        </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* SECTION: LIMITS */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <Section
+        title="Limits"
         isOpen={expandedSections.limits}
-        onToggle={() => toggleSection('limits')}
+        onToggle={() => toggleSection("limits")}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Total Usage Limit" hint="Max times coupon can be used (leave empty for unlimited)">
+          <Field label="Total Usage Limit" hint="Leave empty for unlimited">
             <input
               value={form.usageLimit}
               onChange={(e) =>
@@ -824,14 +1148,13 @@ export default function CouponForm({
             />
           </Field>
 
-          <Field label="Usage Per User" hint="Times each user can use this coupon">
+          <Field label="Usage Per User" hint="Times per user">
             <input
               value={form.usagePerUserLimit}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  usagePerUserLimit:
-                    e.target.value,
+                  usagePerUserLimit: e.target.value,
                 }))
               }
               type="number"
@@ -840,57 +1163,6 @@ export default function CouponForm({
               className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
             />
           </Field>
-        </div>
-      </Section>
-
-      {/* ──────── TARGETING SECTION ──────── */}
-      <Section
-        title="Targeting"
-        isOpen={expandedSections.targeting}
-        onToggle={() => toggleSection('targeting')}
-      >
-        <div className="grid gap-4">
-          <Field label="Applicable Restaurants" hint="IDs separated by commas (leave empty for all)">
-            <input
-              value={form.applicableRestaurants}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  applicableRestaurants:
-                    e.target.value,
-                }))
-              }
-              placeholder="r1, r2, r3"
-              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-            />
-          </Field>
-
-          <Field label="Applicable Cuisines" hint="Types separated by commas (leave empty for all)">
-            <input
-              value={form.applicableCuisines}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  applicableCuisines:
-                    e.target.value,
-                }))
-              }
-              placeholder="Indian, Italian, Chinese"
-              className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-            />
-          </Field>
-
-          <CheckField
-            label="Stackable"
-            checked={form.stackable}
-            onChange={(checked) =>
-              setForm((prev) => ({
-                ...prev,
-                stackable: checked,
-              }))
-            }
-            hint="Can be combined with other coupons"
-          />
         </div>
       </Section>
 
@@ -927,6 +1199,10 @@ export default function CouponForm({
   );
 }
 
+// ════════════════════════════════════════════════════════════════
+// UI COMPONENTS
+// ════════════════════════════════════════════════════════════════
+
 function Section({
   title,
   children,
@@ -945,10 +1221,12 @@ function Section({
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition"
       >
-        <h3 className="text-sm font-semibold text-zinc-900">
-          {title}
-        </h3>
-        <span className={`text-lg text-zinc-500 transition transform ${isOpen ? 'rotate-180' : ''}`}>
+        <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>
+        <span
+          className={`text-lg text-zinc-500 transition transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        >
           ▼
         </span>
       </button>
@@ -974,16 +1252,11 @@ function Field({
   return (
     <label className="block">
       <span className="mb-2 flex items-center gap-2">
-        <span className="text-sm font-medium text-zinc-700">
-          {label}
-        </span>
+        <span className="text-sm font-medium text-zinc-700">{label}</span>
         {hint && (
-          <span className="text-xs text-zinc-500">
-            ({hint})
-          </span>
+          <span className="text-xs text-zinc-500">({hint})</span>
         )}
       </span>
-
       {children}
     </label>
   );
@@ -1006,16 +1279,12 @@ function CheckField({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 rounded border border-zinc-300 cursor-pointer"
+        className="mt-1 rounded border-zinc-300 cursor-pointer"
       />
       <div>
-        <span className="text-sm font-medium text-zinc-700">
-          {label}
-        </span>
+        <span className="text-sm font-medium text-zinc-700">{label}</span>
         {hint && (
-          <p className="text-xs text-zinc-500 mt-0.5">
-            {hint}
-          </p>
+          <p className="text-xs text-zinc-500 mt-0.5">{hint}</p>
         )}
       </div>
     </label>

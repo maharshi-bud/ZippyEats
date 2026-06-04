@@ -19,6 +19,7 @@ import {
   toggleCouponStatus,
   getCouponUsage,
 } from "../../controllers/admin/couponController.js";
+import { validateAdminCoupon } from "../../controllers/couponController.js";
 
 const router = express.Router();
 
@@ -49,6 +50,12 @@ router.post(
   "/coupons",
   requirePermission("coupons", "add"),
   createCoupon
+);
+
+router.post(
+  "/coupons/:id/validate",
+  requirePermission("coupons", "view"),
+  validateAdminCoupon
 );
 
 // ── Update ────────────────────────────────────────────────────

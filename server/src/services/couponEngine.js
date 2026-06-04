@@ -148,9 +148,9 @@ function calcBogo(reward, coupon, cart) {
   const bxgy = coupon.conditions?.buy_x_get_y;
 
   if (bxgy) {
-    // Free item is the buy_x_get_y.free_item
-    result.free_item_id  = bxgy.free_item?.toString() || null;
-    result.free_item_qty = bxgy.free_qty || 1;
+    // Support both existing and guide-convention fields
+    result.free_item_id  = bxgy.free_item?.toString() || bxgy.get_item?.toString() || null;
+    result.free_item_qty = bxgy.free_qty || bxgy.get_qty || 1;
 
     // Find the price of the buy item from cart to compute ₹ discount shown
     const buyItem = cart.items.find((i) => i.item_id.toString() === bxgy.buy_item?.toString());

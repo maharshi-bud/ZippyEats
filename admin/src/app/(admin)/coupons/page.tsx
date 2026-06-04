@@ -15,9 +15,12 @@ import type {
   DiscountType,
 } from "../../../components/coupons/CouponForm";
 
-import CouponTable from "../../../components/coupons/CouponTable";
-
-import CouponUsageCard from "../../../components/coupons/CouponUsageCard";
+interface FilteredCouponsData {
+  totalCount: number;
+  activeCount: number;
+  totalRedeemed: number;
+  totalUsageLimit: number;
+}
 
 function unwrapList<T>(
   payload: any
@@ -43,6 +46,130 @@ function unwrapList<T>(
     return payload.items;
 
   return [];
+}
+
+function getStatusBadgeColor(
+  coupon: Coupon
+): {
+  bg: string;
+  text: string;
+  label: string;
+} {
+  const now = Date.now();
+
+  const from = coupon.validity?.start_date
+    ? new Date(
+        coupon.validity.start_date
+      ).getTime()
+    : null;
+
+  const till = coupon.validity?.end_date
+    ? new Date(
+        coupon.validity.end_date
+      ).getTime()
+    : null;
+
+  const scheduled =
+    from !== null && from > now;
+
+  const expired =
+    till !== null && till < now;
+
+  const usageLimit =
+    coupon.limits?.total_usage_limit ||
+    0;
+
+  const usedCount =
+    coupon.limits?.current_usage_count ||
+    0;
+
+  const exhausted =
+    usageLimit > 0 &&
+    usedCount >= usageLimit;
+
+  const active =
+    Boolean(coupon.is_active) &&
+    !scheduled &&
+    !expired &&
+    !exhausted;
+
+  if (active) {
+    return {
+      bg: "#E6F1FB",
+      text: "#185FA5",
+      label: "Active",
+    };
+  }
+
+  if (scheduled) {
+    return {
+      bg: "#FAEEDA",
+      text: "#854F0B",
+      label: "Scheduled",
+    };
+  }
+
+  if (expired) {
+    return {
+      bg: "#FCEBEB",
+      text: "#A32D2D",
+      label: "Expired",
+    };
+  }
+
+  if (exhausted) {
+    return {
+      bg: "#F1EFE8",
+      text: "#5F5E5A",
+      label: "Exhausted",
+    };
+  }
+
+  return {
+    bg: "#F1EFE8",
+    text: "#5F5E5A",
+    label: "Inactive",
+  };
+}
+
+function formatCurrency(
+  value?: number | null
+) {
+  if (
+    value === null ||
+    value === undefined ||
+    Number.isNaN(Number(value))
+  ) {
+    return "—";
+  }
+
+  return `₹${Number(
+    value
+  ).toLocaleString("en-IN")}`;
+}
+
+function getDiscountLabel(
+  coupon: Coupon
+) {
+  if (
+    coupon.reward?.type ===
+    "percentage"
+  ) {
+    return `${
+      coupon.reward?.value || 0
+    }% OFF`;
+  }
+
+  if (
+    coupon.reward?.type ===
+    "flat"
+  ) {
+    return `${formatCurrency(
+      coupon.reward?.value
+    )} OFF`;
+  }
+
+  return "Free Delivery";
 }
 
 export default function CouponsPage() {
@@ -244,6 +371,41 @@ export default function CouponsPage() {
       typeFilter,
     ]);
 
+  const stats: FilteredCouponsData =
+    useMemo(() => {
+      const totalRedeemed =
+        coupons.reduce(
+          (acc, item) =>
+            acc +
+            (item.limits
+              ?.current_usage_count ||
+              0),
+          0
+        );
+
+      const totalUsageLimit =
+        coupons.reduce(
+          (acc, item) =>
+            acc +
+            (item.limits
+              ?.total_usage_limit ||
+              0),
+          0
+        );
+
+      const activeCount = coupons.filter(
+        (coupon) =>
+          coupon.is_active
+      ).length;
+
+      return {
+        totalCount: coupons.length,
+        activeCount,
+        totalRedeemed,
+        totalUsageLimit,
+      };
+    }, [coupons]);
+
   const toggleCoupon = (
     coupon: Coupon
   ) => {
@@ -329,145 +491,202 @@ export default function CouponsPage() {
       });
   };
 
-  const activeCoupons =
-    coupons.filter(
-      (coupon) =>
-        coupon.is_active
-    ).length;
-
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6">
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "1.5rem 0",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          marginBottom: "2rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
         <div>
-          <p className="text-sm font-medium text-zinc-500">
-            Admin /
-            Promotions
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#888780",
+              margin: "0 0 0.5rem",
+              fontWeight: "500",
+              letterSpacing: "0.5px",
+              textTransform: "uppercase",
+            }}
+          >
+            Admin / Promotions
           </p>
-
-          <h1 className="text-3xl font-semibold text-zinc-900">
+          <h1
+            style={{
+              fontSize: "28px",
+              fontWeight: "500",
+              margin: "0 0 0.5rem",
+              color: "#1a1a1a",
+            }}
+          >
             Coupons
           </h1>
-
-          <p className="mt-2 text-sm text-zinc-600">
-            Manage coupon
-            campaigns,
-            restrictions,
-            and usage.
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#666666",
+              margin: "0.5rem 0 0",
+            }}
+          >
+            Manage coupon campaigns,
+            restrictions, and usage.
           </p>
         </div>
-
         <button
           type="button"
           onClick={() =>
-            router.push(
-              "/coupons/new"
-            )
+            router.push("/coupons/new")
           }
-          className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800"
+          style={{
+            backgroundColor: "#1a1a1a",
+            color: "#ffffff",
+            border: "none",
+            padding: "0.6rem 1.2rem",
+            borderRadius: "8px",
+            fontSize: "14px",
+            fontWeight: "500",
+            cursor: "pointer",
+            transition: "background 0.2s",
+            whiteSpace: "nowrap",
+            height: "fit-content",
+          }}
+          onMouseEnter={(e) => {
+            (e.target as HTMLButtonElement)
+              .style.backgroundColor =
+              "#333333";
+          }}
+          onMouseLeave={(e) => {
+            (e.target as HTMLButtonElement)
+              .style.backgroundColor =
+              "#1a1a1a";
+          }}
         >
           + New Coupon
         </button>
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-3">
-        <CouponUsageCard
-          code="TOTAL"
-          usedCount={coupons.reduce(
-            (
-              acc,
-              item
-            ) =>
-              acc +
-              (item.limits
-                ?.current_usage_count ||
-                0),
-            0
-          )}
-          usageLimit={coupons.reduce(
-            (
-              acc,
-              item
-            ) =>
-              acc +
-              (item.limits
-                ?.total_usage_limit ||
-                0),
-            0
-          )}
-          totalSavingsGiven={0}
-          isActive
+      {/* Stats Grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: "12px",
+          marginBottom: "2rem",
+        }}
+      >
+        <StatCard
+          label="Total coupons"
+          value={stats.totalCount.toString()}
+          hint="All campaigns"
         />
-
-        <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-zinc-500">
-            Total Coupons
-          </p>
-
-          <p className="mt-2 text-4xl font-semibold text-zinc-900">
-            {coupons.length}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-zinc-500">
-            Active Coupons
-          </p>
-
-          <p className="mt-2 text-4xl font-semibold text-zinc-900">
-            {
-              activeCoupons
-            }
-          </p>
-        </div>
+        <StatCard
+          label="Active now"
+          value={stats.activeCount.toString()}
+          hint="Running campaigns"
+        />
+        <StatCard
+          label="Total redeemed"
+          value={stats.totalRedeemed.toString()}
+          hint="Across all codes"
+        />
+        <StatCard
+          label="Capacity used"
+          value={
+            stats.totalUsageLimit > 0
+              ? `${Math.round(
+                  (stats.totalRedeemed /
+                    stats.totalUsageLimit) *
+                    100
+                )}%`
+              : "0%"
+          }
+          hint="Of limits"
+        />
       </div>
 
-      <div className="mb-5 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
-          <div className="md:col-span-2">
-            <input
-              value={query}
-              onChange={(e) =>
-                setQuery(
-                  e.target.value
-                )
-              }
-              placeholder="Search by coupon code, title..."
-              className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
-            />
-          </div>
-
-          <select
-            value={
-              statusFilter
+      {/* Filters */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "0.5px solid #d3d1c7",
+          borderRadius: "10px",
+          padding: "1rem 1.25rem",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Search by coupon code, title..."
+            value={query}
+            onChange={(e) =>
+              setQuery(e.target.value)
             }
+            style={{
+              flex: "1",
+              minWidth: "200px",
+              padding: "0.6rem 0.9rem",
+              border: "0.5px solid #d3d1c7",
+              borderRadius: "8px",
+              fontSize: "14px",
+              backgroundColor: "#ffffff",
+              color: "#1a1a1a",
+              fontFamily:
+                "system-ui, -apple-system, sans-serif",
+            }}
+          />
+          <select
+            value={statusFilter}
             onChange={(e) =>
               setStatusFilter(
-                e.target
-                  .value as typeof statusFilter
+                e.target.value as typeof statusFilter
               )
             }
-            className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
+            style={{
+              minWidth: "140px",
+              padding: "0.6rem 0.9rem",
+              border: "0.5px solid #d3d1c7",
+              borderRadius: "8px",
+              fontSize: "14px",
+              backgroundColor: "#ffffff",
+              color: "#1a1a1a",
+              fontFamily:
+                "system-ui, -apple-system, sans-serif",
+              cursor: "pointer",
+            }}
           >
             <option value="all">
               All Statuses
             </option>
-
             <option value="active">
               Active
             </option>
-
             <option value="inactive">
               Inactive
             </option>
-
             <option value="scheduled">
               Scheduled
             </option>
-
             <option value="expired">
               Expired
             </option>
-
             <option value="exhausted">
               Exhausted
             </option>
@@ -477,24 +696,31 @@ export default function CouponsPage() {
             value={typeFilter}
             onChange={(e) =>
               setTypeFilter(
-                e.target
-                  .value as typeof typeFilter
+                e.target.value as typeof typeFilter
               )
             }
-            className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-400"
+            style={{
+              minWidth: "140px",
+              padding: "0.6rem 0.9rem",
+              border: "0.5px solid #d3d1c7",
+              borderRadius: "8px",
+              fontSize: "14px",
+              backgroundColor: "#ffffff",
+              color: "#1a1a1a",
+              fontFamily:
+                "system-ui, -apple-system, sans-serif",
+              cursor: "pointer",
+            }}
           >
             <option value="all">
               All Types
             </option>
-
             <option value="PERCENTAGE">
               Percentage
             </option>
-
             <option value="FLAT">
               Flat
             </option>
-
             <option value="FREE_DELIVERY">
               Free Delivery
             </option>
@@ -502,34 +728,500 @@ export default function CouponsPage() {
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div
+            style={{
+              marginTop: "1rem",
+              borderRadius: "8px",
+              border:
+                "0.5px solid #F7C1C1",
+              backgroundColor: "#FCEBEB",
+              padding: "0.75rem",
+              fontSize: "14px",
+              color: "#A32D2D",
+            }}
+          >
             {error}
           </div>
         ) : null}
       </div>
 
-      <CouponTable
-        coupons={
-          filteredCoupons
+      {/* Table */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "0.5px solid #d3d1c7",
+          borderRadius: "10px",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              fontSize: "14px",
+              borderCollapse: "collapse",
+            }}
+          >
+            <thead>
+              <tr
+                style={{
+                  borderBottom:
+                    "0.5px solid #d3d1c7",
+                  backgroundColor: "#f8f8f7",
+                }}
+              >
+                {[
+                  "Code",
+                  "Title",
+                  "Discount",
+                  "Redeemed",
+                  "Status",
+                  "Actions",
+                ].map((header) => (
+                  <th
+                    key={header}
+                    style={{
+                      textAlign: "left",
+                      padding: "0.75rem 1rem",
+                      fontWeight: "500",
+                      color: "#888780",
+                      fontSize: "12px",
+                      textTransform:
+                        "uppercase",
+                      letterSpacing:
+                        "0.5px",
+                    }}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({
+                  length: 6,
+                }).map((_, idx) => (
+                  <tr
+                    key={idx}
+                    style={{
+                      borderBottom:
+                        "0.5px solid #e8e8e8",
+                    }}
+                  >
+                    {Array.from({
+                      length: 6,
+                    }).map(
+                      (_, cdIdx) => (
+                        <td
+                          key={cdIdx}
+                          style={{
+                            padding: "1rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: "16px",
+                              backgroundColor:
+                                "#f0f0f0",
+                              borderRadius:
+                                "4px",
+                              animation:
+                                "pulse 2s infinite",
+                            }}
+                          />
+                        </td>
+                      )
+                    )}
+                  </tr>
+                ))
+              ) : filteredCoupons.length ===
+                0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    style={{
+                      padding: "4rem 1rem",
+                      textAlign: "center",
+                      fontSize: "14px",
+                      color: "#aaaaaa",
+                    }}
+                  >
+                    No coupons found.
+                  </td>
+                </tr>
+              ) : (
+                filteredCoupons.map(
+                  (coupon) => {
+                    const status =
+                      getStatusBadgeColor(
+                        coupon
+                      );
+
+                    return (
+                      <tr
+                        key={coupon._id}
+                        style={{
+                          borderBottom:
+                            "0.5px solid #e8e8e8",
+                          transition:
+                            "background 0.2s",
+                        }}
+                        onMouseEnter={(
+                          e
+                        ) => {
+                          (e.currentTarget
+                            .style as any)
+                            .backgroundColor =
+                            "#fafaf9";
+                        }}
+                        onMouseLeave={(
+                          e
+                        ) => {
+                          (e.currentTarget
+                            .style as any)
+                            .backgroundColor =
+                            "transparent";
+                        }}
+                      >
+                        <td
+                          style={{
+                            padding: "1rem",
+                            color: "#1a1a1a",
+                            fontWeight:
+                              "500",
+                          }}
+                        >
+                          <span
+                            style={{
+                              backgroundColor:
+                                "#f8f8f7",
+                              padding:
+                                "0.4rem 0.6rem",
+                              borderRadius:
+                                "6px",
+                              fontSize:
+                                "12px",
+                              fontWeight:
+                                "600",
+                              color: "#444441",
+                            }}
+                          >
+                            {
+                              coupon.code
+                            }
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "1rem",
+                            color: "#1a1a1a",
+                          }}
+                        >
+                          {coupon.title ||
+                            "Untitled"}
+                        </td>
+                        <td
+                          style={{
+                            padding: "1rem",
+                            color: "#1a1a1a",
+                            fontWeight:
+                              "500",
+                          }}
+                        >
+                          {getDiscountLabel(
+                            coupon
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            padding: "1rem",
+                            color: "#666666",
+                          }}
+                        >
+                          {coupon.limits
+                            ?.current_usage_count ||
+                            0}{" "}
+                          {typeof coupon
+                            .limits
+                            ?.total_usage_limit ===
+                            "number" &&
+                          coupon.limits
+                            ?.total_usage_limit >
+                            0
+                            ? `/ ${coupon.limits.total_usage_limit}`
+                            : ""}
+                        </td>
+                        <td
+                          style={{
+                            padding: "1rem",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display:
+                                "inline-block",
+                              padding:
+                                "0.3rem 0.6rem",
+                              borderRadius:
+                                "6px",
+                              fontSize:
+                                "12px",
+                              fontWeight:
+                                "500",
+                              backgroundColor:
+                                status.bg,
+                              color:
+                                status.text,
+                            }}
+                          >
+                            {
+                              status.label
+                            }
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "1rem",
+                            textAlign:
+                              "right",
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(
+                                `/coupons/${coupon._id}/edit`
+                              )
+                            }
+                            style={{
+                              backgroundColor:
+                                "transparent",
+                              border:
+                                "0.5px solid #b4b2a9",
+                              color: "#1a1a1a",
+                              padding:
+                                "0.35rem 0.7rem",
+                              borderRadius:
+                                "6px",
+                              fontSize:
+                                "12px",
+                              fontWeight:
+                                "500",
+                              cursor:
+                                "pointer",
+                              marginLeft:
+                                "6px",
+                              transition:
+                                "all 0.2s",
+                            }}
+                            onMouseEnter={(
+                              e
+                            ) => {
+                              (e.target as HTMLButtonElement)
+                                .style
+                                .backgroundColor =
+                                "#f8f8f7";
+                            }}
+                            onMouseLeave={(
+                              e
+                            ) => {
+                              (e.target as HTMLButtonElement)
+                                .style
+                                .backgroundColor =
+                                "transparent";
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            disabled={
+                              saving
+                            }
+                            onClick={() =>
+                              toggleCoupon(
+                                coupon
+                              )
+                            }
+                            style={{
+                              backgroundColor:
+                                "transparent",
+                              border:
+                                "0.5px solid #b4b2a9",
+                              color: "#1a1a1a",
+                              padding:
+                                "0.35rem 0.7rem",
+                              borderRadius:
+                                "6px",
+                              fontSize:
+                                "12px",
+                              fontWeight:
+                                "500",
+                              cursor: saving
+                                ? "not-allowed"
+                                : "pointer",
+                              marginLeft:
+                                "6px",
+                              transition:
+                                "all 0.2s",
+                              opacity: saving
+                                ? 0.6
+                                : 1,
+                            }}
+                            onMouseEnter={(
+                              e
+                            ) => {
+                              if (!saving) {
+                                (e.target as HTMLButtonElement)
+                                  .style
+                                  .backgroundColor =
+                                  "#f8f8f7";
+                              }
+                            }}
+                            onMouseLeave={(
+                              e
+                            ) => {
+                              (e.target as HTMLButtonElement)
+                                .style
+                                .backgroundColor =
+                                "transparent";
+                            }}
+                          >
+                            {coupon.is_active
+                              ? "Disable"
+                              : "Enable"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={
+                              saving
+                            }
+                            onClick={() =>
+                              deleteCoupon(
+                                coupon
+                              )
+                            }
+                            style={{
+                              backgroundColor:
+                                "transparent",
+                              border:
+                                "0.5px solid #F7C1C1",
+                              color: "#A32D2D",
+                              padding:
+                                "0.35rem 0.7rem",
+                              borderRadius:
+                                "6px",
+                              fontSize:
+                                "12px",
+                              fontWeight:
+                                "500",
+                              cursor: saving
+                                ? "not-allowed"
+                                : "pointer",
+                              marginLeft:
+                                "6px",
+                              transition:
+                                "all 0.2s",
+                              opacity: saving
+                                ? 0.6
+                                : 1,
+                            }}
+                            onMouseEnter={(
+                              e
+                            ) => {
+                              if (!saving) {
+                                (e.target as HTMLButtonElement)
+                                  .style
+                                  .backgroundColor =
+                                  "#FCEBEB";
+                              }
+                            }}
+                            onMouseLeave={(
+                              e
+                            ) => {
+                              (e.target as HTMLButtonElement)
+                                .style
+                                .backgroundColor =
+                                "transparent";
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  }
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
         }
-        loading={loading}
-        onEdit={(
-          coupon
-        ) =>
-          router.push(
-            `/coupons/${coupon._id}/edit`
-          )
-        }
-        onDelete={
-          deleteCoupon
-        }
-        onToggle={
-          toggleCoupon
-        }
-        actionLoading={
-          saving
-        }
-      />
+      `}</style>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div
+      style={{
+        backgroundColor: "#f8f8f7",
+        padding: "1rem",
+        borderRadius: "10px",
+        border: "0.5px solid #d3d1c7",
+      }}
+    >
+      <p
+        style={{
+          fontSize: "12px",
+          color: "#888780",
+          fontWeight: "500",
+          margin: "0 0 0.75rem",
+          letterSpacing: "0.5px",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          fontSize: "28px",
+          fontWeight: "500",
+          margin: "0",
+          color: "#1a1a1a",
+        }}
+      >
+        {value}
+      </p>
+      <p
+        style={{
+          fontSize: "12px",
+          color: "#aaaaaa",
+          margin: "0.5rem 0 0",
+        }}
+      >
+        {hint}
+      </p>
     </div>
   );
 }

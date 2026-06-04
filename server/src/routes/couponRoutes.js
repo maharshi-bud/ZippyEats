@@ -13,6 +13,7 @@ import {
   redeemCoupon,
   getAutoApplyCoupons,
   getPublicCoupons,
+  getCouponsAvailable,
 } from "../controllers/couponController.js";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ const router = express.Router();
 // ── Public (no auth required) ─────────────────────────────────
 // Browse available coupons on the app's coupon page
 router.get("/public", getPublicCoupons);
+router.get("/available", getCouponsAvailable);
 
 // ── Auth-required ─────────────────────────────────────────────
 router.use(protect);

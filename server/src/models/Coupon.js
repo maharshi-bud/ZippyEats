@@ -73,12 +73,16 @@ const requiresItemSchema = new Schema(
   { _id: false }
 );
 
+
 const buyXGetYSchema = new Schema(
   {
     buy_item: { type: Types.ObjectId, ref: "MenuItem", required: true },
     buy_qty:  { type: Number, required: true, min: 1 },
-    free_item:{ type: Types.ObjectId, ref: "MenuItem", required: true },
+    free_item:{ type: Types.ObjectId, ref: "MenuItem", required: false }, // ← CHANGE: required: false
     free_qty: { type: Number, default: 1, min: 1 },
+    // Guide-compatible aliases for alternative naming
+    get_item: { type: Types.ObjectId, ref: "MenuItem", default: null },
+    get_qty:  { type: Number, default: null, min: 0 },
   },
   { _id: false }
 );
@@ -101,7 +105,7 @@ const conditionsSchema = new Schema(
     max_order_amount: { type: Number, default: null, min: 0 },
 
     // ── Cart quantity gate ────────────────────────────────────
-    min_items: { type: Number, default: null, min: 1 },
+    min_items: { type: Number, default: null, min: 0 },
 
     // ── Payment restriction ───────────────────────────────────
     // [] = all methods allowed
@@ -155,6 +159,12 @@ const rewardSchema = new Schema(
 
     // ── free_item / bogo / buy_x_get_y ───────────────────────
     free_item: { type: Types.ObjectId, ref: "MenuItem", default: null },
+
+    // Optional explicit Buy X Get Y reward metadata
+    bxgy_reward: {
+      item_id: { type: Types.ObjectId, ref: "MenuItem", default: null },
+      qty:     { type: Number, default: 1, min: 1 },
+    },
 
     // ── cashback ──────────────────────────────────────────────
     cashback_amount: { type: Number, default: null, min: 0 },

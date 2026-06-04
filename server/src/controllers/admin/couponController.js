@@ -13,7 +13,8 @@ import CouponUsage from "../../models/CouponUsage.js";
 
 /**
  * Sanitize and build the coupon payload from request body.
- * Used by both createCoupon and updateCoupon.
+ * Used by both createCoupon and updat
+ * eCoupon.
  */
 function buildCouponPayload(body) {
   const {
@@ -23,20 +24,93 @@ function buildCouponPayload(body) {
     isActive, is_active, disabled,
   } = body;
 
-  let normalizedVisibility = visibility ? { ...visibility } : undefined;
-  const normalizedConditions = conditions ? { ...conditions } : undefined;
-
-  if (normalizedConditions) {
-    if (normalizedConditions.first_order_only !== undefined) {
-      normalizedConditions.first_order = Boolean(normalizedConditions.first_order_only);
-      if (!normalizedVisibility) {
-        normalizedVisibility = {};
-      }
-      normalizedVisibility.first_order_only = Boolean(normalizedConditions.first_order_only);
-    }
+  // ── Handle visibility ──────────────────────────────────────
+  let normalizedVisibility = visibility ? { ...visibility } : {};
+  if (conditions?.first_order) {
+    normalizedVisibility.first_order_only = true;
   }
 
-  let normalizedIsActive;
+  // ── Handle conditions (keep ALL sub-fields) ────────────────
+  const normalizedConditions = conditions ? {
+    // Order amount gates
+    min_order_amount: conditions.min_order_amount ?? null,
+    max_order_amount: conditions.max_order_amount ?? null,
+    
+    // Item count
+    min_items: conditions.min_items ?? null,
+    
+    // Order history
+    first_order: Boolean(conditions.first_order ?? false),
+    second_order: Boolean(conditions.second_order ?? false),
+    order_number: conditions.order_number ?? null,
+    
+    // Restaurant spend
+    min_restaurant_spend: conditions.min_restaurant_spend ?? null,
+    
+    // Restrictions
+    payment_methods: Array.isArray(conditions.payment_methods) 
+      ? conditions.payment_methods 
+      : [],
+    allowed_platforms: Array.isArray(conditions.allowed_platforms)
+      ? conditions.allowed_platforms
+      : [],
+    
+    // Complex conditions
+    requires_items: Array.isArray(conditions.requires_items)
+      ? conditions.requires_items
+      : [],
+    buy_x_get_y: conditions.buy_x_get_y ?? null,
+  } : {};
+
+  // ── Handle validity (keep ALL sub-fields) ──────────────────
+  const normalizedValidity = validity ? {
+    start_date: validity.start_date ?? null,
+    end_date: validity.end_date ?? null,
+    timezone: validity.timezone ?? "Asia/Kolkata",
+    days_allowed: Array.isArray(validity.days_allowed)
+      ? validity.days_allowed
+      : [],
+    time_ranges: Array.isArray(validity.time_ranges)
+      ? validity.time_ranges
+      : [],
+  } : {};
+
+  // ── Handle targeting ──────────────────────────────────────
+  const normalizedTargeting = targeting ? {
+    restaurants: Array.isArray(targeting.restaurants)
+      ? targeting.restaurants
+      : [],
+    cuisines: Array.isArray(targeting.cuisines)
+      ? targeting.cuisines
+      : [],
+    menu_items: Array.isArray(targeting.menu_items)
+      ? targeting.menu_items
+      : [],
+    cities: Array.isArray(targeting.cities)
+      ? targeting.cities
+      : [],
+    user_ids: Array.isArray(targeting.user_ids)
+      ? targeting.user_ids
+      : [],
+  } : {};
+
+  // ── Handle limits ──────────────────────────────────────────
+  const normalizedLimits = limits ? {
+    total_usage_limit: limits.total_usage_limit ?? null,
+    usage_per_user: limits.usage_per_user ?? 1,
+    current_usage_count: limits.current_usage_count ?? 0,
+  } : {};
+
+  // ── Handle stacking ────────────────────────────────────────
+  const normalizedStacking = stacking ? {
+    can_combine: Boolean(stacking.can_combine ?? false),
+    excludes: Array.isArray(stacking.excludes)
+      ? stacking.excludes
+      : [],
+  } : {};
+
+  // ── Normalize is_active ────────────────────────────────────
+  let normalizedIsActive = true;
   if (is_active !== undefined) {
     normalizedIsActive = Boolean(is_active);
   } else if (isActive !== undefined) {
@@ -46,21 +120,20 @@ function buildCouponPayload(body) {
   }
 
   return {
-    ...(code        !== undefined && { code:        code.trim().toUpperCase() }),
-    ...(title       !== undefined && { title:       title.trim() }),
+    ...(code && { code: code.trim().toUpperCase() }),
+    ...(title && { title: title.trim() }),
     ...(description !== undefined && { description: description.trim() }),
-    ...(type        !== undefined && { type }),
+    ...(type && { type }),
     ...(normalizedIsActive !== undefined && { is_active: normalizedIsActive }),
-    ...(normalizedVisibility !== undefined && { visibility: normalizedVisibility }),
-    ...(validity    !== undefined && { validity }),
-    ...(targeting   !== undefined && { targeting }),
-    ...(normalizedConditions !== undefined && { conditions: normalizedConditions }),
-    ...(reward      !== undefined && { reward }),
-    ...(limits      !== undefined && { limits }),
-    ...(stacking    !== undefined && { stacking }),
+    ...(Object.keys(normalizedVisibility).length > 0 && { visibility: normalizedVisibility }),
+    ...(Object.keys(normalizedValidity).length > 0 && { validity: normalizedValidity }),
+    ...(Object.keys(normalizedTargeting).length > 0 && { targeting: normalizedTargeting }),
+    ...(Object.keys(normalizedConditions).length > 0 && { conditions: normalizedConditions }),
+    ...(reward && { reward }),
+    ...(Object.keys(normalizedLimits).length > 0 && { limits: normalizedLimits }),
+    ...(Object.keys(normalizedStacking).length > 0 && { stacking: normalizedStacking }),
   };
 }
-
 /**
  * Validate the reward sub-document before save.
  * Returns an error string or null.

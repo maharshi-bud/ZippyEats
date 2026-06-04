@@ -235,3 +235,88 @@ export const getPublicCoupons = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch coupons." });
   }
 };
+
+export const getCouponsAvailable = async (req, res) => {
+  try {
+    const { restaurant_id, city } = req.query;
+    const now = new Date();
+
+    const query = {
+      is_active: true,
+      $or: [{ "validity.start_date": null }, { "validity.start_date": { $lte: now } }],
+      $and: [{ "$or": [{ "validity.end_date": null }, { "validity.end_date": { $gte: now } }] }],
+    };
+
+    if (restaurant_id) {
+      query["targeting.restaurants"] = { $in: [restaurant_id] };
+    }
+    if (city) {
+      query["targeting.cities"] = { $in: [city] };
+    }
+
+    const coupons = await Coupon.find(query)
+      .select("code title description type reward is_active validity targeting")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({ success: true, data: coupons });
+  } catch (err) {
+    console.error("[CouponCtrl] getCouponsAvailable:", err);
+    res.status(500).json({ message: "Failed to fetch available coupons." });
+  }
+};
+
+export const validateAdminCoupon = async (req, res) => {
+  try {
+    const { cart } = req.body;
+    if (!cart || typeof cart.subtotal !== "number") {
+      return res.status(400).json({ message: "Invalid cart payload." });
+    }
+
+    const coupon = await Coupon.findById(req.params.id);
+    if (!coupon) {
+      return res.status(404).json({ message: "Coupon not found." });
+    }
+
+    const cartCtx = {
+      user_id:        req.user.id,
+      restaurant_id:  cart.restaurant_id,
+      cuisines:       cart.cuisines        || [],
+      items:          cart.items           || [],
+      subtotal:       cart.subtotal,
+      delivery_fee:   cart.delivery_fee    ?? 40,
+      city:           cart.city            || "",
+      payment_method: cart.payment_method  || "cod",
+      platform:       cart.platform        || "web",
+    };
+
+    const validation = await validateCoupon(coupon, cartCtx);
+    if (!validation.valid) {
+      return res.status(422).json({
+        success: false,
+        valid: false,
+        reason: validation.reason,
+        coupon: {
+          _id: coupon._id,
+          code: coupon.code,
+          title: coupon.title,
+          reward: coupon.reward,
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      valid: true,
+      coupon: {
+        _id: coupon._id,
+        code: coupon.code,
+        title: coupon.title,
+        reward: coupon.reward,
+      },
+    });
+  } catch (err) {
+    console.error("[CouponCtrl] validateAdminCoupon:", err);
+    res.status(500).json({ message: "Failed to validate coupon." });
+  }
+};
