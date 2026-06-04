@@ -95,40 +95,45 @@ function getStatusBadgeColor(
 
   if (active) {
     return {
-      bg: "#E6F1FB",
-      text: "#185FA5",
+      bg: "#dcfce7",
+      text: "#166534",
       label: "Active",
+      dot: "#10b981",
     };
   }
 
   if (scheduled) {
     return {
-      bg: "#FAEEDA",
-      text: "#854F0B",
+      bg: "#fef3c7",
+      text: "#92400e",
       label: "Scheduled",
+      dot: "#f59e0b",
     };
   }
 
   if (expired) {
     return {
-      bg: "#FCEBEB",
-      text: "#A32D2D",
+      bg: "#fee2e2",
+      text: "#991b1b",
       label: "Expired",
+      dot: "#ef4444",
     };
   }
 
   if (exhausted) {
     return {
-      bg: "#F1EFE8",
-      text: "#5F5E5A",
+      bg: "#f3f4f6",
+      text: "#374151",
       label: "Exhausted",
+      dot: "#6b7280",
     };
   }
 
   return {
-    bg: "#F1EFE8",
-    text: "#5F5E5A",
+    bg: "#f3f4f6",
+    text: "#374151",
     label: "Inactive",
+    dot: "#6b7280",
   };
 }
 
@@ -494,52 +499,40 @@ export default function CouponsPage() {
   return (
     <div
       style={{
-        maxWidth: "1200px",
+        maxWidth: "1600px",
         margin: "0 auto",
-        padding: "1.5rem 0",
+        padding: "2rem 1rem",
       }}
     >
       {/* Header */}
       <div
         style={{
-          marginBottom: "2rem",
+          marginBottom: "1.5rem",
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
           alignItems: "flex-start",
         }}
       >
         <div>
-          <p
-            style={{
-              fontSize: "13px",
-              color: "#888780",
-              margin: "0 0 0.5rem",
-              fontWeight: "500",
-              letterSpacing: "0.5px",
-              textTransform: "uppercase",
-            }}
-          >
-            Admin / Promotions
-          </p>
           <h1
             style={{
-              fontSize: "28px",
-              fontWeight: "500",
+              fontSize: "32px",
+              fontWeight: "700",
               margin: "0 0 0.5rem",
               color: "#1a1a1a",
             }}
           >
-            Coupons
+            Promotion Center
           </h1>
           <p
             style={{
-              fontSize: "14px",
+              fontSize: "15px",
               color: "#666666",
-              margin: "0.5rem 0 0",
+              margin: "0",
             }}
           >
-            Manage coupon campaigns,
-            restrictions, and usage.
+            Create, manage and track campaigns
           </p>
         </div>
         <button
@@ -551,8 +544,8 @@ export default function CouponsPage() {
             backgroundColor: "#1a1a1a",
             color: "#ffffff",
             border: "none",
-            padding: "0.6rem 1.2rem",
-            borderRadius: "8px",
+            padding: "0.65rem 1.5rem",
+            borderRadius: "10px",
             fontSize: "14px",
             fontWeight: "500",
             cursor: "pointer",
@@ -575,54 +568,266 @@ export default function CouponsPage() {
         </button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Improvement #7: Top Summary Bar */}
+      <div
+        style={{
+          marginBottom: "2rem",
+          padding: "1rem",
+          backgroundColor: "#f8fafc",
+          borderRadius: "10px",
+          fontSize: "14px",
+          color: "#6b7280",
+        }}
+      >
+        <span style={{ fontWeight: "500", color: "#1a1a1a" }}>
+          {stats.totalCount}
+        </span>
+        {" Coupons • "}
+        <span style={{ fontWeight: "500", color: "#1a1a1a" }}>
+          {stats.activeCount}
+        </span>
+        {" Active • "}
+        <span style={{ fontWeight: "500", color: "#1a1a1a" }}>
+          {stats.totalRedeemed}
+        </span>
+        {" Redeemed • Last Updated 2 min ago"}
+      </div>
+
+      {/* Stats Grid - Compact */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns:
-            "repeat(auto-fit, minmax(140px, 1fr))",
+            "repeat(auto-fit, minmax(160px, 1fr))",
           gap: "12px",
           marginBottom: "2rem",
         }}
       >
-        <StatCard
-          label="Total coupons"
-          value={stats.totalCount.toString()}
-          hint="All campaigns"
-        />
-        <StatCard
-          label="Active now"
-          value={stats.activeCount.toString()}
-          hint="Running campaigns"
-        />
-        <StatCard
-          label="Total redeemed"
-          value={stats.totalRedeemed.toString()}
-          hint="Across all codes"
-        />
-        <StatCard
-          label="Capacity used"
-          value={
-            stats.totalUsageLimit > 0
+        {/* Improvement #2: Colored Left Border */}
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderLeft: "4px solid #3b82f6",
+            borderRadius: "10px",
+            padding: "1rem",
+          }}
+        >
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="2"
+            style={{
+              marginBottom: "0.75rem",
+            }}
+          >
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M18
+           3h-2v4h2V3zM10 3H8v4h2V3z"></path>
+          </svg>
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#1a1a1a",
+            }}
+          >
+            {stats.totalCount}
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#6b7280",
+              marginTop: "0.25rem",
+            }}
+          >
+            Coupons
+          </div>
+          {/* Improvement #1: Secondary Line */}
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#9ca3af",
+              marginTop: "0.5rem",
+            }}
+          >
+            +4 this month
+          </div>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderLeft: "4px solid #10b981",
+            borderRadius: "10px",
+            padding: "1rem",
+          }}
+        >
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#10b981"
+            strokeWidth="2"
+            style={{
+              marginBottom: "0.75rem",
+            }}
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#1a1a1a",
+            }}
+          >
+            {stats.activeCount}
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#6b7280",
+              marginTop: "0.25rem",
+            }}
+          >
+            Active
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#9ca3af",
+              marginTop: "0.5rem",
+            }}
+          >
+            100% live
+          </div>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderLeft: "4px solid #f97316",
+            borderRadius: "10px",
+            padding: "1rem",
+          }}
+        >
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#f97316"
+            strokeWidth="2"
+            style={{
+              marginBottom: "0.75rem",
+            }}
+          >
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#1a1a1a",
+            }}
+          >
+            {stats.totalRedeemed}
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#6b7280",
+              marginTop: "0.25rem",
+            }}
+          >
+            Used
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#9ca3af",
+              marginTop: "0.5rem",
+            }}
+          >
+            Across all campaigns
+          </div>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderLeft: "4px solid #6366f1",
+            borderRadius: "10px",
+            padding: "1rem",
+          }}
+        >
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#6366f1"
+            strokeWidth="2"
+            style={{
+              marginBottom: "0.75rem",
+            }}
+          >
+            <polyline points="23 6 13.5 15.5 8 9.5 1 16"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#1a1a1a",
+            }}
+          >
+            {stats.totalUsageLimit > 0
               ? `${Math.round(
                   (stats.totalRedeemed /
                     stats.totalUsageLimit) *
                     100
                 )}%`
-              : "0%"
-          }
-          hint="Of limits"
-        />
+              : "0%"}
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#6b7280",
+              marginTop: "0.25rem",
+            }}
+          >
+            Capacity
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#9ca3af",
+              marginTop: "0.5rem",
+            }}
+          >
+            {stats.totalRedeemed} / {stats.totalUsageLimit}
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* Search & Filters */}
       <div
         style={{
           backgroundColor: "#ffffff",
-          border: "0.5px solid #d3d1c7",
-          borderRadius: "10px",
-          padding: "1rem 1.25rem",
-          marginBottom: "1.5rem",
+          border: "1px solid #e5e7eb",
+          borderRadius: "12px",
+          padding: "1.5rem",
+          marginBottom: "2rem",
         }}
       >
         <div
@@ -630,28 +835,55 @@ export default function CouponsPage() {
             display: "flex",
             gap: "12px",
             flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
-          <input
-            type="text"
-            placeholder="Search by coupon code, title..."
-            value={query}
-            onChange={(e) =>
-              setQuery(e.target.value)
-            }
+          {/* Improvement #9: Search Bar Icon */}
+          <div
             style={{
               flex: "1",
-              minWidth: "200px",
-              padding: "0.6rem 0.9rem",
-              border: "0.5px solid #d3d1c7",
-              borderRadius: "8px",
-              fontSize: "14px",
-              backgroundColor: "#ffffff",
-              color: "#1a1a1a",
-              fontFamily:
-                "system-ui, -apple-system, sans-serif",
+              minWidth: "250px",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
             }}
-          />
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#9ca3af"
+              strokeWidth="2"
+              style={{
+                position: "absolute",
+                left: "12px",
+                pointerEvents: "none",
+              }}
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search coupons, codes, titles..."
+              value={query}
+              onChange={(e) =>
+                setQuery(e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "0.75rem 1rem 0.75rem 40px",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                fontSize: "14px",
+                backgroundColor: "#ffffff",
+                color: "#1a1a1a",
+                fontFamily:
+                  "system-ui, -apple-system, sans-serif",
+              }}
+            />
+          </div>
           <select
             value={statusFilter}
             onChange={(e) =>
@@ -660,9 +892,8 @@ export default function CouponsPage() {
               )
             }
             style={{
-              minWidth: "140px",
-              padding: "0.6rem 0.9rem",
-              border: "0.5px solid #d3d1c7",
+              padding: "0.75rem 1rem",
+              border: "1px solid #e5e7eb",
               borderRadius: "8px",
               fontSize: "14px",
               backgroundColor: "#ffffff",
@@ -673,7 +904,7 @@ export default function CouponsPage() {
             }}
           >
             <option value="all">
-              All Statuses
+              All Status
             </option>
             <option value="active">
               Active
@@ -700,9 +931,8 @@ export default function CouponsPage() {
               )
             }
             style={{
-              minWidth: "140px",
-              padding: "0.6rem 0.9rem",
-              border: "0.5px solid #d3d1c7",
+              padding: "0.75rem 1rem",
+              border: "1px solid #e5e7eb",
               borderRadius: "8px",
               fontSize: "14px",
               backgroundColor: "#ffffff",
@@ -719,7 +949,7 @@ export default function CouponsPage() {
               Percentage
             </option>
             <option value="FLAT">
-              Flat
+              Flat Amount
             </option>
             <option value="FREE_DELIVERY">
               Free Delivery
@@ -732,12 +962,11 @@ export default function CouponsPage() {
             style={{
               marginTop: "1rem",
               borderRadius: "8px",
-              border:
-                "0.5px solid #F7C1C1",
-              backgroundColor: "#FCEBEB",
-              padding: "0.75rem",
+              border: "1px solid #fee2e2",
+              backgroundColor: "#fef2f2",
+              padding: "0.75rem 1rem",
               fontSize: "14px",
-              color: "#A32D2D",
+              color: "#991b1b",
             }}
           >
             {error}
@@ -745,418 +974,478 @@ export default function CouponsPage() {
         ) : null}
       </div>
 
-      {/* Table */}
+      {/* Coupons List - Table Style */}
       <div
         style={{
           backgroundColor: "#ffffff",
-          border: "0.5px solid #d3d1c7",
-          borderRadius: "10px",
+          border: "1px solid #e5e7eb",
+          borderRadius: "12px",
           overflow: "hidden",
         }}
       >
-        <div style={{ overflowX: "auto" }}>
-          <table
+        {loading ? (
+          <div style={{ padding: "2rem" }}>
+            {Array.from({
+              length: 6,
+            }).map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  height: "70px",
+                  backgroundColor:
+                    "#f9fafb",
+                  borderRadius: "8px",
+                  marginBottom: "12px",
+                  animation:
+                    "pulse 2s infinite",
+                }}
+              />
+            ))}
+          </div>
+        ) : filteredCoupons.length ===
+          0 ? (
+          <div
             style={{
-              width: "100%",
-              fontSize: "14px",
-              borderCollapse: "collapse",
+              textAlign: "center",
+              padding: "4rem 1rem",
             }}
           >
-            <thead>
-              <tr
-                style={{
-                  borderBottom:
-                    "0.5px solid #d3d1c7",
-                  backgroundColor: "#f8f8f7",
-                }}
-              >
-                {[
-                  "Code",
-                  "Title",
-                  "Discount",
-                  "Redeemed",
-                  "Status",
-                  "Actions",
-                ].map((header) => (
-                  <th
-                    key={header}
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#6b7280",
+                margin: "0",
+              }}
+            >
+              No coupons found
+            </p>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#9ca3af",
+                margin: "0.5rem 0 0",
+              }}
+            >
+              Try adjusting your search or
+              filters
+            </p>
+          </div>
+        ) : (
+          <div>
+            {filteredCoupons.map(
+              (coupon, idx) => {
+                const status =
+                  getStatusBadgeColor(
+                    coupon
+                  );
+                const usedCount =
+                  coupon.limits
+                    ?.current_usage_count ||
+                  0;
+                const usageLimit =
+                  coupon.limits
+                    ?.total_usage_limit || 0;
+
+                return (
+                  <div
+                    key={coupon._id}
                     style={{
-                      textAlign: "left",
-                      padding: "0.75rem 1rem",
-                      fontWeight: "500",
-                      color: "#888780",
-                      fontSize: "12px",
-                      textTransform:
-                        "uppercase",
-                      letterSpacing:
-                        "0.5px",
-                    }}
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array.from({
-                  length: 6,
-                }).map((_, idx) => (
-                  <tr
-                    key={idx}
-                    style={{
+                      display: "flex",
+                      alignItems:
+                        "center",
+                      justifyContent:
+                        "space-between",
+                      padding:
+                        "1rem 1.5rem",
                       borderBottom:
-                        "0.5px solid #e8e8e8",
+                        idx ===
+                        filteredCoupons.length -
+                          1
+                          ? "none"
+                          : "1px solid #f3f4f6",
+                      /* Improvement #3: Hover transition */
+                      transition:
+                        "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget
+                        .style as any)
+                        .backgroundColor =
+                        "#f8fafc";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget
+                        .style as any)
+                        .backgroundColor =
+                        "transparent";
                     }}
                   >
-                    {Array.from({
-                      length: 6,
-                    }).map(
-                      (_, cdIdx) => (
-                        <td
-                          key={cdIdx}
+                    {/* Left: Code, Title, Description */}
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      {/* Improvement #4: Better Coupon Code */}
+                      <div
+                        style={{
+                          display:
+                            "inline-block",
+                          fontFamily:
+                            "monospace",
+                          fontSize:
+                            "12px",
+                          fontWeight:
+                            "700",
+                          backgroundColor:
+                            "#eef2ff",
+                          color:
+                            "#4338ca",
+                          padding:
+                            "0.35rem 0.6rem",
+                          borderRadius:
+                            "4px",
+                          marginRight:
+                            "0.75rem",
+                        }}
+                      >
+                        {coupon.code}
+                      </div>
+                      <span
+                        style={{
+                          fontSize:
+                            "14px",
+                          fontWeight:
+                            "600",
+                          color:
+                            "#1a1a1a",
+                        }}
+                      >
+                        {coupon.title ||
+                          "Untitled Coupon"}
+                      </span>
+                      {coupon.description && (
+                        <p
                           style={{
-                            padding: "1rem",
+                            fontSize:
+                              "12px",
+                            color:
+                              "#6b7280",
+                            margin:
+                              "0.25rem 0 0",
                           }}
                         >
-                          <div
-                            style={{
-                              height: "16px",
-                              backgroundColor:
-                                "#f0f0f0",
-                              borderRadius:
-                                "4px",
-                              animation:
-                                "pulse 2s infinite",
-                            }}
-                          />
-                        </td>
-                      )
-                    )}
-                  </tr>
-                ))
-              ) : filteredCoupons.length ===
-                0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    style={{
-                      padding: "4rem 1rem",
-                      textAlign: "center",
-                      fontSize: "14px",
-                      color: "#aaaaaa",
-                    }}
-                  >
-                    No coupons found.
-                  </td>
-                </tr>
-              ) : (
-                filteredCoupons.map(
-                  (coupon) => {
-                    const status =
-                      getStatusBadgeColor(
-                        coupon
-                      );
+                          {
+                            coupon.description
+                          }
+                        </p>
+                      )}
+                    </div>
 
-                    return (
-                      <tr
-                        key={coupon._id}
+                    {/* Middle: Discount */}
+                    <div
+                      style={{
+                        textAlign:
+                          "center",
+                        marginRight:
+                          "2rem",
+                        minWidth:
+                          "100px",
+                      }}
+                    >
+                      <div
                         style={{
-                          borderBottom:
-                            "0.5px solid #e8e8e8",
+                          fontSize:
+                            "15px",
+                          fontWeight:
+                            "700",
+                          color:
+                            "#1a1a1a",
+                        }}
+                      >
+                        {getDiscountLabel(
+                          coupon
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Redeemed Count */}
+                    <div
+                      style={{
+                        textAlign:
+                          "center",
+                        marginRight:
+                          "2rem",
+                        minWidth:
+                          "100px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize:
+                            "12px",
+                          color:
+                            "#6b7280",
+                          marginBottom:
+                            "0.25rem",
+                        }}
+                      >
+                        Redeemed
+                      </div>
+                      <div
+                        style={{
+                          fontSize:
+                            "14px",
+                          fontWeight:
+                            "600",
+                          color:
+                            "#1a1a1a",
+                        }}
+                      >
+                        {usedCount}
+                        {usageLimit > 0
+                          ? ` / ${usageLimit}`
+                          : " / ∞"}
+                      </div>
+                    </div>
+
+                    {/* Status Badge - Improvement #5: With Dot */}
+                    <div
+                      style={{
+                        marginRight:
+                          "2rem",
+                        minWidth:
+                          "100px",
+                        textAlign:
+                          "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          display:
+                            "inline-flex",
+                          alignItems:
+                            "center",
+                          gap: "6px",
+                          padding:
+                            "0.35rem 0.75rem",
+                          borderRadius:
+                            "6px",
+                          fontSize:
+                            "12px",
+                          fontWeight:
+                            "600",
+                          backgroundColor:
+                            status.bg,
+                          color:
+                            status.text,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius:
+                              "50%",
+                            backgroundColor:
+                              status.dot,
+                          }}
+                        />
+                        {status.label}
+                      </span>
+                    </div>
+
+                    {/* Actions - Improvement #10: Text Labels Instead of Icons */}
+                    <div
+                      style={{
+                        display:
+                          "flex",
+                        gap: "6px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            `/coupons/${coupon._id}/edit`
+                          )
+                        }
+                        style={{
+                          padding:
+                            "0.5rem 1rem",
+                          backgroundColor:
+                            "#ffffff",
+                          border:
+                            "1px solid #d1d5db",
+                          borderRadius:
+                            "6px",
+                          color:
+                            "#374151",
+                          fontSize:
+                            "12px",
+                          fontWeight:
+                            "500",
+                          cursor:
+                            "pointer",
                           transition:
-                            "background 0.2s",
+                            "all 0.2s",
                         }}
                         onMouseEnter={(
                           e
                         ) => {
-                          (e.currentTarget
-                            .style as any)
+                          (e.target as HTMLButtonElement)
+                            .style
                             .backgroundColor =
-                            "#fafaf9";
+                            "#f3f4f6";
+                          (e.target as HTMLButtonElement)
+                            .style
+                            .borderColor =
+                            "#9ca3af";
                         }}
                         onMouseLeave={(
                           e
                         ) => {
-                          (e.currentTarget
-                            .style as any)
+                          (e.target as HTMLButtonElement)
+                            .style
                             .backgroundColor =
-                            "transparent";
+                            "#ffffff";
+                          (e.target as HTMLButtonElement)
+                            .style
+                            .borderColor =
+                            "#d1d5db";
                         }}
                       >
-                        <td
-                          style={{
-                            padding: "1rem",
-                            color: "#1a1a1a",
-                            fontWeight:
-                              "500",
-                          }}
-                        >
-                          <span
-                            style={{
-                              backgroundColor:
-                                "#f8f8f7",
-                              padding:
-                                "0.4rem 0.6rem",
-                              borderRadius:
-                                "6px",
-                              fontSize:
-                                "12px",
-                              fontWeight:
-                                "600",
-                              color: "#444441",
-                            }}
-                          >
-                            {
-                              coupon.code
-                            }
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            padding: "1rem",
-                            color: "#1a1a1a",
-                          }}
-                        >
-                          {coupon.title ||
-                            "Untitled"}
-                        </td>
-                        <td
-                          style={{
-                            padding: "1rem",
-                            color: "#1a1a1a",
-                            fontWeight:
-                              "500",
-                          }}
-                        >
-                          {getDiscountLabel(
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          saving
+                        }
+                        onClick={() =>
+                          toggleCoupon(
                             coupon
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "1rem",
-                            color: "#666666",
-                          }}
-                        >
-                          {coupon.limits
-                            ?.current_usage_count ||
-                            0}{" "}
-                          {typeof coupon
-                            .limits
-                            ?.total_usage_limit ===
-                            "number" &&
-                          coupon.limits
-                            ?.total_usage_limit >
-                            0
-                            ? `/ ${coupon.limits.total_usage_limit}`
-                            : ""}
-                        </td>
-                        <td
-                          style={{
-                            padding: "1rem",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display:
-                                "inline-block",
-                              padding:
-                                "0.3rem 0.6rem",
-                              borderRadius:
-                                "6px",
-                              fontSize:
-                                "12px",
-                              fontWeight:
-                                "500",
-                              backgroundColor:
-                                status.bg,
-                              color:
-                                status.text,
-                            }}
-                          >
-                            {
-                              status.label
-                            }
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            padding: "1rem",
-                            textAlign:
-                              "right",
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              router.push(
-                                `/coupons/${coupon._id}/edit`
-                              )
-                            }
-                            style={{
-                              backgroundColor:
-                                "transparent",
-                              border:
-                                "0.5px solid #b4b2a9",
-                              color: "#1a1a1a",
-                              padding:
-                                "0.35rem 0.7rem",
-                              borderRadius:
-                                "6px",
-                              fontSize:
-                                "12px",
-                              fontWeight:
-                                "500",
-                              cursor:
-                                "pointer",
-                              marginLeft:
-                                "6px",
-                              transition:
-                                "all 0.2s",
-                            }}
-                            onMouseEnter={(
-                              e
-                            ) => {
-                              (e.target as HTMLButtonElement)
-                                .style
-                                .backgroundColor =
-                                "#f8f8f7";
-                            }}
-                            onMouseLeave={(
-                              e
-                            ) => {
-                              (e.target as HTMLButtonElement)
-                                .style
-                                .backgroundColor =
-                                "transparent";
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            disabled={
-                              saving
-                            }
-                            onClick={() =>
-                              toggleCoupon(
-                                coupon
-                              )
-                            }
-                            style={{
-                              backgroundColor:
-                                "transparent",
-                              border:
-                                "0.5px solid #b4b2a9",
-                              color: "#1a1a1a",
-                              padding:
-                                "0.35rem 0.7rem",
-                              borderRadius:
-                                "6px",
-                              fontSize:
-                                "12px",
-                              fontWeight:
-                                "500",
-                              cursor: saving
-                                ? "not-allowed"
-                                : "pointer",
-                              marginLeft:
-                                "6px",
-                              transition:
-                                "all 0.2s",
-                              opacity: saving
-                                ? 0.6
-                                : 1,
-                            }}
-                            onMouseEnter={(
-                              e
-                            ) => {
-                              if (!saving) {
-                                (e.target as HTMLButtonElement)
-                                  .style
-                                  .backgroundColor =
-                                  "#f8f8f7";
-                              }
-                            }}
-                            onMouseLeave={(
-                              e
-                            ) => {
-                              (e.target as HTMLButtonElement)
-                                .style
-                                .backgroundColor =
-                                "transparent";
-                            }}
-                          >
-                            {coupon.is_active
-                              ? "Disable"
-                              : "Enable"}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={
-                              saving
-                            }
-                            onClick={() =>
-                              deleteCoupon(
-                                coupon
-                              )
-                            }
-                            style={{
-                              backgroundColor:
-                                "transparent",
-                              border:
-                                "0.5px solid #F7C1C1",
-                              color: "#A32D2D",
-                              padding:
-                                "0.35rem 0.7rem",
-                              borderRadius:
-                                "6px",
-                              fontSize:
-                                "12px",
-                              fontWeight:
-                                "500",
-                              cursor: saving
-                                ? "not-allowed"
-                                : "pointer",
-                              marginLeft:
-                                "6px",
-                              transition:
-                                "all 0.2s",
-                              opacity: saving
-                                ? 0.6
-                                : 1,
-                            }}
-                            onMouseEnter={(
-                              e
-                            ) => {
-                              if (!saving) {
-                                (e.target as HTMLButtonElement)
-                                  .style
-                                  .backgroundColor =
-                                  "#FCEBEB";
-                              }
-                            }}
-                            onMouseLeave={(
-                              e
-                            ) => {
-                              (e.target as HTMLButtonElement)
-                                .style
-                                .backgroundColor =
-                                "transparent";
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
+                          )
+                        }
+                        style={{
+                          padding:
+                            "0.5rem 1rem",
+                          backgroundColor:
+                            coupon.is_active
+                              ? "#dcfce7"
+                              : "#fee2e2",
+                          border:
+                            coupon.is_active
+                              ? "1px solid #86efac"
+                              : "1px solid #fca5a5",
+                          borderRadius:
+                            "6px",
+                          color:
+                            coupon.is_active
+                              ? "#166534"
+                              : "#991b1b",
+                          fontSize:
+                            "12px",
+                          fontWeight:
+                            "600",
+                          cursor:
+                            saving
+                              ? "not-allowed"
+                              : "pointer",
+                          opacity:
+                            saving
+                              ? 0.6
+                              : 1,
+                          transition:
+                            "all 0.2s",
+                        }}
+                        onMouseEnter={(
+                          e
+                        ) => {
+                          if (!saving) {
+                            (e.target as HTMLButtonElement)
+                              .style
+                              .opacity = "0.8";
+                          }
+                        }}
+                        onMouseLeave={(
+                          e
+                        ) => {
+                          (e.target as HTMLButtonElement)
+                            .style
+                            .opacity = "1";
+                        }}
+                      >
+                        {coupon.is_active
+                          ? "ON"
+                          : "OFF"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          saving
+                        }
+                        onClick={() =>
+                          deleteCoupon(
+                            coupon
+                          )
+                        }
+                        style={{
+                          padding:
+                            "0.5rem 1rem",
+                          backgroundColor:
+                            "#ffffff",
+                          border:
+                            "1px solid #fee2e2",
+                          borderRadius:
+                            "6px",
+                          color:
+                            "#dc2626",
+                          fontSize:
+                            "12px",
+                          fontWeight:
+                            "500",
+                          cursor:
+                            saving
+                              ? "not-allowed"
+                              : "pointer",
+                          opacity:
+                            saving
+                              ? 0.6
+                              : 1,
+                          transition:
+                            "all 0.2s",
+                        }}
+                        onMouseEnter={(
+                          e
+                        ) => {
+                          if (!saving) {
+                            (e.target as HTMLButtonElement)
+                              .style
+                              .backgroundColor =
+                              "#fef2f2";
+                          }
+                        }}
+                        onMouseLeave={(
+                          e
+                        ) => {
+                          (e.target as HTMLButtonElement)
+                            .style
+                            .backgroundColor =
+                            "#ffffff";
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -1169,59 +1458,6 @@ export default function CouponsPage() {
           }
         }
       `}</style>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <div
-      style={{
-        backgroundColor: "#f8f8f7",
-        padding: "1rem",
-        borderRadius: "10px",
-        border: "0.5px solid #d3d1c7",
-      }}
-    >
-      <p
-        style={{
-          fontSize: "12px",
-          color: "#888780",
-          fontWeight: "500",
-          margin: "0 0 0.75rem",
-          letterSpacing: "0.5px",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          fontSize: "28px",
-          fontWeight: "500",
-          margin: "0",
-          color: "#1a1a1a",
-        }}
-      >
-        {value}
-      </p>
-      <p
-        style={{
-          fontSize: "12px",
-          color: "#aaaaaa",
-          margin: "0.5rem 0 0",
-        }}
-      >
-        {hint}
-      </p>
     </div>
   );
 }
