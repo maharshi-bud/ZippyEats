@@ -50,6 +50,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    // Validate menu_item_id values and build a list of unique ObjectIds
     const menuIds = items.map((i) => {
       if (!mongoose.Types.ObjectId.isValid(i.menu_item_id)) {
         throw new Error("Invalid menu_item_id");
@@ -57,11 +58,17 @@ export const createOrder = async (req, res) => {
       return new mongoose.Types.ObjectId(i.menu_item_id);
     });
 
+    // Use unique IDs when querying DB so duplicate items (e.g. free reward copies)
+    // don't cause a false-negative "Invalid menu items" response.
+    const uniqueMenuIds = Array.from(new Set(menuIds.map((id) => id.toString()))).map(
+      (s) => new mongoose.Types.ObjectId(s)
+    );
+
     const menuItems = await MenuItem.find({
-      _id: { $in: menuIds },
+      _id: { $in: uniqueMenuIds },
     }).session(session);
 
-    if (menuItems.length !== items.length) {
+    if (menuItems.length !== uniqueMenuIds.length) {
       return res.status(400).json({
         success: false,
         message: "Invalid menu items",

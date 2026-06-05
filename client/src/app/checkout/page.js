@@ -307,22 +307,15 @@ export default function CheckoutPage() {
                 freeItemId
             );
 
-          dispatch(
+         dispatch(
             addToCart({
+              ...(matchedItem || {}),
               menu_item_id: freeItemId,
-              name:
-                matchedItem?.name ||
-                coupon.reward_label ||
-                "Free item",
-              image:
-                matchedItem?.image ||
-                null,
-              restaurant_id:
-                matchedItem?.restaurant_id,
               quantity: freeItemQty,
-              price: 0,
-              isFree: true,
+              // Add as a regular item (not flagged as free) so backend validation
+              // and totals include it like any other menu item.
               reward_type: "bxgy",
+              price: matchedItem?.price || (coupon.discount_amount / freeItemQty),
             })
           );
         }
@@ -484,6 +477,9 @@ export default function CheckoutPage() {
 
                     quantity:
                       i.quantity,
+                      
+                    price: 
+                      i.price || 0, // ✅ CRITICAL: Send the full original price to the backend
                   })
                 ),
 
@@ -1016,10 +1012,8 @@ export default function CheckoutPage() {
                     }
                   </span>
 
-                  <span className="font-semibold text-slate-800">
-                    ₹
-                    {item.price *
-                      item.quantity}
+                <span className="font-semibold text-slate-800">
+                    ₹{(item.price || 0) * item.quantity}
                   </span>
                 </div>
               )

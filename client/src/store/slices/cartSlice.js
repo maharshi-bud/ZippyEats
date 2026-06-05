@@ -56,7 +56,7 @@ const cartSlice = createSlice({
       _id: reward_item_id,
       name: item.name, // Update with actual reward name if available
       quantity: totalRewardQuantity,
-      price: 0,
+      price: item.price,
       originalPrice: item.price,
       isRewardItem: true,
       image: item.image,
@@ -188,7 +188,9 @@ export const selectCartItems = (state) =>
 export const selectCartTotal = (state) => {
   const items = Array.isArray(state.cart?.items) ? state.cart.items : [];
   return items.reduce(
-    (total, item) => total + (item.price || 0) * (item.quantity || 0),
+    (total, item) => 
+      // If it's a free reward, add 0 to the total. Otherwise, add normal price.
+      total + ( (item.price || 0) * (item.quantity || 0)),
     0
   );
 };

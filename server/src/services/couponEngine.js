@@ -144,15 +144,15 @@ function calcBXGY(reward, coupon, cart) {
     (i) => i.item_id.toString() === bxgy.buy_item?.toString()
   );
 
-  const buyQty = buyItem?.qty || 0;
+  const buyQty = buyItem?.qty || 1;
   const freeQty = bxgy.get_qty || 1;
   const pairSize = (bxgy.buy_qty || 1) + freeQty;
 
   // Calculate eligible free items
-  const eligibleFreeQty = Math.floor(buyQty / pairSize) * freeQty;
+  const eligibleFreeQty = Math.floor(buyQty / bxgy.buy_qty) * freeQty;
 
   // Discount = price of free items
-  const freeItemPrice = buyItem?.price || 0;
+  const freeItemPrice = buyItem?.price ;
   const discountAmount = freeItemPrice * eligibleFreeQty;
 
   result.reward_label = `Buy ${bxgy.buy_qty} → Get ${freeQty} Free!`;
@@ -263,8 +263,8 @@ export function calculateReward(coupon, cart) {
     case "cashback":
       return calcCashback(reward, cart);
 
-    case "bogo":
-      return calcBogo(reward, coupon, cart);
+    // case "bogo":
+    //   return calcBogo(reward, coupon, cart);
 
     default:
       throw new Error(`[CouponEngine] Unknown reward type: "${reward.type}"`);
