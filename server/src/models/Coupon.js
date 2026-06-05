@@ -165,7 +165,7 @@ const rewardSchema = new Schema(
       item_id: { type: Types.ObjectId, ref: "MenuItem", default: null },
       qty:     { type: Number, default: 1, min: 1 },
     },
-
+    
     // ── cashback ──────────────────────────────────────────────
     cashback_amount: { type: Number, default: null, min: 0 },
 
@@ -251,6 +251,13 @@ const couponSchema = new Schema(
     targeting:  { type: targetingSchema,    default: () => ({}) },
     conditions: { type: conditionsSchema,   default: () => ({}) },
     reward:     { type: rewardSchema,       required: true },
+       bxgy_config: {
+      buy_item: { type: Types.ObjectId, ref: "MenuItem", required: false },
+      buy_qty: { type: Number, default: 1, min: 1 },
+      free_item: { type: Types.ObjectId, ref: "MenuItem", required: false },
+      free_qty: { type: Number, default: 1, min: 1 },
+      max_applications: { type: Number, default: 1, min: 1 },
+    },
     limits:     { type: limitsSchema,       default: () => ({}) },
     stacking:   { type: stackingSchema,     default: () => ({}) },
     analytics:  { type: analyticsSchema,    default: () => ({}) },

@@ -59,13 +59,13 @@ export type Coupon = {
 
   // ── REWARD ──
   reward?: {
-    type?: "percentage" | "flat" | "free_delivery";
+    type?: "percentage" | "flat" | "free_delivery" | "bxgy";
     value?: number;
     max_discount?: number | null;
     bxgy_reward?: {
       item_id: string;
       qty: number;
-    };
+    };  
   };
 
   // ── LIMITS ──
@@ -296,11 +296,13 @@ function hydrateForm(coupon?: Coupon | null): CouponFormState {
 
     couponType: coupon.type || "coupon",
     discountType:
-      coupon.reward?.type === "percentage"
-        ? "PERCENTAGE"
-        : coupon.reward?.type === "flat"
-          ? "FLAT"
-          : "FREE_DELIVERY",
+  coupon.reward?.type === "percentage"
+    ? "PERCENTAGE"
+    : coupon.reward?.type === "flat"
+      ? "FLAT"
+      : coupon.reward?.type === "bxgy"
+        ? "BXGY"
+        : "FREE_DELIVERY",
 
     discountValue: String(coupon.reward?.value || ""),
     maxDiscount: String(coupon.reward?.max_discount || ""),
@@ -332,11 +334,11 @@ function hydrateForm(coupon?: Coupon | null): CouponFormState {
     applicableCities: listToCsv(coupon.targeting?.cities || []),
     applicableUserIds: listToCsv(coupon.targeting?.user_ids || []),
 
-    buyXGetYEnabled: !!coupon.conditions?.buy_x_get_y,
-    buyXItem: coupon.conditions?.buy_x_get_y?.buy_item || "",
-    buyXQty: String(coupon.conditions?.buy_x_get_y?.buy_qty || "1"),
-    getYItem: coupon.conditions?.buy_x_get_y?.get_item || "",
-    getYQty: String(coupon.conditions?.buy_x_get_y?.get_qty || "1"),
+  buyXGetYEnabled: !!coupon.reward?.bxgy_reward,
+buyXItem: coupon.conditions?.buy_x_get_y?.buy_item || "",
+buyXQty: String(coupon.conditions?.buy_x_get_y?.buy_qty || "1"),
+getYItem: coupon.reward?.bxgy_reward?.item_id || "",
+getYQty: String(coupon.reward?.bxgy_reward?.qty || "1"),
 
     usageLimit: String(coupon.limits?.total_usage_limit || ""),
     usagePerUserLimit: String(coupon.limits?.usage_per_user || "1"),
@@ -450,6 +452,23 @@ export default function CouponForm({
   });
 
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+useEffect(() => {
+  const fetchMenuItems = async () => {
+    try {
+      const response = await fetch("http://localhost:5010/api/menu");
+      const data = await response.json();
+      setMenuItems(data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch menu items:", error);
+    }
+  };
+
+  fetchMenuItems();
+}, []);
+
+
+
 
   useEffect(() => {
     setForm(hydrateForm(initialData));
@@ -661,26 +680,26 @@ export default function CouponForm({
             </select>
           </Field>
 
-          {form.discountType !== "FREE_DELIVERY" ? (
-            <Field label="Discount Value">
-              <input
-                value={form.discountValue}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    discountValue: e.target.value,
-                  }))
-                }
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder={form.discountType === "PERCENTAGE" ? "20" : "500"}
-                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-              />
-            </Field>
-          ) : null}
+         {form.discountType !== "FREE_DELIVERY" && form.discountType !== "BXGY" ? (
+  <Field label="Discount Value">
+    <input
+      value={form.discountValue}
+      onChange={(e) =>
+        setForm((prev) => ({
+          ...prev,
+          discountValue: e.target.value,
+        }))
+      }
+      type="number"
+      min="0"
+      step="0.01"
+      placeholder={form.discountType === "PERCENTAGE" ? "20" : "500"}
+      className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+    />
+  </Field>
+) : null}
 
-          {form.discountType === "PERCENTAGE" ? (
+          {form.discountType === "PERCENTAGE"  ? (
             <Field label="Max Discount Cap" hint="Max amount user saves (₹)">
               <input
                 value={form.maxDiscount}
@@ -700,80 +719,82 @@ export default function CouponForm({
           ) : null}
 
           <div className="md:col-span-2">
-            <CheckField
-              label="Buy X Get Y"
-              checked={form.buyXGetYEnabled}
-              onChange={(checked) =>
-                setForm((prev) => ({
-                  ...prev,
-                  buyXGetYEnabled: checked,
-                }))
-              }
-              hint="Special bundle promotion"
-            />
-          </div>
+  <CheckField
+    label="Buy X Get Y"
+    checked={form.buyXGetYEnabled}
+    onChange={(checked) =>
+      setForm((prev) => ({
+        ...prev,
+        buyXGetYEnabled: checked,
+      }))
+    }
+    hint="Special bundle promotion"
+  />
+</div>
 
-          {form.buyXGetYEnabled ? (
-            <>
-              <Field label="Buy Item ID">
-                <input
-                  value={form.buyXItem}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      buyXItem: e.target.value,
-                    }))
-                  }
-                  placeholder="Item ID to buy"
-                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-                />
-              </Field>
+{form.buyXGetYEnabled ? (
+  <>
+    <Field label="Buy Item">
+      <select 
+        value={form.buyXItem}
+        onChange={(e) =>
+          setForm((prev) => ({
+            ...prev,
+            buyXItem: e.target.value,
+          }))
+        }
+        className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+      >
+        <option value="">Select item to buy</option>
+        {menuItems?.map(item => (
+          <option key={item._id} value={item._id}>
+            {item.name} (₹{item.price})
+          </option>
+        ))}
+      </select>
+    </Field>
+    
+    <Field label="Buy Quantity">
+      <input 
+        type="number" 
+        value={form.buyXQty}
+        onChange={(e) => setForm(prev => ({ ...prev, buyXQty: e.target.value }))}
+        min="1"
+        className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+      />
+    </Field>
 
-              <Field label="Buy Quantity">
-                <input
-                  value={form.buyXQty}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      buyXQty: e.target.value,
-                    }))
-                  }
-                  type="number"
-                  min="1"
-                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-                />
-              </Field>
+    <Field label="Get Item (Free)">
+      <select 
+        value={form.getYItem}
+        onChange={(e) =>
+          setForm((prev) => ({
+            ...prev,
+            getYItem: e.target.value,
+          }))
+        }
+        className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+      >
+        <option value="">Select item to give free</option>
+        {menuItems?.map(item => (
+          <option key={item._id} value={item._id}>
+            {item.name} (₹{item.price})
+          </option>
+        ))}
+      </select>
+    </Field>
 
-              <Field label="Get Item ID">
-                <input
-                  value={form.getYItem}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      getYItem: e.target.value,
-                    }))
-                  }
-                  placeholder="Item ID to get free"
-                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-                />
-              </Field>
-
-              <Field label="Get Quantity">
-                <input
-                  value={form.getYQty}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      getYQty: e.target.value,
-                    }))
-                  }
-                  type="number"
-                  min="1"
-                  className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
-                />
-              </Field>
-            </>
-          ) : null}
+    <Field label="Get Quantity">
+      <input 
+        type="number" 
+        value={form.getYQty}
+        onChange={(e) => setForm(prev => ({ ...prev, getYQty: e.target.value }))}
+        min="1"
+        className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition focus:border-zinc-400"
+      />
+    </Field>
+  </>
+) : null}
         </div>
       </Section>
 

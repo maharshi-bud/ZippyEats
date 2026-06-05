@@ -5,14 +5,103 @@ import User from "../../models/User.js";
 import MenuItem from "../../models/MenuItem.js";
 import Restaurant from "../../models/Restaurant.js";
 import { updateOrderStatus as updateScheduledOrderStatus } from "../../services/orderEngine.js";
-
+import Coupon from "../../models/Coupon.js";  // ← ADD THIS
+import CouponUsage from "../../models/CouponUsage.js";  // ← ADD THIS
  import {
   notifyOrderCreated,
   notifyOrderStatusChanged,
   notifyOrderCancelled,
 } from "../../services/fcmService.js";
+import { validateCoupon, calculateBXGYRewards } from "../../utils/couponValidation.js";  // ← ADD THIS
 
 
+export const createOrder = async (req, res) => {
+  try {
+    const { cart, coupon, deliveryAddress } = req.body;
+    const userId = req.user._id;
+
+    // Validate coupon if provided
+    let discount = 0;
+    let finalCart = [...cart];
+
+    if (coupon?.code) {
+      const couponDoc = await Coupon.findByCode(coupon.code);
+      if (!couponDoc) {
+        return res.status(400).json({ error: "Invalid coupon code" });
+      }
+
+      const validationResult = await validateCoupon(couponDoc, { items: cart });
+      if (!validationResult.valid) {
+        return res.status(400).json({ error: validationResult.reason });
+      }
+
+      // Handle BXGY coupon
+      if (couponDoc.reward.type === "bxgy" && couponDoc.bxgy_config) {
+        const bxgyResult = calculateBXGYRewards(couponDoc, { items: cart });
+        if (bxgyResult.valid && bxgyResult.rewards.length > 0) {
+          // Add rewards to cart
+          for (const reward of bxgyResult.rewards) {
+            finalCart.push({
+              menu_item_id: reward.item_id,
+              quantity: reward.quantity,
+              price: 0,
+              originalPrice: reward.originalPrice,
+              isRewardItem: true,
+            });
+          }
+          discount = bxgyResult.rewards.reduce(
+            (sum, r) => sum + (r.originalPrice * r.quantity),
+            0
+          );
+        }
+      } else {
+        // Regular coupon discount
+        discount = couponDoc.reward.value || 0;
+      }
+    }
+
+    // Calculate totals
+    const subtotal = finalCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const deliveryFee = 40;
+    const total = subtotal + deliveryFee - discount;
+
+    // Create order
+    const order = new Order({
+      user_id: userId,
+      items: finalCart,
+      subtotal,
+      discount,
+      delivery_fee: deliveryFee,
+      total_amount: total,
+      delivery_address: deliveryAddress,
+      payment_method: req.body.paymentMethod || "cod",
+      status: "placed",
+      coupon_code: coupon?.code,
+      coupon_type: coupon?.reward?.type,
+      bxgy_rewards: coupon?.reward?.type === "bxgy" ? finalCart.filter(i => i.isRewardItem) : null,
+    });
+
+    await order.save();
+
+    // Mark coupon as used
+    if (coupon?.code) {
+      await CouponUsage.create({
+        coupon_code: coupon.code,
+        user_id: userId,
+        order_id: order._id,
+      });
+    }
+
+    res.json({
+      success: true,
+      orderId: order._id,
+      total: total,
+    });
+  } catch (error) {
+    console.error("Order creation error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 export const getOrderById = async (req, res) => {
   try {

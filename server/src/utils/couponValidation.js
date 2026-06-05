@@ -414,23 +414,57 @@ export function validateRequiredItems(coupon, cart) {
  * @param {CartContext} cart
  * @returns {ValidationResult}
  */
-export function validateBuyXGetY(coupon, cart) {
-  const bxgy = coupon.conditions.buy_x_get_y;
-  if (!bxgy) return { valid: true };
+export const validateBuyXGetY = (coupon, cart) => {
+  if (coupon.reward_type !== 'bxgy' || !coupon.bxgy_config) {
+    return { valid: true };
+  }
 
-  const cartItemMap = new Map(
-    cart.items.map((i) => [i.item_id.toString(), i.qty])
+  const { trigger_item_id, trigger_quantity, reward_item_id } = coupon.bxgy_config;
+
+  // Check if trigger item exists with sufficient quantity
+  const triggerItems = cart.items.filter(
+    item => item.item_id?.toString?.() === trigger_item_id?.toString?.()
   );
 
-  const buyQty = cartItemMap.get(bxgy.buy_item.toString()) || 0;
-  if (buyQty < bxgy.buy_qty) {
+  const totalTrigger = triggerItems.reduce((sum, item) => sum + item.quantity, 0);
+  console.log(totalTrigger, trigger_quantity );
+  if (totalTrigger < trigger_quantity) {
     return {
       valid: false,
-      reason: `Add ${bxgy.buy_qty} of the required item to get the free reward.`,
+      reason: `Need at least ${trigger_quantity} unit(s) of trigger item for this offer`,
     };
   }
+
   return { valid: true };
-}
+};
+
+export const calculateBXGYRewards = (coupon, cart) => {
+  if (coupon.reward_type !== 'bxgy' || !coupon.bxgy_config) {
+    return { rewards: [], valid: true };
+  }
+
+  const { trigger_item_id, trigger_quantity, reward_item_id, reward_quantity, max_applications } = coupon.bxgy_config;
+
+  const triggerCount = cart.items
+    .filter(item => item.item_id?.toString?.() === trigger_item_id?.toString?.() && !item.isRewardItem)
+    .reduce((sum, item) => sum + item.quantity, 0);
+
+  const applicationsEarned = Math.floor(triggerCount / trigger_quantity);
+  const applicationsAllowed = Math.min(applicationsEarned, max_applications);
+  const totalRewardQuantity = applicationsAllowed * reward_quantity;
+
+  return {
+    valid: true,
+    rewards: [
+      {
+        item_id: reward_item_id,
+        quantity: totalRewardQuantity,
+        price: 0,
+        isRewardItem: true,
+      },
+    ],
+  };
+};
 
 // ─────────────────────────────────────────────────────────────
 // 16. Per-user usage limit  (DB hit)

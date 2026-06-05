@@ -13,24 +13,128 @@ const cartSlice = createSlice({
       state.items = Array.isArray(action.payload) ? action.payload : [];
     },
 
+    addItemWithBXGYCheck(state, action) {
+  const { item, couponData } = action.payload;
+  
+  // Add regular item
+  const existingItem = state.items.find(i => i._id === item._id);
+  if (existingItem) {
+    existingItem.quantity += item.quantity;
+  } else {
+    state.items.push({
+      ...item,
+      quantity: item.quantity || 1,
+      isRewardItem: false,
+    });
+  }
+
+  // Check if coupon is BXGY and trigger item was added
+  if (couponData?.reward_type !== 'bxgy' || !couponData?.bxgy_config) return;
+
+  const { trigger_item_id, reward_item_id, trigger_quantity, reward_quantity, max_applications } = couponData.bxgy_config;
+
+  if (item._id.toString() !== trigger_item_id?.toString?.()) return;
+
+  // Count trigger items
+  const triggerCount = state.items
+    .filter(i => i._id.toString() === trigger_item_id?.toString?.() && !i.isRewardItem)
+    .reduce((sum, i) => sum + i.quantity, 0);
+
+  const applicationsEarned = Math.floor(triggerCount / trigger_quantity);
+  const applicationsAllowed = Math.min(applicationsEarned, max_applications);
+  const totalRewardQuantity = applicationsAllowed * reward_quantity;
+
+  // Find or create reward item
+  const existingReward = state.items.find(
+    i => i._id.toString() === reward_item_id?.toString?.() && i.isRewardItem
+  );
+
+  if (existingReward) {
+    existingReward.quantity = totalRewardQuantity;
+  } else {
+    state.items.push({
+      _id: reward_item_id,
+      name: item.name, // Update with actual reward name if available
+      quantity: totalRewardQuantity,
+      price: 0,
+      originalPrice: item.price,
+      isRewardItem: true,
+      image: item.image,
+    });
+  }
+},
+updateQuantityWithBXGY(state, action) {
+  const { itemId, quantity, couponData } = action.payload;
+  const item = state.items.find(i => i._id === itemId);
+
+  if (!item || item.isRewardItem) return;
+
+  item.quantity = quantity;
+
+  // Recalculate rewards
+  if (couponData?.reward_type !== 'bxgy' || !couponData?.bxgy_config) return;
+
+  const { trigger_item_id, reward_item_id, trigger_quantity, reward_quantity, max_applications } = couponData.bxgy_config;
+
+  if (itemId.toString() !== trigger_item_id?.toString?.()) return;
+
+  const triggerCount = state.items
+    .filter(i => i._id.toString() === trigger_item_id?.toString?.() && !i.isRewardItem)
+    .reduce((sum, i) => sum + i.quantity, 0);
+
+  const totalRewardQuantity = Math.min(
+    Math.floor(triggerCount / trigger_quantity),
+    max_applications
+  ) * reward_quantity;
+
+  const rewardItem = state.items.find(
+    i => i._id.toString() === reward_item_id?.toString?.() && i.isRewardItem
+  );
+
+  if (rewardItem) {
+    rewardItem.quantity = totalRewardQuantity;
+  }
+},
+
+removeItemWithBXGYCleanup(state, action) {
+  const itemId = action.payload;
+  
+  // Check if this item triggers rewards
+  const coupon = state.appliedCoupon;
+  if (coupon?.reward_type === 'bxgy' && coupon?.bxgy_config?.trigger_item_id?.toString?.() === itemId?.toString?.()) {
+    // Also remove reward items
+    state.items = state.items.filter(
+      item => item._id?.toString?.() !== coupon.bxgy_config.reward_item_id?.toString?.() || !item.isRewardItem
+    );
+  }
+
+  // Remove the item
+  state.items = state.items.filter(item => item._id !== itemId);
+},
+
     addToCart: (state, action) => {
       const item = action.payload;
-      console.log(item)
       const existing = state.items.find(
-        (i) => i.menu_item_id === item.menu_item_id
+        (i) =>
+          i.menu_item_id === item.menu_item_id &&
+          Boolean(i.isFree) === Boolean(item.isFree)
       );
+
       if (existing) {
-        existing.quantity += 1;
-    //       if (!existing.restaurant_id) {
-    //   existing.restaurant_id = item.restaurant_id;
-    // }
-      
-      } 
-      
-      else {
-        state.items.push({ ...item, quantity: 1 });
+        existing.quantity += item.quantity || 1;
+      } else {
+        state.items.push({
+          ...item,
+          quantity: item.quantity || 1,
+        });
       }
       // ✅ No saveCart() — store.js subscriber handles it
+    },
+
+    removeFreeRewardItems: (state) => {
+      state.items = state.items.filter(
+        (item) => !item.isFree
+      );
     },
 
     removeFromCart: (state, action) => {
@@ -67,6 +171,7 @@ const cartSlice = createSlice({
 
 export const {
   addToCart,
+  removeFreeRewardItems,
   removeFromCart,
   updateQuantity,
   clearCart,

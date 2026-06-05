@@ -146,9 +146,10 @@ function calcBXGY(reward, coupon, cart) {
 
   const buyQty = buyItem?.qty || 0;
   const freeQty = bxgy.get_qty || 1;
+  const pairSize = (bxgy.buy_qty || 1) + freeQty;
 
   // Calculate eligible free items
-  const eligibleFreeQty = Math.floor(buyQty / (bxgy.buy_qty || 1)) * freeQty;
+  const eligibleFreeQty = Math.floor(buyQty / pairSize) * freeQty;
 
   // Discount = price of free items
   const freeItemPrice = buyItem?.price || 0;
@@ -204,7 +205,10 @@ function calcBogo(reward, coupon, cart) {
     // Find the price of the buy item from cart to compute ₹ discount shown
     const buyItem = cart.items.find((i) => i.item_id.toString() === bxgy.buy_item?.toString());
     if (buyItem) {
-      result.discount_amount = round2(buyItem.price * result.free_item_qty);
+      const pairSize = (bxgy.buy_qty || 1) + (bxgy.free_qty || bxgy.get_qty || 1);
+      const eligibleFreeQty = Math.floor((buyItem.qty || 0) / pairSize) * result.free_item_qty;
+      result.discount_amount = round2(buyItem.price * eligibleFreeQty);
+      result.free_item_qty = eligibleFreeQty;
     }
   } else if (reward.free_item) {
     // Fallback: free_item in reward itself

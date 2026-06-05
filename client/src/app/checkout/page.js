@@ -5,6 +5,8 @@ import {
   selectCartItems,
   selectCartTotal,
   clearCart,
+  addToCart,
+  removeFreeRewardItems,
 } from "../../store/slices/cartSlice";
 
 import { useRouter } from "next/navigation";
@@ -288,44 +290,41 @@ export default function CheckoutPage() {
           "bxgy"
         ) {
           const freeItemId =
-            coupon.free_item_id;
+            coupon.free_item_id ||
+            coupon.bxgy_config?.reward_item_id ||
+            coupon.bxgy_config?.get_item;
 
           const freeItemQty =
-            coupon.free_item_qty;
+            coupon.free_item_qty ||
+            coupon.bxgy_config?.free_quantity ||
+            coupon.bxgy_config?.reward_quantity ||
+            1;
 
-          // Check if item already exists
-          const existingItemIndex =
-            items.findIndex(
+          const matchedItem =
+            items.find(
               (i) =>
                 i.menu_item_id ===
                 freeItemId
             );
 
-          if (
-            existingItemIndex !==
-            -1
-          ) {
-            // Item exists - would need Redux dispatch to update
-            console.log(
-              "Free item already in cart, quantity:",
-              freeItemQty
-            );
-          } else {
-            // Item doesn't exist - you would need to add it to Redux store
-            console.log(
-              "Free item to add:",
-              freeItemId,
-              "Qty:",
-              freeItemQty
-            );
-            // TODO: Dispatch Redux action to add free item
-            // dispatch(addToCart({
-            //   menu_item_id: freeItemId,
-            //   quantity: freeItemQty,
-            //   price: 0,
-            //   isFree: true,
-            // }));
-          }
+          dispatch(
+            addToCart({
+              menu_item_id: freeItemId,
+              name:
+                matchedItem?.name ||
+                coupon.reward_label ||
+                "Free item",
+              image:
+                matchedItem?.image ||
+                null,
+              restaurant_id:
+                matchedItem?.restaurant_id,
+              quantity: freeItemQty,
+              price: 0,
+              isFree: true,
+              reward_type: "bxgy",
+            })
+          );
         }
 
         setAppliedCoupon(
@@ -353,6 +352,15 @@ export default function CheckoutPage() {
 
   const removeCoupon =
     () => {
+      if (
+        appliedCoupon?.reward_type ===
+          "bxgy"
+      ) {
+        dispatch(
+          removeFreeRewardItems()
+        );
+      }
+
       setAppliedCoupon(
         null
       );
