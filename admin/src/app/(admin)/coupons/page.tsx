@@ -537,7 +537,7 @@ export default function CouponsPage() {
             Create, manage and track campaigns
           </p>
         </div>
-        <button
+        <button className="shadow-xl"
           type="button"
           onClick={() =>
             router.push("/coupons/new")
@@ -571,29 +571,7 @@ export default function CouponsPage() {
       </div>
 
       {/* Improvement #7: Top Summary Bar */}
-      <div
-        style={{
-          marginBottom: "2rem",
-          padding: "1rem",
-          backgroundColor: "#f8fafc",
-          borderRadius: "10px",
-          fontSize: "14px",
-          color: "#6b7280",
-        }}
-      >
-        <span style={{ fontWeight: "500", color: "#1a1a1a" }}>
-          {stats.totalCount}
-        </span>
-        {" Coupons • "}
-        <span style={{ fontWeight: "500", color: "#1a1a1a" }}>
-          {stats.activeCount}
-        </span>
-        {" Active • "}
-        <span style={{ fontWeight: "500", color: "#1a1a1a" }}>
-          {stats.totalRedeemed}
-        </span>
-        {" Redeemed • Last Updated 2 min ago"}
-      </div>
+     
 
       {/* Stats Grid - Compact */}
       <div
@@ -606,13 +584,15 @@ export default function CouponsPage() {
         }}
       >
         {/* Improvement #2: Colored Left Border */}
-        <div
+        <div className="shadow-sm"
           style={{
             backgroundColor: "#ffffff",
             border: "1px solid #e5e7eb",
             borderLeft: "4px solid #3b82f6",
             borderRadius: "10px",
             padding: "1rem",
+            // boxShadow : "large
+            
           }}
         >
           <svg
@@ -660,7 +640,7 @@ export default function CouponsPage() {
           </div>
         </div>
 
-        <div
+        <div className="shadow-sm"
           style={{
             backgroundColor: "#ffffff",
             border: "1px solid #e5e7eb",
@@ -712,8 +692,8 @@ export default function CouponsPage() {
           </div>
         </div>
 
-        <div
-          style={{
+        <div className="shadow-sm"
+          style={{ 
             backgroundColor: "#ffffff",
             border: "1px solid #e5e7eb",
             borderLeft: "4px solid #f97316",
@@ -763,7 +743,7 @@ export default function CouponsPage() {
           </div>
         </div>
 
-        <div
+        <div className="shadow-sm"
           style={{
             backgroundColor: "#ffffff",
             border: "1px solid #e5e7eb",
@@ -823,12 +803,12 @@ export default function CouponsPage() {
       </div>
 
       {/* Search & Filters */}
-      <div
+      <div  className="shadow-sm"
         style={{
           backgroundColor: "#ffffff",
           border: "1px solid #e5e7eb",
           borderRadius: "12px",
-          padding: "1.5rem",
+          padding: "20px",
           marginBottom: "2rem",
         }}
       >
@@ -876,7 +856,7 @@ export default function CouponsPage() {
               style={{
                 width: "100%",
                 padding: "0.75rem 1rem 0.75rem 40px",
-                border: "1px solid #e5e7eb",
+                border: "1px solid #d1d5db",
                 borderRadius: "8px",
                 fontSize: "14px",
                 backgroundColor: "#ffffff",
@@ -977,7 +957,7 @@ export default function CouponsPage() {
       </div>
 
       {/* Coupons List - Table Style */}
-      <div
+      <div className="shadow-sm"
         style={{
           backgroundColor: "#ffffff",
           border: "1px solid #e5e7eb",
@@ -1090,6 +1070,20 @@ export default function CouponsPage() {
                       }}
                     >
                       {/* Improvement #4: Better Coupon Code */}
+                      
+                      <span
+                        style={{
+                          fontSize:
+                            "14px",
+                          fontWeight:
+                            "600",
+                          color:
+                            "#1a1a1a",
+                        }}
+                      >
+                        {coupon.title ||
+                          "Untitled Coupon"}
+                      </span>
                       <div
                         style={{
                           display:
@@ -1108,25 +1102,12 @@ export default function CouponsPage() {
                             "0.35rem 0.6rem",
                           borderRadius:
                             "4px",
-                          marginRight:
+                          marginLeft:
                             "0.75rem",
                         }}
                       >
                         {coupon.code}
                       </div>
-                      <span
-                        style={{
-                          fontSize:
-                            "14px",
-                          fontWeight:
-                            "600",
-                          color:
-                            "#1a1a1a",
-                        }}
-                      >
-                        {coupon.title ||
-                          "Untitled Coupon"}
-                      </span>
                       {coupon.description && (
                         <p
                           style={{
@@ -1229,6 +1210,8 @@ export default function CouponsPage() {
                             "inline-flex",
                           alignItems:
                             "center",
+                                justifyContent: "center",
+  width: "110px",
                           gap: "6px",
                           padding:
                             "0.35rem 0.75rem",
