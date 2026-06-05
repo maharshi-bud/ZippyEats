@@ -75,7 +75,10 @@ export default function CheckoutPage() {
     setUseCustom,
   ] = useState(false);
 
-  const [ saveAddress, setSaveAddress, ] = useState(false);
+  const [
+    saveAddress,
+    setSaveAddress,
+  ] = useState(false);
 
   const [
     zipCoins,
@@ -97,12 +100,10 @@ export default function CheckoutPage() {
     setCouponLoading,
   ] = useState(false);
 
-const [
-  appliedCoupon,
-  setAppliedCoupon,
-] = useState(null);
-
-
+  const [
+    appliedCoupon,
+    setAppliedCoupon,
+  ] = useState(null);
 
   const [
     couponError,
@@ -135,7 +136,6 @@ const [
   const [error, setError] =
     useState("");
 
-
   // ── Computed totals ──────────────────────────────────────
 
   const subtotal =
@@ -157,10 +157,10 @@ const [
             subtotal
         )
       : zipCoins;
-const couponDiscount =
-  appliedCoupon
-    ?.discount_amount || 0;
 
+  const couponDiscount =
+    appliedCoupon
+      ?.discount_amount || 0;
 
   const finalTotal =
     Math.max(
@@ -223,6 +223,7 @@ const couponDiscount =
       .catch(() => {});
   }, []);
 
+  // ── APPLY COUPON ──────────────────────────────────────
   const applyCoupon =
     async () => {
       if (
@@ -238,58 +239,100 @@ const couponDiscount =
 
         setCouponError("");
 
-        // const res = await api.post( "/coupons/apply", { coupon_code: couponCode .trim() .toUpperCase(), cart_total: subtotal, restaurant_id: items[0] ?.restaurant_id, items: items.map( (item) => ({ menu_item_id: item.menu_item_id, quantity: item.quantity, price: item.price, }) ), } );
-const res =
-  await api.post(
-    "/coupons/apply",
-    {
-      code:
-        couponCode
-          .trim()
-          .toUpperCase(),
+        // ✅ CORRECT: Build cart object for API
+        const cartData = {
+          subtotal,
+          delivery_fee:
+            DELIVERY_FEE,
+          restaurant_id:
+            items[0]
+              ?.restaurant_id,
+          cuisines: [],
+          city:
+            form.city ||
+            "Ahmedabad",
+          payment_method:
+            paymentMethod,
+          platform: "web",
+          items: items.map(
+            (item) => ({
+              item_id:
+                item.menu_item_id,
+              qty:
+                item.quantity,
+              price:
+                item.price,
+            })
+          ),
+        };
 
-      cart: {
-        subtotal,
+        // ✅ CORRECT: Call API with coupon code
+        const res =
+          await api.post(
+            "/coupons/apply",
+            {
+              code:
+                couponCode
+                  .trim()
+                  .toUpperCase(),
+              cart: cartData,
+            }
+          );
 
-        delivery_fee:
-          DELIVERY_FEE,
+        const coupon =
+          res.data.data;
 
-        restaurant_id:
-          items[0]
-            ?.restaurant_id,
+        // ✅ CORRECT: Handle BXGY coupon - auto-add free item
+        if (
+          coupon.reward_type ===
+          "bxgy"
+        ) {
+          const freeItemId =
+            coupon.free_item_id;
 
-        cuisines: [],
+          const freeItemQty =
+            coupon.free_item_qty;
 
-        city:
-          form.city ||
-          "Ahmedabad",
+          // Check if item already exists
+          const existingItemIndex =
+            items.findIndex(
+              (i) =>
+                i.menu_item_id ===
+                freeItemId
+            );
 
-        payment_method:
-          paymentMethod,
-
-        platform:
-          "web",
-
-items: items.map(
-  (item) => ({
-    item_id:
-      item.menu_item_id,
-
-    qty:
-      item.quantity,
-
-    price:
-      item.price,
-  })
-),
-
-      },
-    }
-  );
+          if (
+            existingItemIndex !==
+            -1
+          ) {
+            // Item exists - would need Redux dispatch to update
+            console.log(
+              "Free item already in cart, quantity:",
+              freeItemQty
+            );
+          } else {
+            // Item doesn't exist - you would need to add it to Redux store
+            console.log(
+              "Free item to add:",
+              freeItemId,
+              "Qty:",
+              freeItemQty
+            );
+            // TODO: Dispatch Redux action to add free item
+            // dispatch(addToCart({
+            //   menu_item_id: freeItemId,
+            //   quantity: freeItemQty,
+            //   price: 0,
+            //   isFree: true,
+            // }));
+          }
+        }
 
         setAppliedCoupon(
-          res.data.data
+          coupon
         );
+
+        setCouponCode("");
       } catch (err) {
         setAppliedCoupon(
           null
@@ -369,46 +412,46 @@ items: items.map(
           form;
       }
 
-// ── Save address if requested ─────────────────
+      // ── Save address if requested ─────────────────
 
-if (saveAddress) {
-  try {
+      if (saveAddress) {
+        try {
 
-    const addressPayload = {
-      ...form,
+          const addressPayload = {
+            ...form,
 
-      label: "Other",
+            label: "Other",
 
-      is_default:
-        savedAddresses.length === 0,
-    };
+            is_default:
+              savedAddresses.length === 0,
+          };
 
-    const saveRes =
-      await api.post(
-        "/users/addresses",
-        addressPayload
-      );
+          const saveRes =
+            await api.post(
+              "/users/addresses",
+              addressPayload
+            );
 
-    // Add immediately to local state
+          // Add immediately to local state
 
-    if (saveRes.data?.data) {
+          if (saveRes.data?.data) {
 
-      setSavedAddresses(
-        (prev) => [
-          ...prev,
-          saveRes.data.data,
-        ]
-      );
-    }
+            setSavedAddresses(
+              (prev) => [
+                ...prev,
+                saveRes.data.data,
+              ]
+            );
+          }
 
-  } catch (saveErr) {
+        } catch (saveErr) {
 
-    console.error(
-      "SAVE ADDRESS ERROR:",
-      saveErr
-    );
-  }
-}
+          console.error(
+            "SAVE ADDRESS ERROR:",
+            saveErr
+          );
+        }
+      }
 
 
       setLoading(true);
@@ -420,6 +463,7 @@ if (saveAddress) {
           items[0]
             ?.restaurant_id;
 
+        // ✅ CORRECT: Send coupon info to order API
         const res =
           await api.post(
             "/orders",
@@ -445,26 +489,25 @@ if (saveAddress) {
 
               useZipCoins,
 
-coupon_code:
-  appliedCoupon?.code ||
-  null,
+              coupon_code:
+                appliedCoupon?.code ||
+                null,
 
-appliedCouponId:
-  appliedCoupon?._id ||
-  null,
+              appliedCouponId:
+                appliedCoupon?._id ||
+                null,
 
-discountAmount:
-  appliedCoupon?.discount_amount ||
-  0,
+              discountAmount:
+                appliedCoupon
+                  ?.discount_amount || 0,
 
-cashbackAmount:
-  appliedCoupon?.cashback_amount ||
-  0,
+              cashbackAmount:
+                appliedCoupon
+                  ?.cashback_amount || 0,
 
-rewardType:
-  appliedCoupon?.reward_type ||
-  "",
-
+              rewardType:
+                appliedCoupon
+                  ?.reward_type || "",
             }
           );
 
@@ -474,21 +517,17 @@ rewardType:
 
         startRouteLoader();
 
-console.log(
-  "ORDER RESPONSE:",
-  res.data
-);
-console.log(
-  "APPLIED COUPON:",
-  appliedCoupon
-);
+        console.log(
+          "ORDER RESPONSE:",
+          res.data
+        );
 
-router.push(
-  `/orders/${
-    res.data?.data?._id ||
-    res.data?._id
-  }`
-);
+        router.push(
+          `/orders/${
+            res.data?.data?._id ||
+            res.data?._id
+          }`
+        );
 
       } catch (err) {
         setError(
@@ -754,24 +793,23 @@ router.push(
                   className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
 
-<label className="flex items-center gap-3 mt-2">
-  <input
-    type="checkbox"
-    checked={saveAddress}
-    onChange={(e) =>
-      setSaveAddress(
-        e.target.checked
-      )
-    }
-    className="w-4 h-4"
-  />
+                <label className="flex items-center gap-3 col-span-3 mt-2">
+                  <input
+                    type="checkbox"
+                    checked={saveAddress}
+                    onChange={(e) =>
+                      setSaveAddress(
+                        e.target.checked
+                      )
+                    }
+                    className="w-4 h-4"
+                  />
 
-  <span className="text-sm text-slate-600">
-    Save this address
-    for future orders
-  </span>
-</label>
-
+                  <span className="text-sm text-slate-600">
+                    Save this address
+                    for future orders
+                  </span>
+                </label>
               </div>
             </div>
           )}
@@ -914,7 +952,8 @@ router.push(
 
                   <p className="text-sm text-green-600 mt-1">
                     {
-                      appliedCoupon.message
+                      appliedCoupon.reward_label ||
+                      "Coupon applied successfully"
                     }
                   </p>
                 </div>
@@ -1075,7 +1114,7 @@ router.push(
                 Placing
                 order…
               </span>
-              <span className="w-4 h-4 border-2 p-4 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             </>
           ) : (
             <>

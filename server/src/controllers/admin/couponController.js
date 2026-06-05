@@ -141,7 +141,7 @@ function buildCouponPayload(body) {
 function validateRewardPayload(reward) {
   if (!reward?.type) return "reward.type is required.";
 
-  const validTypes = ["flat", "percentage", "free_delivery", "free_item", "cashback", "bogo"];
+  const validTypes = ["flat", "percentage", "free_delivery", "free_item", "cashback", "bogo" , "bxgy"];
   if (!validTypes.includes(reward.type)) {
     return `reward.type must be one of: ${validTypes.join(", ")}.`;
   }

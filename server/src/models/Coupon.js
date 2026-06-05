@@ -148,7 +148,7 @@ const rewardSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ["flat", "percentage", "free_delivery", "free_item", "cashback", "bogo"],
+      enum: ["flat", "percentage", "free_delivery", "free_item", "cashback", "bogo", "bxgy"],
     },
 
     // ── flat / percentage ─────────────────────────────────────

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 // TYPES
 // ════════════════════════════════════════════════════════════════
 
-export type DiscountType = "PERCENTAGE" | "FLAT" | "FREE_DELIVERY";
+export type DiscountType = "PERCENTAGE" | "FLAT" | "FREE_DELIVERY" |"BXGY";
 export type CouponType = "coupon" | "auto_apply" | "reward";
 export type PaymentMethod = "UPI" | "CARD" | "WALLET" | "NET_BANKING" | "CASH";
 export type Platform = "WEB" | "MOBILE" | "APP";
@@ -133,7 +133,7 @@ export type CouponPayload = {
   };
 
   reward: {
-    type: "percentage" | "flat" | "free_delivery";
+    type: "percentage" | "flat" | "free_delivery" | "bxgy";
     value: number;
     max_discount: number | null;
     bxgy_reward: {
@@ -347,11 +347,13 @@ function hydrateForm(coupon?: Coupon | null): CouponFormState {
 }
 
 function buildPayload(form: CouponFormState): CouponPayload {
-  const rewardType: "percentage" | "flat" | "free_delivery" =
-    form.discountType === "PERCENTAGE"
-      ? "percentage"
-      : form.discountType === "FLAT"
-        ? "flat"
+const rewardType: "percentage" | "flat" | "free_delivery" | "bxgy" =
+  form.discountType === "PERCENTAGE"
+    ? "percentage"
+    : form.discountType === "FLAT"
+      ? "flat"
+      : form.discountType === "BXGY"
+        ? "bxgy"  // ← ADD THIS
         : "free_delivery";
 
   return {
@@ -400,18 +402,17 @@ function buildPayload(form: CouponFormState): CouponPayload {
         : null,
     },
 
-    reward: {
-      type: rewardType,
-      value:
-        rewardType === "free_delivery"
-          ? 0
-          : toNumber(form.discountValue) ?? 0,
-      max_discount:
-        rewardType === "percentage"
-          ? toNumber(form.maxDiscount)
-          : null,
-      bxgy_reward: null,
-    },
+reward: {
+  type: rewardType,
+  value: rewardType === "bxgy" ? 0 : (rewardType === "free_delivery" ? 0 : toNumber(form.discountValue) ?? 0),
+  max_discount: rewardType === "percentage" ? toNumber(form.maxDiscount) : null,
+  bxgy_reward: form.buyXGetYEnabled
+    ? {
+        item_id: form.getYItem,  // The FREE item
+        qty: toNumber(form.getYQty) || 1,
+      }
+    : null,
+},
 
     limits: {
       total_usage_limit: toNumber(form.usageLimit),
@@ -655,6 +656,8 @@ export default function CouponForm({
               <option value="PERCENTAGE">Percentage (%)</option>
               <option value="FLAT">Flat Amount (₹)</option>
               <option value="FREE_DELIVERY">Free Delivery</option>
+                <option value="BXGY">Buy X Get Y</option>  {/* ← ADD THIS */}
+
             </select>
           </Field>
 

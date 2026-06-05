@@ -125,6 +125,55 @@ function calcFreeItem(reward) {
 }
 
 /**
+ * BXGY cal logic in cart auto add item 
+ */
+
+function calcBXGY(reward, coupon, cart) {
+  const result = baseResult("bxgy");
+  const bxgy = coupon.conditions?.buy_x_get_y;
+
+  if (!bxgy) {
+    return {
+      ...result,
+      reward_label: "Invalid BXGY setup",
+    };
+  }
+
+  // Find buy item in cart
+  const buyItem = cart.items.find(
+    (i) => i.item_id.toString() === bxgy.buy_item?.toString()
+  );
+
+  const buyQty = buyItem?.qty || 0;
+  const freeQty = bxgy.get_qty || 1;
+
+  // Calculate eligible free items
+  const eligibleFreeQty = Math.floor(buyQty / (bxgy.buy_qty || 1)) * freeQty;
+
+  // Discount = price of free items
+  const freeItemPrice = buyItem?.price || 0;
+  const discountAmount = freeItemPrice * eligibleFreeQty;
+
+  result.reward_label = `Buy ${bxgy.buy_qty} → Get ${freeQty} Free!`;
+  result.discount_amount = discountAmount;
+  result.free_item_id = bxgy.get_item?.toString() || null;
+  result.free_item_qty = eligibleFreeQty;
+  result.breakdown = {
+    type: "bxgy",
+    buy_item: bxgy.buy_item?.toString(),
+    buy_qty: bxgy.buy_qty,
+    free_item: bxgy.get_item?.toString(),
+    free_qty: freeQty,
+    eligible_free_qty: eligibleFreeQty,
+    discount: discountAmount,
+  };
+
+  return result;
+}
+
+
+
+/**
  * cashback — credited after delivery (not an immediate discount)
  */
 function calcCashback(reward, cart) {
@@ -199,6 +248,10 @@ export function calculateReward(coupon, cart) {
 
     case "free_delivery":
       return calcFreeDelivery(reward, cart);
+
+    case "bxgy":
+      return calcBXGY(reward, coupon, cart);  // ← ADD THIS
+
 
     case "free_item":
       return calcFreeItem(reward);
