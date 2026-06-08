@@ -133,7 +133,8 @@ removeItemWithBXGYCleanup(state, action) {
 
     removeFreeRewardItems: (state) => {
       state.items = state.items.filter(
-        (item) => !item.isFree
+        (item) => !item.isFree &&
+      item.reward_type !== "bxgy"
       );
     },
 

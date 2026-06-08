@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-
 import {
   ClipboardList,
   CheckCircle2,
@@ -14,103 +13,72 @@ import {
   IndianRupee,
   UtensilsCrossed,
   Printer,
-  CircleDot,
+  MapPin,
+  Phone,
+  Calendar,
+  Store,
 } from "lucide-react";
 import axios from "../../../lib/axios";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { resolveItemImage, handleImgError } from "../../../lib/imageUtils";
 import { getSocket } from "../../../lib/socket";
-  import SupportWidget from "../../../components/SupportWidget";
-
+import SupportWidget from "../../../components/SupportWidget";
 import { useSelector } from "react-redux";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5010";
-
-// const steps = [
-//   { key: "placed",           label: "Placed",           icon: "📋" },
-//   { key: "accepted",         label: "Accepted",         icon: "✅" },
-//   { key: "preparing",        label: "Preparing",        icon: "🍳" },
-//   { key: "out_for_delivery", label: "Out For Delivery", icon: "🛵" },
-//   { key: "delivered",        label: "Delivered",        icon: "📦" },
-// ];
-
+gsap.registerPlugin(ScrollTrigger);
 
 const steps = [
-  {
-    key: "placed",
-    label: "Placed",
-    icon: ClipboardList,
-  },
-  {
-    key: "accepted",
-    label: "Accepted",
-    icon: CheckCircle2,
-  },
-  {
-    key: "preparing",
-    label: "Preparing",
-    icon: ChefHat,
-  },
-  {
-    key: "out_for_delivery",
-    label: "Out For Delivery",
-    icon: Bike,
-  },
-  {
-    key: "delivered",
-    label: "Delivered",
-    icon: PackageCheck,
-  },
-];  
+  { key: "placed", label: "Placed", icon: ClipboardList },
+  { key: "accepted", label: "Accepted", icon: CheckCircle2 },
+  { key: "preparing", label: "Preparing", icon: ChefHat },
+  { key: "out_for_delivery", label: "Out For Delivery", icon: Bike },
+  { key: "delivered", label: "Delivered", icon: PackageCheck },
+];
 
-
-const statusMessages = {
-  placed:           { text: "Your order has been placed!",          sub: "Waiting for the restaurant to accept." },
-  accepted:         { text: "Restaurant accepted your order!",      sub: "They'll start preparing it soon." },
-  preparing:        { text: "Your order is now being prepared.",     sub: "We'll update you when it's on the way." },
-  out_for_delivery: { text: "Your order is out for delivery!",      sub: "Your rider is on the way." },
-  delivered:        { text: "Order delivered! Enjoy your meal 🎉",  sub: "Thanks for ordering with ZippyEats." },
-};
-// const { user, token } = useSelector((state) => state.auth);
-// Icon circle — consistent padding approach so emoji always centers
-// const IconCircle = ({ emoji, bg }) => (
-const IconCircle = ({
-  icon: Icon,
-  bg,
-}) => (
-<div className={`${bg} rounded-xl flex-shrink-0`} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-    {/* {emoji} */}
-    <Icon
-  size={18}
-  className="text-slate-700"
-/>
+const IconCircle = ({ icon: Icon, bg }) => (
+  <div
+    className={`${bg} rounded-xl flex-shrink-0`}
+    style={{
+      width: 36,
+      height: 36,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    <Icon size={18} className="text-slate-700" />
   </div>
 );
 
-
-
 export default function OrderPage({ params }) {
-const { user, token } = useSelector((state) => state.auth);
-
+  const { user, token } = useSelector((state) => state.auth);
   const [order, setOrder] = useState(null);
   const [copied, setCopied] = useState(false);
+
   const lineRefs = useRef([]);
-    // const token = localStorage.getItem("token");
+
+  // Animation refs
+  const headerRef = useRef(null);
+  const trackerRef = useRef(null);
+  const orderDetailsRef = useRef(null);
+  const itemsCardRef = useRef(null);
+  const addressCardRef = useRef(null);
+  const summaryRef = useRef(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
       const res = await axios.get(`/orders/${params.id}`);
       setOrder(res.data.data);
     };
-
     fetchOrder();
 
-    const token = localStorage.getItem("token");
+    const currentToken = token || localStorage.getItem("token");
     const socket = getSocket();
 
-    if (token) {
+    if (currentToken) {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        const payload = JSON.parse(atob(currentToken.split(".")[1]));
         socket.emit("join", { userId: payload.id, role: payload.role });
       } catch (err) {
         console.error("Socket join failed:", err.message);
@@ -119,628 +87,493 @@ const { user, token } = useSelector((state) => state.auth);
 
     const handleStatusUpdate = (payload) => {
       if (String(payload.orderId) !== params.id) return;
-
       setOrder((current) =>
         current
-          ? {
-              ...current,
-              status: payload.status,
-              updatedAt: payload.updatedAt,
-            }
+          ? { ...current, status: payload.status, updatedAt: payload.updatedAt }
           : current
       );
     };
 
     socket.on("orderStatusUpdate", handleStatusUpdate);
+    return () => socket.off("orderStatusUpdate", handleStatusUpdate);
+  }, [params.id, token]);
 
-    return () => {
-      socket.off("orderStatusUpdate", handleStatusUpdate);
-    };
-  }, [params.id]);
-
+  // ── GSAP: progress line animation ──────────────────────────────────────────
   useEffect(() => {
     if (!order) return;
-    const currentIndex = steps.findIndex(s => s.key === order.status);
+    const currentIndex = steps.findIndex((s) => s.key === order.status);
     lineRefs.current.forEach((el, i) => {
       if (!el) return;
-      // gsap.to(el, { width: i < currentIndex ? "100%" : "0%", duration: 0.6, ease: "power2.out" });
       gsap.to(el, {
-
-  width:
-    i < currentIndex
-      ? "100%"
-      : i === currentIndex
-      ? "55%"
-      : "0%",
-
-  duration: 0.8,
-
-  ease: "power2.out",
-});
+        width: i < currentIndex ? "100%" : i === currentIndex ? "55%" : "0%",
+        duration: 0.8,
+        ease: "power2.out",
+      });
     });
   }, [order]);
 
-  if (!order) return (
-    <div className="min-h-screen flex items-center justify-center text-slate-400">Loading...</div>
-  );
+  // ── GSAP: entry + scroll-triggered animations (runs after order loads) ─────
+  useEffect(() => {
+    if (!order) return;
 
-  const currentIndex = steps.findIndex(s => s.key === order.status);
-  const msg = statusMessages[order.status] || statusMessages.placed;
-  const copyId = () => { navigator.clipboard.writeText(params.id); setCopied(true); setTimeout(() => setCopied(false), 1500); };
+    const ctx = gsap.context(() => {
+      // 1. Header — immediate entry (fade + slide down)
+      gsap.from(headerRef.current, {
+        y: -30,
+        opacity: 0,
+        duration: 0.6,
+        ease: "power3.out",
+      });
 
-  // restaurant_id lives on the ORDER, not the populated menu item
+      // 2. Status tracker — fade + slide up, short delay after header
+      gsap.from(trackerRef.current, {
+        y: 40,
+        opacity: 0,
+        duration: 0.7,
+        delay: 0.2,
+        ease: "power3.out",
+      });
+
+      // 3. Three cards in the grid — staggered scroll-triggered
+      const scrollCards = [
+        orderDetailsRef.current,
+        itemsCardRef.current,
+        addressCardRef.current,
+        summaryRef.current,
+      ].filter(Boolean);
+
+      scrollCards.forEach((card, i) => {
+        gsap.from(card, {
+          scrollTrigger: {
+            trigger: card,
+            start: "top bottom",
+            once: true,
+          },
+          y: 50,
+          opacity: 0,
+          duration: 0.6,
+          delay: i * 0.15,
+          ease: "power3.out",
+        });
+      });
+    });
+
+    return () => ctx.revert();
+  }, [order]);
+
+  if (!order)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-400">
+        Loading...
+      </div>
+    );
+
+  const currentIndex = steps.findIndex((s) => s.key === order.status);
+  const copyId = () => {
+    navigator.clipboard.writeText(params.id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
   const restaurantId = order.restaurant_id;
 
+  const itemsTotal = order.subtotal || 0;
+  const deliveryFee = order.delivery_fee || 0;
+  const taxAmount = order.tax_amount || 0;
+  const couponDiscount = order.coupon_discount || 0;
+  const coinsDiscount = order.coins_discount || 0;
+  const finalTotal = order.total_amount || 0;
+
   return (
-<div className="
-   relative
-  
-  min-h-screen
-  bg-[#f0f4f7]">
-      <div className="  max-w-5xl
-  mx-auto
-  px-4
-  py-8
-  min-h-screen
-  backdrop-blur-[2px]">
+    <div className="relative min-h-screen bg-[#f0f4f7]">
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
-      {/* HEADER */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          {/* <span className="text-4xl">📦</span> */}
-          <div className="rounded-2xl bg-green-100 p-3">
-  <PackageCheck
-    size={32}
-    className="text-green-600"
-  />
-</div>
-          <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-0">Order Tracking</h1>
-            <p className="text-sm text-slate-400 ">Track your order in real-time</p>
+        {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+        <div ref={headerRef} className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-gradient-to-br from-green-500 to-green-600 p-3 shadow-lg">
+              <PackageCheck size={32} className="text-white" strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-slate-900 mb-[0px]">
+                Order Tracking
+              </h1>
+              <p className="text-sm text-slate-500 mt-0">
+                Track your order in real-time
+              </p>
+            </div>
           </div>
-        </div>
-        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm rounded-xl hover:bg-slate-700 transition">
-        <>
-  <Printer
-    size={16}
-    className="mr-1"
-  />
-  Print Bill
-</>
-        </button>
-      </div>
-
-      {/* PROGRESS TRACKER */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-        <div className="flex items-start">
-          {steps.map((step, index) => {
-            const done = index <= currentIndex;
-            const isLast = index === steps.length - 1;
-            return (
-              <div key={step.key} className="flex items-start flex-1 last:flex-none">
-                <div className="flex flex-col items-center w-16 flex-shrink-0">
-                  <div
-                    style={{ width: 48, height: 48, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}
-                    className={`rounded-full border-2 transition-all duration-500 ${done ? "bg-green-500 border-green-500 text-white shadow-md shadow-black-200" : "bg-white border-slate-200 text-slate-400"}`}
-                  >
-                    {/* {step.icon} */}
-                    <step.icon size={22} />
-                  </div>
-                  <p className={`text-xs mt-2 font-medium text-center ${done ? "text-slate-800" : "text-slate-400"}`}>{step.label}</p>
-                  <p className={`text-[10px] mt-0.5 text-center ${done ? "text-green-500" : "text-slate-300"}`}>
-                    {index < currentIndex
-                      ? new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                      : index === currentIndex ? "Now" : "Upcoming"}
-                  </p>
-                </div>
-{!isLast && (
-
-  <div className="
-    relative
-    flex-1
-    h-1.5
-    bg-slate-200
-    mx-2
-    mt-6
-    rounded-full
-    overflow-hidden
-  ">
-
-    {/* COMPLETED LINE */}
-
-    <div
-
-      ref={(el) =>
-        (lineRefs.current[index] = el)
-      }
-
-      className="
-        h-full
-        bg-green-500
-        rounded-full
-        relative
-        overflow-hidden
-      "
-
-      style={{
-        width:
-          index < currentIndex
-            ? "100%"
-            : index === currentIndex
-            ? "60%"
-            : "0%",
-      }}
-    >
-
-      {/* MOVING LOADER EFFECT */}
-
-      {index === currentIndex && (
-
-        <div className="
-          absolute
-          top-0
-          left-[-40%]
-
-          h-full
-          w-[40%]
-
-          bg-gradient-to-r
-          from-transparent
-          via-white/80
-          to-transparent
-
-          animate-[loadingFlow_1.3s_linear_infinite]
-        " />
-
-      )}
-
-    </div>
-  </div>
-)}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 2 COL GRID */}
-      
-{/* 2 COL GRID — Fixed height, scrollable items */}
-{/* <div className="grid md:grid-cols-2 gap-6 mb-6"> */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-  {/* ORDER DETAILS — fixed height */}
- {/* ORDER DETAILS — fixed height */}
-<div
-  className="
-    bg-white
-    rounded-2xl
-    shadow-xl
-    border
-    border-slate-200
-    p-6
-    text-left
-    flex
-    flex-col
-  "
-  style={{ height: 500 }}
->
-
-  {/* HEADER */}
-
-  <div className="flex items-center gap-3 mb-6">
-
-    <div className="
-      rounded-2xl
-      bg-slate-200
-      p-3
-    ">
-      <ReceiptText
-        size={30}
-        className="text-slate-700"
-      />
-    </div>
-
-    <div>
-
-      <h2 className="
-        text-3xl
-        font-semibold
-        text-slate-800
-        leading-none
-      ">
-        Order Details
-      </h2>
-
-      <p className="
-        mt-1
-        text-sm
-        text-slate-400
-      ">
-        Live order information
-      </p>
-
-    </div>
-
-  </div>
-
-  {/* DETAILS */}
-
-  <div className="
-    space-y-3
-    w-full
-    flex-1
-  ">
-
-    {/* STATUS */}
-
-    <div className="
-      flex
-      items-center
-      gap-3
-      w-full
-      p-4
-      bg-slate-50
-      rounded-xl
-      transition
-      hover:bg-slate-100
-    ">
-
-      <IconCircle
-        icon={CircleDot}
-        bg="bg-green-100"
-      />
-
-      <span className="
-        text-sm
-        text-slate-500
-        flex-1
-      ">
-        Status
-      </span>
-
-      <span className="
-        text-sm
-        font-semibold
-        px-3
-        py-1
-        bg-green-100
-        text-green-700
-        rounded-lg
-        capitalize
-      ">
-        {order.status.replaceAll("_", " ")}
-      </span>
-
-    </div>
-
-    {/* TOTAL */}
-
-    <div className="
-      flex
-      items-center
-      gap-3
-      p-4
-      bg-slate-50
-      rounded-xl
-      transition
-      hover:bg-slate-100
-    ">
-
-      <IconCircle
-        icon={IndianRupee}
-        bg="bg-blue-100"
-      />
-
-      <span className="
-        text-sm
-        text-slate-500
-        flex-1
-      ">
-        Total Amount
-      </span>
-
-      <span className="
-        text-sm
-        font-bold
-        text-slate-800
-      ">
-        ₹{order.total_amount}
-      </span>
-
-    </div>
-
-    {/* ITEMS */}
-
-    <div className="
-      flex
-      items-center
-      gap-3
-      p-4
-      bg-slate-50
-      rounded-xl
-      transition
-      hover:bg-slate-100
-    ">
-
-      <IconCircle
-        icon={PackageCheck}
-        bg="bg-indigo-100"
-      />
-
-      <span className="
-        text-sm
-        text-slate-500
-        flex-1
-      ">
-        Number of Items
-      </span>
-
-      <span className="
-        text-sm
-        font-bold
-        text-slate-800
-      ">
-
-        {
-          order.items?.reduce(
-            (sum, item) =>
-              sum + item.quantity,
-            0
-          ) || 0
-        }
-
-      </span>
-
-    </div>
-
-    {/* ETA */}
-
-    <div className="
-      flex
-      items-center
-      gap-3
-      p-4
-      bg-slate-50
-      rounded-xl
-      transition
-      hover:bg-slate-100
-    ">
-
-      <IconCircle
-        icon={Clock3}
-        bg="bg-orange-100"
-      />
-
-      <span className="
-        text-sm
-        text-slate-500
-        flex-1
-      ">
-        ETA
-      </span>
-
-      <span className="
-        text-sm
-        font-bold
-        text-slate-800
-      ">
-
-        {new Date(order.eta)
-          .toLocaleTimeString(
-            [],
-            {
-              hour: "2-digit",
-              minute: "2-digit",
-            }
-          )}
-
-      </span>
-
-    </div>
-
-    {/* ORDER ID */}
-
-    <div className="
-      flex
-      items-center
-      gap-3
-      p-4
-      bg-slate-50
-      rounded-xl
-      transition
-      hover:bg-slate-100
-    ">
-
-      <IconCircle
-        icon={Hash}
-        bg="bg-purple-100"
-      />
-
-      <span className="
-        text-sm
-        text-slate-500
-        flex-1
-      ">
-        Order ID
-      </span>
-
-      <div className="
-        flex
-        items-center
-        gap-2
-        min-w-0
-      ">
-
-        <span className="
-          font-mono
-          text-xs
-          text-slate-600
-          truncate
-          max-w-[120px]
-        ">
-          {params.id}
-        </span>
-
-        <button
-
-          onClick={copyId}
-
-          className="
-            text-slate-400
-            hover:text-slate-700
-            text-xs
-            flex-shrink-0
-            transition
-          "
-        >
-
-          {copied ? "✓" : "⧉"}
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-  {/* ITEMS — same fixed height, scrollable content */}
-  <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 text-left flex flex-col"
-       style={{ height: 500 }}>
-
-    <div className="flex items-center  justify-between mb-5">
-      <div className="flex items-center gap-2">
-        {/* <span style={{ fontSize: 36 }}> 🍽️  </span> */}
-        <div className="rounded-2xl bg-orange-100 p-3">
-  <UtensilsCrossed
-    size={28}
-    className="text-orange-600"
-  />
-</div>
-        {/* <h2 className="text-lg font-semibold text-slate-800"> */}
-      <h2 className="text-3xl font-semibold text-slate-800 leading-none m-2 mr-[2px]">
-Dishes</h2>
-      </div>
-      {/* <span className="text-xs font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-full">
-        {order.items?.length || 0} {order.items?.length === 1 ? "item" : "items"}
-      </span> */}
-    </div>
-
-    {/* ✅ Scrollable items container */}
-    {/* <div className="flex-1 overflow-y-auto space-y-2 pr-1
-                    [&::-webkit-scrollbar]:w-1.5
-                    [&::-webkit-scrollbar-track]:bg-transparent
-                    [&::-webkit-scrollbar-thumb]:bg-slate-200
-                    [&::-webkit-scrollbar-thumb]:rounded-full
-                    hover:[&::-webkit-scrollbar-thumb]:bg-slate-300"> */}
-      <div className="flex-1 w-full overflow-y-auto max-h-[500px]">
-
-      {order.items.map((item) => {
-        const itemId =
-          typeof item.menu_item_id === "object"
-            ? item.menu_item_id._id
-            : item.menu_item_id;
-
-        const itemName =
-          item.name ||
-          (typeof item.menu_item_id === "object"
-            ? item.menu_item_id.name
-            : "Unknown");
-
-        const itemPrice =
-          item.price ||
-          (typeof item.menu_item_id === "object"
-            ? item.menu_item_id.price
-            : 0);
-
-        const itemImage =
-          item.image ||
-          (typeof item.menu_item_id === "object"
-            ? item.menu_item_id.image
-            : null);
-
-        return (
-          <div
-            key={itemId}
-            className="flex items-center gap-3 p-3 mx-1 rounded-xl bg-slate-50 hover:bg-slate-100 transition"
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-5 py-3 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition shadow-md hover:shadow-lg"
           >
-            <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
-              <img
-                src={resolveItemImage({
-                  image: itemImage,
-                  restaurant_id: restaurantId,
-                  name: itemName,
-                })}
-                alt={itemName}
-                className="w-full h-full object-cover"
-                onError={handleImgError}
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-slate-800 text-sm truncate">
-                {itemName}
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Qty: {item.quantity}
-              </p>
-            </div>
-            <p className="font-semibold text-slate-800 text-sm flex-shrink-0">
-              ₹{itemPrice * item.quantity}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-</div>
+            <Printer size={16} />
+            Print Bill
+          </button>
+        </div>
 
-      {/* STATUS BANNER */}
-      <div className="bg-white rounded-2xl shadow-xl mt-3 border border-slate-200 p-5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div style={{ width: 48, height: 48, fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" }} className="rounded-full bg-green-100 flex-shrink-0">
-            🛵
-          </div>
-          <div className="text-left">
-            <p className="font-semibold text-slate-800">{msg.text}</p>
-            <p className="text-sm text-slate-400 mt-0.5">{msg.sub}</p>
+        {/* ── STATUS TRACKER ─────────────────────────────────────────────────── */}
+        <div
+          ref={trackerRef}
+          className="bg-white rounded-2xl shadow-lg border border-slate-200 p-10 mb-8"
+        >
+          <div className="flex items-start">
+            {steps.map((step, index) => {
+              const done = index <= currentIndex;
+              const isActive = index === currentIndex;
+              const isLast = index === steps.length - 1;
+              return (
+                <div
+                  key={step.key}
+                  className="flex items-start flex-1 last:flex-none"
+                >
+                  <div className="flex flex-col items-center w-24 flex-shrink-0">
+                    {/* Step circle — pulse ring on the active step */}
+                    <div className="relative flex items-center justify-center">
+                      {isActive && (
+                        <>
+                          {/* Outer pulse ring */}
+                          <span
+                            className="absolute rounded-full animate-ping"
+                            style={{
+                              width: 68,
+                              height: 68,
+                              background: "rgba(34,197,94,0.25)",
+                              // background: "rgb(34, 197, 94)",
+                              animationDuration: "1.4s",
+                              right: -6,
+                              
+                            }}
+                          />
+                          {/* Inner steady halo */}
+                          
+                        </>
+                      )}
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          position: "relative",
+                          zIndex: 1,
+                        }}
+                        className={`rounded-full border-4 transition-all duration-500 shadow-md ${
+                          done
+                            ? "bg-green-500 border-green-500 text-white shadow-green-200"
+                            : "bg-white border-slate-300 text-slate-400"
+                        }`}
+                      >
+                        <step.icon size={24} strokeWidth={2.5} />
+                      </div>
+                    </div>
+
+                    <p
+                      className={`text-sm mt-3 font-bold text-center leading-tight ${
+                        done ? "text-slate-900" : "text-slate-400"
+                      }`}
+                    >
+                      {step.label}
+                    </p>
+                    <p
+                      className={`text-xs mt-1.5 text-center font-medium ${
+                        done ? "text-green-600" : "text-slate-300"
+                      }`}
+                    >
+                      {index < currentIndex
+                        ? new Date().toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : index === currentIndex
+                        ? "In Progress"
+                        : "Pending"}
+                    </p>
+                  </div>
+
+                  {!isLast && (
+                    <div className="relative flex-1 h-3 bg-slate-200 mx-3 mt-7 rounded-full overflow-hidden shadow-inner">
+                      <div
+                        ref={(el) => (lineRefs.current[index] = el)}
+                        className="h-full bg-green-500 rounded-full"
+                        style={{
+                          width:
+                            index < currentIndex
+                              ? "100%"
+                              : index === currentIndex
+                              ? "60%"
+                              : "0%",
+                        }}
+                      >
+                        {index === currentIndex && (
+                          <div className="absolute top-0 left-[-40%] h-full w-[40%] bg-gradient-to-r from-transparent via-white/80 to-transparent animate-[loadingFlow_1.3s_linear_infinite]" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-        <svg width="80" height="60" viewBox="0 0 80 50" fill="none" className="opacity-20 hidden sm:block">
-          <ellipse cx="20" cy="40" rx="10" ry="10" stroke="#16a34a" strokeWidth="3"/>
-          <ellipse cx="60" cy="40" rx="10" ry="10" stroke="#16a34a" strokeWidth="3"/>
-          <path d="M10 40 L30 20 L50 20 L70 40" stroke="#16a34a" strokeWidth="3" strokeLinecap="round"/>
-          <circle cx="38" cy="12" r="8" stroke="#16a34a" strokeWidth="2"/>
-        </svg>
+
+        {/* ── 3-COLUMN GRID ──────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+
+          {/* LEFT: ORDER DETAILS */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* ORDER DETAILS CARD */}
+            <div
+              ref={orderDetailsRef}
+              className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+            >
+              <h2 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">
+                <ReceiptText size={32} className="ml-[15px]" />
+                <p className="text-left">Order Details</p>
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+                  <IconCircle icon={Store} bg="bg-blue-100" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 font-medium">Restaurant</p>
+                    <p className="font-semibold text-slate-900 text-sm">{order.restaurant_name}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+                  <IconCircle icon={Hash} bg="bg-purple-100" />
+                  <div className="text-right min-w-0">
+                    <p className="text-xs text-slate-500 font-medium">Order ID</p>
+                    <div className="flex items-center justify-end gap-2">
+                      <p className="font-mono text-slate-700 text-xs truncate">{params.id.slice(-12)}</p>
+                      <button onClick={copyId} className="text-slate-400 hover:text-slate-700 transition shrink-0">
+                        {copied ? "✓" : "⧉"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+                  <IconCircle icon={Calendar} bg="bg-green-100" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 font-medium">Order Date</p>
+                    <p className="font-semibold text-slate-900 text-sm">
+                      {new Date(order.createdAt).toLocaleDateString("en-US", {
+                        month: "short", day: "numeric", year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+                  <IconCircle icon={Clock3} bg="bg-orange-100" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 font-medium">Order Time</p>
+                    <p className="font-semibold text-slate-900 text-sm">
+                      {new Date(order.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-600">Current Status</span>
+                  <span
+                    className={`px-4 py-2 rounded-xl text-sm font-bold shadow-sm ${
+                      order.status === "delivered"
+                        ? "bg-green-100 text-green-700 border-2 border-green-300"
+                        : order.status === "cancelled"
+                        ? "bg-red-100 text-red-700 border-2 border-red-300"
+                        : "bg-blue-100 text-blue-700 border-2 border-blue-300"
+                    }`}
+                  >
+                    {order.status.replace("_", " ").toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ITEMS CARD */}
+            <div
+              ref={itemsCardRef}
+              className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+            >
+              <h2 className="text-xl font-bold text-slate-900 mb-5 flex gap-2">
+                <UtensilsCrossed size={22} />
+                <div className="flex align-end gap-2">
+                  <p className="text-end mb-1">Order Items</p>
+                  <span className="ml-auto text-sm font-normal text-slate-500 bottom-1">
+                    {order.items?.length || 0} {order.items?.length === 1 ? "item" : "items"}
+                  </span>
+                </div>
+              </h2>
+              <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2">
+                {order.items.map((item, i) => {
+                  const itemId =
+                    typeof item.menu_item_id === "object"
+                      ? item.menu_item_id._id
+                      : item.menu_item_id;
+                  const itemName =
+                    item.name ||
+                    (typeof item.menu_item_id === "object"
+                      ? item.menu_item_id.name
+                      : "Unknown");
+                  const itemPrice = item.price || 0;
+                  const itemImage = item.image || null;
+                  return (
+                    <div
+                      key={itemId}
+                      className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition shadow-sm"
+                    >
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 shadow-md">
+                        <img
+                          src={resolveItemImage({
+                            image: itemImage,
+                            restaurant_id: restaurantId,
+                            name: itemName,
+                          })}
+                          alt={itemName}
+                          className="w-full h-full object-cover"
+                          onError={handleImgError}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-900 text-sm">{itemName}</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Qty: {item.quantity} × ₹{itemPrice}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-slate-900 text-base">
+                          ₹{itemPrice * item.quantity}
+                        </p>
+                        {item.veg !== undefined && (
+                          <p className="text-base mt-1">{item.veg ? "🟢" : "🔴"}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* DELIVERY ADDRESS */}
+            <div
+              ref={addressCardRef}
+              className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+            >
+              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <MapPin size={22} />
+                Delivery Address
+              </h2>
+              <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-left">
+                <p className="font-bold text-slate-900 text-base">
+                  {order.delivery_address?.full_name}
+                </p>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Phone size={16} className="text-slate-500 flex-shrink-0" />
+                  <span className="font-medium">{order.delivery_address?.phone}</span>
+                </div>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  {order.delivery_address?.address_line}
+                </p>
+                <p className="text-slate-600 text-sm">
+                  {order.delivery_address?.city}, {order.delivery_address?.state}{" "}
+                  {order.delivery_address?.pincode}
+                </p>
+                <p className="text-slate-500 text-xs">India</p>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: ORDER SUMMARY */}
+          <div className="lg:col-span-1">
+            <div
+              ref={summaryRef}
+              className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 lg:sticky lg:top-20"
+            >
+              <h2 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">
+                <IndianRupee size={22} />
+                Order Summary
+              </h2>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2.5 border-b border-slate-100">
+                  <span className="text-slate-600 font-medium">Items Total</span>
+                  <span className="font-bold text-slate-900">₹{itemsTotal}</span>
+                </div>
+
+                <div className="flex justify-between py-2.5 border-b border-slate-100">
+                  <span className="text-slate-600 font-medium">Delivery Fee</span>
+                  <span className="font-bold text-slate-900">₹{deliveryFee}</span>
+                </div>
+
+                {taxAmount > 0 && (
+                  <div className="flex justify-between py-2.5 border-b border-slate-100">
+                    <span className="text-slate-600 font-medium">Tax & Charges</span>
+                    <span className="font-bold text-slate-900">₹{taxAmount}</span>
+                  </div>
+                )}
+
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between py-2.5 border-b border-green-300 bg-green-100 px-3 rounded-lg">
+                    <span className="text-green-700 font-semibold">🎟 Coupon Discount</span>
+                    <span className="font-bold text-green-700">-₹{couponDiscount}</span>
+                  </div>
+                )}
+
+                {coinsDiscount > 0 && (
+                  <div className="flex justify-between py-2.5 border-b border-amber-300 bg-amber-100 px-3 rounded-lg">
+                    <span className="text-amber-700 font-semibold">🪙 Coins Discount</span>
+                    <span className="font-bold text-amber-700">-₹{coinsDiscount}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between py-2 mt-2 bg-gradient-to-br from-slate-900 to-slate-800 text-white px-3 rounded-xl shadow-xl">
+                  <span className="text-base font-bold">Total Paid</span>
+                  <span className="text-xl font-bold">₹{finalTotal}</span>
+                </div>
+
+                <div className="flex justify-between py-3 mt-4 border-t border-slate-200 pt-4">
+                  <span className="text-slate-600 font-medium">Payment Method</span>
+                  <span className="font-bold capitalize text-slate-900">
+                    {order.payment_method}
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-3">
+                  <span className="text-slate-600 font-medium">Payment Status</span>
+                  <span
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm ${
+                      order.payment_status === "paid"
+                        ? "bg-green-100 text-green-700 border border-green-300"
+                        : "bg-yellow-100 text-yellow-700 border border-yellow-300"
+                    }`}
+                  >
+                    {order.payment_status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <SupportWidget
+          orderId={params.id}
+          userId={
+            user?._id ||
+            JSON.parse(
+              atob((token || localStorage.getItem("token")).split(".")[1])
+            ).id
+          }
+          token={token || localStorage.getItem("token")}
+        />
       </div>
-          {/* <SupportWidget
-    orderId={params.id}
-    // userId={params.user_id}// user_id
-    userId={user._id}
-    token={token}
-  />
-  */}
-  <SupportWidget
-    orderId={params.id}
-    userId={
-      user?._id ||
-      JSON.parse(
-        atob(
-          (
-            token ||
-            localStorage.getItem("token")
-          ).split(".")[1]
-        )
-      ).id
-    }
-    token={
-      token ||
-      localStorage.getItem("token")
-    }
-  />
-    </div>
     </div>
   );
 }
