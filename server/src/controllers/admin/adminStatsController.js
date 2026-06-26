@@ -233,13 +233,79 @@ export const orderStats = async (req, res) => {
 
 export const getOrderData = async (req, res) => {
   try {
-    const { status, sort = "desc" } = req.query;
+    const {
+      status,
+      sort = "desc",
+      sortBy = "createdAt",
+      payment_method,
+      payment_status,
+      city,
+      hasCoupon,
+      hasCoins,
+      minAmount,
+      maxAmount,
+      from,
+      to,
+      search,
+    } = req.query;
+
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
 
     const query = {};
     if (status) query.status = status;
+    if (payment_method) query.payment_method = payment_method;
+    if (payment_status) query.payment_status = payment_status;
+    if (city) query["delivery_address.city"] = new RegExp(String(city), "i");
 
+    if (hasCoupon === "true") query.coupon_code = { $nin: [null, ""] };
+    if (hasCoupon === "false") query.$or = [{ coupon_code: null }, { coupon_code: "" }];
+    if (hasCoins === "true") query.coins_used = { $gt: 0 };
+    if (hasCoins === "false") query.coins_used = { $lte: 0 };
+
+    const amountQuery = {};
+    if (minAmount !== undefined && minAmount !== "") amountQuery.$gte = Number(minAmount);
+    if (maxAmount !== undefined && maxAmount !== "") amountQuery.$lte = Number(maxAmount);
+    if (Object.keys(amountQuery).length) query.total_amount = amountQuery;
+
+    const createdAtQuery = {};
+    if (from) createdAtQuery.$gte = new Date(String(from));
+    if (to) {
+      const toDate = new Date(String(to));
+      toDate.setHours(23, 59, 59, 999);
+      createdAtQuery.$lte = toDate;
+    }
+    if (Object.keys(createdAtQuery).length) query.createdAt = createdAtQuery;
+
+    if (search) {
+      const searchRegex = new RegExp(String(search).trim(), "i");
+      query.$and = [
+        ...(query.$and || []),
+        {
+          $or: [
+            { _id: String(search).match(/^[0-9a-fA-F]{24}$/) ? search : undefined },
+            { restaurant_name: searchRegex },
+            { "delivery_address.full_name": searchRegex },
+            { "delivery_address.phone": searchRegex },
+            { "items.name": searchRegex },
+            { coupon_code: searchRegex },
+          ].filter((condition) => Object.values(condition)[0] !== undefined),
+        },
+      ];
+    }
+
+    const allowedSortFields = new Set([
+      "createdAt",
+      "total_amount",
+      "subtotal",
+      "delivery_fee",
+      "eta",
+      "status",
+      "payment_status",
+      "coins_used",
+      "coupon_discount",
+    ]);
+    const safeSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
     const sortDirection = sort === "asc" ? 1 : -1;
 
     const [result] = await Order.aggregate([
@@ -247,7 +313,7 @@ export const getOrderData = async (req, res) => {
       {
         $facet: {
           orders: [
-            { $sort: { createdAt: sortDirection } },
+            { $sort: { [safeSortBy]: sortDirection, createdAt: -1 } },
             { $skip: (page - 1) * limit },
             { $limit: limit },
             {
@@ -392,6 +458,14 @@ export const usersList = async (req, res) => {
         },
       },
 
+      // Calculate correct totalSpent and avgTicket before unwinding to prevent duplication
+      {
+        $addFields: {
+          totalSpentTemp: { $sum: "$orders.total_amount" },
+          avgTicketTemp: { $avg: "$orders.total_amount" },
+        },
+      },
+
       // 3. Flatten orders
       { $unwind: { path: "$orders", preserveNullAndEmptyArrays: true } },
       { $unwind: { path: "$orders.items", preserveNullAndEmptyArrays: true } },
@@ -426,8 +500,8 @@ export const usersList = async (req, res) => {
           email: { $first: "$email" },
           isActive: { $first: "$isActive" },
 
-          totalSpent: { $sum: "$orders.total_amount" },
-          avgTicket: { $avg: "$orders.total_amount" },
+          totalSpent: { $first: "$totalSpentTemp" },
+          avgTicket: { $first: "$avgTicketTemp" },
 
           restaurantStats: {
             $push: {

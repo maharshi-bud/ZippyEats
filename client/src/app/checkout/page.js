@@ -13,14 +13,99 @@ import { useRouter } from "next/navigation";
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
 import api from "../../lib/axios";
 
 import { startRouteLoader } from "../../lib/routeLoading";
+import gsap from "gsap";
 
 const DELIVERY_FEE = 40;
+
+const CrossIcon = () => (
+  <svg width="26" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+function CheckoutGridBg() {
+  const fixedRef = useRef(null);
+
+  useEffect(() => {
+    const fixedContainer = fixedRef.current;
+    if (!fixedContainer) return;
+
+    const ctx = gsap.context(() => {
+      const crosses = fixedContainer.querySelectorAll(".checkout-grid-cross");
+      crosses.forEach((cross, i) => {
+        gsap.to(cross, {
+          scale: 1.35,
+          opacity: 0.22,
+          duration: 3 + i * 0.25,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+        });
+      });
+
+      const lenses = fixedContainer.querySelectorAll(".checkout-ambient-lens");
+      lenses.forEach((lens, i) => {
+        gsap.to(lens, {
+          x: "random(-42, 42)",
+          y: "random(-42, 42)",
+          scale: "random(0.92, 1.12)",
+          duration: 12 + i * 4,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay: i * 1.8,
+        });
+      });
+    }, fixedContainer);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div
+      ref={fixedRef}
+      className="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-[#f0f3f1]"
+      style={{ width: "100vw", height: "100vh" }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(0, 191, 99, 0.08) 1.5px, transparent 1.5px),
+            linear-gradient(to bottom, rgba(0, 191, 99, 0.08) 1.5px, transparent 1.5px)
+          `,
+          backgroundSize: "64px 64px",
+        }}
+      />
+
+      <div
+        className="checkout-ambient-lens absolute top-[4%] left-[-15%] w-[60vw] h-[60vw] rounded-full blur-[140px] opacity-[0.22] pointer-events-none"
+        style={{ background: "radial-gradient(circle, #ffedd5 0%, transparent 70%)" }}
+      />
+      <div
+        className="checkout-ambient-lens absolute bottom-[10%] right-[-15%] w-[60vw] h-[60vw] rounded-full blur-[140px] opacity-[0.24] pointer-events-none"
+        style={{ background: "radial-gradient(circle, #dcfce7 0%, transparent 70%)" }}
+      />
+      <div
+        className="checkout-ambient-lens absolute top-[35%] right-[5%] w-[50vw] h-[50vw] rounded-full blur-[130px] opacity-[0.14] pointer-events-none"
+        style={{ background: "radial-gradient(circle, #fef9c3 0%, transparent 70%)" }}
+      />
+
+      <div className="checkout-grid-cross absolute left-[12%] top-[8%] text-emerald-600/15"><CrossIcon /></div>
+      <div className="checkout-grid-cross absolute left-[88%] top-[24%] text-emerald-600/15"><CrossIcon /></div>
+      <div className="checkout-grid-cross absolute left-[5%] top-[45%] text-emerald-600/15"><CrossIcon /></div>
+      <div className="checkout-grid-cross absolute left-[92%] top-[66%] text-emerald-600/15"><CrossIcon /></div>
+      <div className="checkout-grid-cross absolute left-[8%] top-[85%] text-emerald-600/15"><CrossIcon /></div>
+    </div>
+  );
+}
 
 const PAYMENT_OPTIONS = [
   {
@@ -138,6 +223,18 @@ export default function CheckoutPage() {
   const [error, setError] =
     useState("");
 
+  const checkoutShellRef = useRef(null);
+  const addressSectionRef = useRef(null);
+  const customAddressRef = useRef(null);
+  const saveCheckboxRef = useRef(null);
+  const saveCheckboxIconRef = useRef(null);
+  const saveCheckboxLabelRef = useRef(null);
+  const couponCardRef = useRef(null);
+  const couponContentRef = useRef(null);
+  const couponContentHeightRef = useRef(null);
+  const couponConfettiRef = useRef(null);
+  const previousAppliedCouponRef = useRef(null);
+
   // ── Computed totals ──────────────────────────────────────
 
   const subtotal =
@@ -171,6 +268,38 @@ export default function CheckoutPage() {
         coinsDiscount -
         couponDiscount
     );
+
+  useEffect(() => {
+    const shell = checkoutShellRef.current;
+    if (!shell) return;
+
+    const ctx = gsap.context(() => {
+      const cards = gsap.utils.toArray(".checkout-reveal-card");
+      if (!cards.length) return;
+
+      gsap.fromTo(
+        cards,
+        {
+          autoAlpha: 0,
+          y: 76,
+          scale: 0.965,
+          transformOrigin: "50% 100%",
+          willChange: "transform, opacity",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.78,
+          stagger: 0.12,
+          ease: "back.out(1.18)",
+          clearProps: "willChange,transform,opacity,visibility",
+        }
+      );
+    }, shell);
+
+    return () => ctx.revert();
+  }, []);
 
   useEffect(() => {
     // Fetch addresses
@@ -224,6 +353,290 @@ export default function CheckoutPage() {
       )
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const section = addressSectionRef.current;
+    if (!section) return;
+
+    const cards = section.querySelectorAll(".checkout-address-option");
+    const activeCard = section.querySelector('.checkout-address-option[data-active="true"]');
+
+    gsap.killTweensOf(cards);
+    gsap.to(cards, {
+      scale: 1,
+      y: 0,
+      duration: 0.18,
+      ease: "power2.out",
+      overwrite: "auto",
+    });
+
+    if (activeCard) {
+      gsap.fromTo(
+        activeCard,
+        {
+          scale: 0.992,
+          y: 1,
+          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
+        },
+        {
+          scale: 1,
+          y: 0,
+          boxShadow: "0 14px 30px rgba(16, 185, 129, 0.10)",
+          duration: 0.28,
+          ease: "power3.out",
+          clearProps: "boxShadow,transform",
+        }
+      );
+    }
+  }, [selectedAddressId, useCustom]);
+
+  useEffect(() => {
+    const el = customAddressRef.current;
+    if (!el) return;
+
+    const shouldShowCustomAddress = useCustom || savedAddresses.length === 0;
+    const fields = el.querySelectorAll(".checkout-address-field");
+
+    gsap.killTweensOf([el, ...fields]);
+
+    if (shouldShowCustomAddress) {
+      gsap.set(el, { display: "block", pointerEvents: "auto" });
+      const targetHeight = el.scrollHeight;
+
+      if (el.dataset.addressInitialized !== "true") {
+        gsap.set(el, { height: "auto", opacity: 1, y: 0 });
+        el.dataset.addressInitialized = "true";
+        return;
+      }
+
+      gsap.fromTo(
+        el,
+        { height: 0, opacity: 0, y: -8 },
+        {
+          height: targetHeight,
+          opacity: 1,
+          y: 0,
+          duration: 0.42,
+          ease: "power3.out",
+          onComplete: () => gsap.set(el, { height: "auto" }),
+        }
+      );
+
+      if (fields.length > 0) {
+        gsap.fromTo(
+          fields,
+          { opacity: 0, y: 10 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.34,
+            stagger: 0.035,
+            delay: 0.08,
+            ease: "power3.out",
+          }
+        );
+      }
+    } else {
+      if (el.dataset.addressInitialized !== "true") {
+        gsap.set(el, { height: 0, opacity: 0, y: -6, display: "none", pointerEvents: "none" });
+        el.dataset.addressInitialized = "true";
+        return;
+      }
+
+      const currentHeight = el.offsetHeight;
+      gsap.set(el, { height: currentHeight, pointerEvents: "none" });
+
+      gsap.to(el, {
+        height: 0,
+        opacity: 0,
+        y: -6,
+        duration: 0.3,
+        ease: "power2.inOut",
+        onComplete: () => gsap.set(el, { display: "none" }),
+      });
+    }
+  }, [useCustom, savedAddresses.length]);
+
+  useEffect(() => {
+    const box = saveCheckboxRef.current;
+    const icon = saveCheckboxIconRef.current;
+    const label = saveCheckboxLabelRef.current;
+
+    if (!box || !icon) return;
+
+    gsap.killTweensOf([box, icon, label].filter(Boolean));
+
+    if (saveAddress) {
+      gsap.timeline()
+        .to(box, {
+          scale: 0.92,
+          duration: 0.07,
+          ease: "power2.out",
+        })
+        .to(box, {
+          scale: 1,
+          backgroundColor: "#10b981",
+          borderColor: "#10b981",
+          boxShadow: "0 0 0 5px rgba(16, 185, 129, 0.13)",
+          duration: 0.2,
+          ease: "power3.out",
+        })
+        .fromTo(
+          icon,
+          { opacity: 0, scale: 0.45, rotate: -18 },
+          { opacity: 1, scale: 1, rotate: 0, duration: 0.22, ease: "power3.out" },
+          "-=0.12"
+        )
+        .to(box, {
+          boxShadow: "0 0 0 0 rgba(16, 185, 129, 0)",
+          duration: 0.28,
+          ease: "power2.out",
+        });
+
+      if (label) {
+        gsap.fromTo(
+          label,
+          { x: -2, color: "#047857" },
+          { x: 0, color: "#475569", duration: 0.24, ease: "power3.out" }
+        );
+      }
+    } else {
+      gsap.timeline()
+        .to(icon, {
+          opacity: 0,
+          scale: 0.55,
+          rotate: 12,
+          duration: 0.12,
+          ease: "power2.in",
+        })
+        .to(
+          box,
+          {
+            backgroundColor: "rgba(255, 255, 255, 0.75)",
+            borderColor: "#cbd5e1",
+            boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
+            duration: 0.18,
+            ease: "power2.out",
+          },
+          "-=0.04"
+        );
+    }
+  }, [saveAddress]);
+
+  const runCouponConfetti = () => {
+    const container = couponConfettiRef.current;
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const colors = ["#10b981", "#34d399", "#f59e0b", "#fb923c", "#fef3c7", "#ffffff"];
+    const particles = Array.from({ length: 34 }).map((_, index) => {
+      const particle = document.createElement("span");
+      const size = gsap.utils.random(5, 9, 1);
+
+      particle.style.position = "absolute";
+      particle.style.left = "50%";
+      particle.style.top = "20px";
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size * gsap.utils.random(0.55, 1.2)}px`;
+      particle.style.borderRadius = index % 3 === 0 ? "999px" : "2px";
+      particle.style.background = colors[index % colors.length];
+      particle.style.pointerEvents = "none";
+      particle.style.willChange = "transform, opacity";
+      particle.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.08)";
+
+      container.appendChild(particle);
+      return particle;
+    });
+
+    gsap.fromTo(
+      particles,
+      {
+        x: 0,
+        y: 0,
+        opacity: 1,
+        scale: 0.8,
+        rotate: 0,
+      },
+      {
+        x: () => gsap.utils.random(-170, 170),
+        y: () => gsap.utils.random(-92, 96),
+        opacity: 0,
+        scale: () => gsap.utils.random(0.45, 1),
+        rotate: () => gsap.utils.random(-220, 220),
+        duration: () => gsap.utils.random(0.85, 1.35),
+        ease: "power3.out",
+        stagger: 0.008,
+        onComplete: () => {
+          container.innerHTML = "";
+        },
+      }
+    );
+  };
+
+  useEffect(() => {
+    const content = couponContentRef.current;
+    if (!content) return;
+
+    const targetHeight = content.scrollHeight;
+    const startHeight = couponContentHeightRef.current ?? targetHeight;
+    gsap.killTweensOf(content);
+
+    gsap.fromTo(
+      content,
+      { height: startHeight, opacity: 0.72, y: appliedCoupon ? -4 : 0 },
+      {
+        height: targetHeight,
+        opacity: 1,
+        y: 0,
+        duration: appliedCoupon ? 0.4 : 0.3,
+        ease: appliedCoupon ? "power3.out" : "power2.out",
+        onComplete: () => {
+          couponContentHeightRef.current = targetHeight;
+          gsap.set(content, { height: "auto" });
+        },
+      }
+    );
+  }, [appliedCoupon, couponError]);
+
+  useEffect(() => {
+    const couponWasJustApplied = appliedCoupon && !previousAppliedCouponRef.current;
+    previousAppliedCouponRef.current = appliedCoupon;
+
+    if (!couponWasJustApplied) return;
+
+    const card = couponCardRef.current;
+    const appliedPanel = couponContentRef.current?.querySelector(".applied-coupon-panel");
+
+    runCouponConfetti();
+
+    if (card) {
+      gsap.fromTo(
+        card,
+        {
+          y: 2,
+          boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08), 0 0 0 0 rgba(16, 185, 129, 0)",
+        },
+        {
+          y: 0,
+          boxShadow: "0 18px 40px rgba(15, 23, 42, 0.10), 0 0 0 4px rgba(16, 185, 129, 0.10)",
+          duration: 0.22,
+          yoyo: true,
+          repeat: 1,
+          ease: "power2.inOut",
+          clearProps: "boxShadow,transform",
+        }
+      );
+    }
+
+    if (appliedPanel) {
+      gsap.fromTo(
+        appliedPanel.children,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.32, stagger: 0.06, ease: "power3.out", delay: 0.05 }
+      );
+    }
+  }, [appliedCoupon]);
 
   // ── APPLY COUPON ──────────────────────────────────────
   const applyCoupon =
@@ -312,9 +725,10 @@ export default function CheckoutPage() {
               ...(matchedItem || {}),
               menu_item_id: freeItemId,
               quantity: freeItemQty,
-              // Add as a regular item (not flagged as free) so backend validation
-              // and totals include it like any other menu item.
+              isFree: true,
+              isRewardItem: true,
               reward_type: "bxgy",
+              originalPrice: matchedItem?.price || (coupon.discount_amount / freeItemQty),
               price: matchedItem?.price || (coupon.discount_amount / freeItemQty),
             })
           );
@@ -350,7 +764,7 @@ export default function CheckoutPage() {
           "bxgy"
       ) {
         dispatch(
-          removeFreeRewardItems()
+          removeFreeRewardItems(appliedCoupon)
         );
       }
 
@@ -546,15 +960,25 @@ export default function CheckoutPage() {
     };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <div className="max-w-2xl mx-auto px-4 space-y-6">
-        <h1 className="text-3xl font-bold text-slate-900">
-          Checkout
-        </h1>
+    <div className="relative min-h-screen overflow-hidden bg-[#f0f3f1] py-10">
+      <CheckoutGridBg />
+
+      <div ref={checkoutShellRef} className="relative left-1/2 z-10 w-[calc(100%-32px)] max-w-2xl -translate-x-1/2 space-y-6">
+        <div className="checkout-reveal-card rounded-[28px] border border-white/40 bg-white/25 backdrop-blur-[16px] px-6 py-5 shadow-[0_0_40px_rgba(15,23,42,0.11),0_18px_55px_rgba(15,23,42,0.08)]">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700/80">
+            Secure order handoff
+          </p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
+            Checkout
+          </h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Review your delivery details and place your ZippyEats order.
+          </p>
+        </div>
 
         {/* ── DELIVERY ADDRESS ─────────────────────────────── */}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div ref={addressSectionRef} className="checkout-reveal-card rounded-2xl border border-white/50 bg-white/65 p-6 shadow-[0_0_40px_rgba(15,23,42,0.11),0_18px_55px_rgba(15,23,42,0.08)] backdrop-blur-[16px]">
           <h2 className="text-lg font-semibold text-slate-800 mb-4">
             Delivery address
           </h2>
@@ -568,12 +992,13 @@ export default function CheckoutPage() {
                     key={
                       addr._id
                     }
-                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    data-active={!useCustom && selectedAddressId === addr._id}
+                    className={`checkout-address-option flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors duration-200 ${
                       !useCustom &&
                       selectedAddressId ===
                         addr._id
-                        ? "border-green-500 bg-green-50"
-                        : "border-slate-200"
+                        ? "border-emerald-500 bg-emerald-50/80"
+                        : "border-white/60 bg-white/35 hover:border-emerald-200 hover:bg-white/55"
                     }`}
                   >
                     <input
@@ -596,8 +1021,23 @@ export default function CheckoutPage() {
                           false
                         );
                       }}
-                      className="mt-1"
+                      className="sr-only"
                     />
+
+                    <span
+                      className={`mt-1 grid h-4 w-4 flex-shrink-0 place-items-center rounded-full border transition-colors duration-200 ${
+                        !useCustom && selectedAddressId === addr._id
+                          ? "border-emerald-500 bg-white"
+                          : "border-slate-300 bg-white/70"
+                      }`}
+                      aria-hidden="true"
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full bg-emerald-500 transition-opacity duration-200 ${
+                          !useCustom && selectedAddressId === addr._id ? "opacity-100" : "opacity-0"
+                        }`}
+                      />
+                    </span>
 
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
@@ -612,7 +1052,7 @@ export default function CheckoutPage() {
                         </span>
 
                         {addr.is_default && (
-                          <span className="ml-1 text-xs text-green-600">
+                          <span className="ml-1 text-xs text-emerald-600">
                             ✓
                             Default
                           </span>
@@ -638,10 +1078,11 @@ export default function CheckoutPage() {
               )}
 
               <label
-                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                data-active={useCustom}
+                className={`checkout-address-option flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors duration-200 ${
                   useCustom
-                    ? "border-green-500 bg-green-50"
-                    : "border-slate-200"
+                    ? "border-emerald-500 bg-emerald-50/80"
+                    : "border-white/60 bg-white/35 hover:border-emerald-200 hover:bg-white/55"
                 }`}
               >
                 <input
@@ -655,7 +1096,23 @@ export default function CheckoutPage() {
                       true
                     )
                   }
+                  className="sr-only"
                 />
+
+                <span
+                  className={`grid h-4 w-4 flex-shrink-0 place-items-center rounded-full border transition-colors duration-200 ${
+                    useCustom
+                      ? "border-emerald-500 bg-white"
+                      : "border-slate-300 bg-white/70"
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full bg-emerald-500 transition-opacity duration-200 ${
+                      useCustom ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </span>
 
                 <span className="text-sm text-slate-700">
                   Enter a
@@ -666,9 +1123,11 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {(useCustom ||
-            savedAddresses.length ===
-              0) && (
+          <div
+            ref={customAddressRef}
+            aria-hidden={!(useCustom || savedAddresses.length === 0)}
+            className="overflow-hidden"
+          >
             <div className="space-y-3">
               <input
                 placeholder="Full name *"
@@ -688,7 +1147,7 @@ export default function CheckoutPage() {
                     })
                   )
                 }
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="checkout-address-field w-[610px] m-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
               />
 
               <input
@@ -709,7 +1168,7 @@ export default function CheckoutPage() {
                     })
                   )
                 }
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="checkout-address-field w-[610px] m-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
               />
 
               <input
@@ -730,7 +1189,7 @@ export default function CheckoutPage() {
                     })
                   )
                 }
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="checkout-address-field w-[610px] m-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
               />
 
               <div className="grid grid-cols-3 gap-3">
@@ -752,7 +1211,7 @@ export default function CheckoutPage() {
                       })
                     )
                   }
-                  className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="checkout-address-field m-1 flex-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
                 />
 
                 <input
@@ -773,7 +1232,7 @@ export default function CheckoutPage() {
                       })
                     )
                   }
-                  className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="checkout-address-field m-1 flex-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
                 />
 
                 <input
@@ -794,10 +1253,10 @@ export default function CheckoutPage() {
                       })
                     )
                   }
-                  className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="checkout-address-field m-1 flex-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
                 />
 
-                <label className="flex items-center gap-3 col-span-3 mt-2">
+                <label className="checkout-address-field group col-span-3 mt-2 flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-100/80 bg-white/45 px-3.5 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-[12px]">
                   <input
                     type="checkbox"
                     checked={saveAddress}
@@ -806,27 +1265,54 @@ export default function CheckoutPage() {
                         e.target.checked
                       )
                     }
-                    className="w-4 h-4"
+                    className="sr-only"
                   />
 
-                  <span className="text-sm text-slate-600">
+                  <span
+                    ref={saveCheckboxRef}
+                    className={`grid h-5 w-5 flex-shrink-0 place-items-center rounded-md border shadow-sm ${
+                      saveAddress
+                        ? "border-emerald-500 bg-emerald-500"
+                        : "border-slate-300 bg-white/75"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <svg
+                      ref={saveCheckboxIconRef}
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className={saveAddress ? "opacity-100" : "opacity-0"}
+                    >
+                      <path
+                        d="M5 12.5l4.2 4.2L19 7"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+
+                  <span ref={saveCheckboxLabelRef} className="text-sm font-medium text-slate-600">
                     Save this address
                     for future orders
                   </span>
                 </label>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ── ZIPCOINS ─────────────────────────────────────── */}
 
         {zipCoins > 0 && (
           <div
-            className={`rounded-2xl border p-5 transition ${
+            className={`checkout-reveal-card rounded-2xl border p-5 shadow-[0_0_40px_rgba(15,23,42,0.11),0_18px_55px_rgba(15,23,42,0.08)] transition-colors duration-200 ${
               useZipCoins
                 ? "bg-amber-50 border-amber-300"
-                : "bg-white border-slate-200"
+                : "bg-white/65 border-white/50 backdrop-blur-[16px]"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -881,7 +1367,9 @@ export default function CheckoutPage() {
 
         {/* ── COUPON ─────────────────────────────────────── */}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div ref={couponCardRef} className="checkout-reveal-card relative overflow-visible rounded-2xl border border-white/50 bg-white/65 p-6 shadow-[0_0_40px_rgba(15,23,42,0.11),0_18px_55px_rgba(15,23,42,0.08)] backdrop-blur-[16px]">
+          <div ref={couponConfettiRef} className="pointer-events-none absolute inset-0 z-20 overflow-visible" />
+
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-800">
@@ -896,12 +1384,13 @@ export default function CheckoutPage() {
             </div>
 
             {appliedCoupon ? (
-              <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
+              <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-medium">
                 Applied
               </span>
             ) : null}
           </div>
 
+          <div ref={couponContentRef} className="overflow-hidden">
           {!appliedCoupon ? (
             <>
               <div className="flex gap-3">
@@ -917,7 +1406,7 @@ export default function CheckoutPage() {
                     )
                   }
                   placeholder="Enter coupon code"
-                  className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="m-1 flex-1 px-4 py-3 border border-slate-200 bg-white/85 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
                 />
 
                 <button
@@ -945,16 +1434,16 @@ export default function CheckoutPage() {
               ) : null}
             </>
           ) : (
-            <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
+            <div className="applied-coupon-panel rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-green-700">
+                  <p className="font-semibold text-emerald-700">
                     {
                       appliedCoupon.code
                     }
                   </p>
 
-                  <p className="text-sm text-green-600 mt-1">
+                  <p className="text-sm text-emerald-600 mt-1">
                     {
                       appliedCoupon.reward_label ||
                       "Coupon applied successfully"
@@ -972,13 +1461,13 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between">
-                <span className="text-sm text-green-700">
+              <div className="mt-3 pt-3 border-t border-emerald-200 flex items-center justify-between">
+                <span className="text-sm text-emerald-700">
                   Coupon
                   Discount
                 </span>
 
-                <span className="font-bold text-green-700">
+                <span className="font-bold text-emerald-700">
                   -₹
                   {
                     appliedCoupon.discount_amount
@@ -987,11 +1476,12 @@ export default function CheckoutPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {/* ── ORDER SUMMARY ────────────────────────────────── */}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="checkout-reveal-card rounded-2xl border border-white/50 bg-white/65 p-6 shadow-[0_0_40px_rgba(15,23,42,0.11),0_18px_55px_rgba(15,23,42,0.08)] backdrop-blur-[16px]">
           <h2 className="text-lg font-semibold text-slate-800 mb-4">
             Order summary
           </h2>
@@ -1047,7 +1537,7 @@ export default function CheckoutPage() {
             {useZipCoins &&
               coinsDiscount >
                 0 && (
-                <div className="flex justify-between text-sm text-green-600 font-medium">
+                <div className="flex justify-between text-sm text-emerald-600 font-medium">
                   <span>
                     🪙 ZipCoins
                     discount
@@ -1063,7 +1553,7 @@ export default function CheckoutPage() {
               )}
 
             {appliedCoupon && (
-              <div className="flex justify-between text-sm text-green-600 font-medium">
+              <div className="flex justify-between text-sm text-emerald-600 font-medium">
                 <span>
                   🎟 Coupon discount
                 </span>
@@ -1090,48 +1580,48 @@ export default function CheckoutPage() {
               </span>
             </div>
           </div>
-        </div>
 
-        {error && (
-          <p className="text-red-500 text-sm mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {error}
-          </p>
-        )}
-
-        <button
-          onClick={
-            handleCheckout
-          }
-          disabled={
-            loading ||
-            items.length ===
-              0
-          }
-          className="mt-5 w-full p-3.5 rounded-xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-
-              <span>
-                Placing
-                order…
-              </span>
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            </>
-          ) : (
-            <>
-              <span>
-                Place order · ₹{finalTotal}
-              </span>
-            </>
+          {error && (
+            <p className="mt-4 text-red-500 text-sm bg-red-50/90 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
           )}
-        </button>
 
-        <p className="text-center text-xs text-slate-400 mt-3">
-          🔒 Your
-          information is
-          secure
-        </p>
+          <button
+            onClick={
+              handleCheckout
+            }
+            disabled={
+              loading ||
+              items.length ===
+                0
+            }
+            className="mt-5 w-full p-3.5 rounded-xl bg-emerald-600 text-white font-semibold text-base hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/15"
+          >
+            {loading ? (
+              <>
+
+                <span>
+                  Placing
+                  order…
+                </span>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </>
+            ) : (
+              <>
+                <span>
+                  Place order · ₹{finalTotal}
+                </span>
+              </>
+            )}
+          </button>
+
+          <p className="text-center text-xs text-slate-400 mt-3">
+            🔒 Your
+            information is
+            secure
+          </p>
+        </div>
       </div>
     </div>
   );

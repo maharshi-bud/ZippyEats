@@ -14,103 +14,103 @@ const cartSlice = createSlice({
     },
 
     addItemWithBXGYCheck(state, action) {
-  const { item, couponData } = action.payload;
-  
-  // Add regular item
-  const existingItem = state.items.find(i => i._id === item._id);
-  if (existingItem) {
-    existingItem.quantity += item.quantity;
-  } else {
-    state.items.push({
-      ...item,
-      quantity: item.quantity || 1,
-      isRewardItem: false,
-    });
-  }
+      const { item, couponData } = action.payload;
 
-  // Check if coupon is BXGY and trigger item was added
-  if (couponData?.reward_type !== 'bxgy' || !couponData?.bxgy_config) return;
+      // Add regular item
+      const existingItem = state.items.find(i => i._id === item._id);
+      if (existingItem) {
+        existingItem.quantity += item.quantity;
+      } else {
+        state.items.push({
+          ...item,
+          quantity: item.quantity || 1,
+          isRewardItem: false,
+        });
+      }
 
-  const { trigger_item_id, reward_item_id, trigger_quantity, reward_quantity, max_applications } = couponData.bxgy_config;
+      // Check if coupon is BXGY and trigger item was added
+      if (couponData?.reward_type !== 'bxgy' || !couponData?.bxgy_config) return;
 
-  if (item._id.toString() !== trigger_item_id?.toString?.()) return;
+      const { trigger_item_id, reward_item_id, trigger_quantity, reward_quantity, max_applications } = couponData.bxgy_config;
 
-  // Count trigger items
-  const triggerCount = state.items
-    .filter(i => i._id.toString() === trigger_item_id?.toString?.() && !i.isRewardItem)
-    .reduce((sum, i) => sum + i.quantity, 0);
+      if (item._id.toString() !== trigger_item_id?.toString?.()) return;
 
-  const applicationsEarned = Math.floor(triggerCount / trigger_quantity);
-  const applicationsAllowed = Math.min(applicationsEarned, max_applications);
-  const totalRewardQuantity = applicationsAllowed * reward_quantity;
+      // Count trigger items
+      const triggerCount = state.items
+        .filter(i => i._id.toString() === trigger_item_id?.toString?.() && !i.isRewardItem)
+        .reduce((sum, i) => sum + i.quantity, 0);
 
-  // Find or create reward item
-  const existingReward = state.items.find(
-    i => i._id.toString() === reward_item_id?.toString?.() && i.isRewardItem
-  );
+      const applicationsEarned = Math.floor(triggerCount / trigger_quantity);
+      const applicationsAllowed = Math.min(applicationsEarned, max_applications);
+      const totalRewardQuantity = applicationsAllowed * reward_quantity;
 
-  if (existingReward) {
-    existingReward.quantity = totalRewardQuantity;
-  } else {
-    state.items.push({
-      _id: reward_item_id,
-      name: item.name, // Update with actual reward name if available
-      quantity: totalRewardQuantity,
-      price: item.price,
-      originalPrice: item.price,
-      isRewardItem: true,
-      image: item.image,
-    });
-  }
-},
-updateQuantityWithBXGY(state, action) {
-  const { itemId, quantity, couponData } = action.payload;
-  const item = state.items.find(i => i._id === itemId);
+      // Find or create reward item
+      const existingReward = state.items.find(
+        i => i._id.toString() === reward_item_id?.toString?.() && i.isRewardItem
+      );
 
-  if (!item || item.isRewardItem) return;
+      if (existingReward) {
+        existingReward.quantity = totalRewardQuantity;
+      } else {
+        state.items.push({
+          _id: reward_item_id,
+          name: item.name, // Update with actual reward name if available
+          quantity: totalRewardQuantity,
+          price: item.price,
+          originalPrice: item.price,
+          isRewardItem: true,
+          image: item.image,
+        });
+      }
+    },
+    updateQuantityWithBXGY(state, action) {
+      const { itemId, quantity, couponData } = action.payload;
+      const item = state.items.find(i => i._id === itemId);
 
-  item.quantity = quantity;
+      if (!item || item.isRewardItem) return;
 
-  // Recalculate rewards
-  if (couponData?.reward_type !== 'bxgy' || !couponData?.bxgy_config) return;
+      item.quantity = quantity;
 
-  const { trigger_item_id, reward_item_id, trigger_quantity, reward_quantity, max_applications } = couponData.bxgy_config;
+      // Recalculate rewards
+      if (couponData?.reward_type !== 'bxgy' || !couponData?.bxgy_config) return;
 
-  if (itemId.toString() !== trigger_item_id?.toString?.()) return;
+      const { trigger_item_id, reward_item_id, trigger_quantity, reward_quantity, max_applications } = couponData.bxgy_config;
 
-  const triggerCount = state.items
-    .filter(i => i._id.toString() === trigger_item_id?.toString?.() && !i.isRewardItem)
-    .reduce((sum, i) => sum + i.quantity, 0);
+      if (itemId.toString() !== trigger_item_id?.toString?.()) return;
 
-  const totalRewardQuantity = Math.min(
-    Math.floor(triggerCount / trigger_quantity),
-    max_applications
-  ) * reward_quantity;
+      const triggerCount = state.items
+        .filter(i => i._id.toString() === trigger_item_id?.toString?.() && !i.isRewardItem)
+        .reduce((sum, i) => sum + i.quantity, 0);
 
-  const rewardItem = state.items.find(
-    i => i._id.toString() === reward_item_id?.toString?.() && i.isRewardItem
-  );
+      const totalRewardQuantity = Math.min(
+        Math.floor(triggerCount / trigger_quantity),
+        max_applications
+      ) * reward_quantity;
 
-  if (rewardItem) {
-    rewardItem.quantity = totalRewardQuantity;
-  }
-},
+      const rewardItem = state.items.find(
+        i => i._id.toString() === reward_item_id?.toString?.() && i.isRewardItem
+      );
 
-removeItemWithBXGYCleanup(state, action) {
-  const itemId = action.payload;
-  
-  // Check if this item triggers rewards
-  const coupon = state.appliedCoupon;
-  if (coupon?.reward_type === 'bxgy' && coupon?.bxgy_config?.trigger_item_id?.toString?.() === itemId?.toString?.()) {
-    // Also remove reward items
-    state.items = state.items.filter(
-      item => item._id?.toString?.() !== coupon.bxgy_config.reward_item_id?.toString?.() || !item.isRewardItem
-    );
-  }
+      if (rewardItem) {
+        rewardItem.quantity = totalRewardQuantity;
+      }
+    },
 
-  // Remove the item
-  state.items = state.items.filter(item => item._id !== itemId);
-},
+    removeItemWithBXGYCleanup(state, action) {
+      const itemId = action.payload;
+
+      // Check if this item triggers rewards
+      const coupon = state.appliedCoupon;
+      if (coupon?.reward_type === 'bxgy' && coupon?.bxgy_config?.trigger_item_id?.toString?.() === itemId?.toString?.()) {
+        // Also remove reward items
+        state.items = state.items.filter(
+          item => item._id?.toString?.() !== coupon.bxgy_config.reward_item_id?.toString?.() || !item.isRewardItem
+        );
+      }
+
+      // Remove the item
+      state.items = state.items.filter(item => item._id !== itemId);
+    },
 
     addToCart: (state, action) => {
       const item = action.payload;
@@ -131,11 +131,45 @@ removeItemWithBXGYCleanup(state, action) {
       // ✅ No saveCart() — store.js subscriber handles it
     },
 
-    removeFreeRewardItems: (state) => {
-      state.items = state.items.filter(
-        (item) => !item.isFree &&
-      item.reward_type !== "bxgy"
+    removeFreeRewardItems: (state, action) => {
+      const coupon = action.payload;
+      const freeItemId =
+        coupon?.free_item_id ||
+        coupon?.bxgy_config?.reward_item_id ||
+        coupon?.bxgy_config?.get_item;
+      const freeItemQty =
+        coupon?.free_item_qty ||
+        coupon?.bxgy_config?.free_quantity ||
+        coupon?.bxgy_config?.reward_quantity ||
+        1;
+
+      const hasDedicatedRewardLine = state.items.some(
+        (item) =>
+          item.menu_item_id === freeItemId &&
+          (item.isFree || item.isRewardItem || item.reward_type === "bxgy")
       );
+
+      // Remove the dedicated reward/free lines created for BXGY coupons.
+      state.items = state.items.filter(
+        (item) => !item.isFree && !item.isRewardItem && item.reward_type !== "bxgy"
+      );
+
+      // Backward-compatible cleanup: older BXGY logic could merge the free qty into
+      // the normal paid line. If no dedicated reward line existed, subtract that qty.
+      if (coupon?.reward_type === "bxgy" && freeItemId && !hasDedicatedRewardLine) {
+        const mergedRewardItem = state.items.find(
+          (item) => item.menu_item_id === freeItemId
+        );
+
+        if (mergedRewardItem) {
+          mergedRewardItem.quantity -= freeItemQty;
+          if (mergedRewardItem.quantity <= 0) {
+            state.items = state.items.filter(
+              (item) => item.menu_item_id !== freeItemId
+            );
+          }
+        }
+      }
     },
 
     removeFromCart: (state, action) => {
@@ -189,9 +223,9 @@ export const selectCartItems = (state) =>
 export const selectCartTotal = (state) => {
   const items = Array.isArray(state.cart?.items) ? state.cart.items : [];
   return items.reduce(
-    (total, item) => 
+    (total, item) =>
       // If it's a free reward, add 0 to the total. Otherwise, add normal price.
-      total + ( (item.price || 0) * (item.quantity || 0)),
+      total + ((item.price || 0) * (item.quantity || 0)),
     0
   );
 };

@@ -502,13 +502,91 @@ export default function RestaurantPage({ params }) {
     );
   };
 
-  // Micro-scale spring pop animation for "ADD" buttons
-  const animateAddClick = (e) => {
-    const btn = e.currentTarget;
+  // Subtle tactile cart controls — intentionally no bounce/spring.
+  // Keep GSAP as the only animation authority for these controls.
+  const animateAddClick = (button, onComplete) => {
+    if (!button) {
+      onComplete?.();
+      return;
+    }
+
+    gsap.killTweensOf(button);
+    gsap.timeline({ onComplete })
+      .to(button, {
+        scale: 0.97,
+        y: 1,
+        duration: 0.08,
+        ease: "power2.out",
+      })
+      .to(button, {
+        scale: 0.985,
+        opacity: 0.88,
+        duration: 0.07,
+        ease: "power2.inOut",
+      });
+  };
+
+  const animateStepperEnter = (stepper) => {
+    if (!stepper || stepper.dataset.stepperAnimated === "true") return;
+
+    stepper.dataset.stepperAnimated = "true";
+    gsap.fromTo(
+      stepper,
+      { opacity: 0, y: 5, scale: 0.985, filter: "blur(2px)" },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        filter: "blur(0px)",
+        duration: 0.24,
+        ease: "power3.out",
+        clearProps: "filter",
+      }
+    );
+  };
+
+  const animateStepperTap = (button, direction = 1) => {
+    if (!button) return;
+
+    const stepper = button.closest(".cart-stepper");
+    const qty = stepper?.querySelector(".stepper-qty");
+
+    gsap.killTweensOf([button, stepper, qty].filter(Boolean));
+
     gsap.timeline()
-      .to(btn, { scale: 0.85, duration: 0.1 })
-      .to(btn, { scale: 1.15, duration: 0.15, ease: "back.out(1.8)" })
-      .to(btn, { scale: 1, duration: 0.1 });
+      .to(button, {
+        scale: 0.9,
+        duration: 0.055,
+        ease: "power2.out",
+      })
+      .to(button, {
+        scale: 1,
+        duration: 0.16,
+        ease: "power3.out",
+      });
+
+    if (stepper) {
+      gsap.fromTo(
+        stepper,
+        { boxShadow: "0 8px 18px rgba(15, 23, 42, 0.11), 0 0 0 0 rgba(22, 163, 74, 0)" },
+        {
+          boxShadow: "0 10px 22px rgba(15, 23, 42, 0.13), 0 0 0 3px rgba(22, 163, 74, 0.10)",
+          duration: 0.12,
+          yoyo: true,
+          repeat: 1,
+          ease: "power2.inOut",
+          clearProps: "boxShadow",
+        }
+      );
+    }
+
+    if (qty) {
+      gsap.fromTo(
+        qty,
+        { y: direction > 0 ? 3 : -3, opacity: 0.72, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.2, ease: "power3.out" }
+      );
+    }
   };
 
   if (!data) return <div className="p-10 text-center">Loading...</div>;
@@ -863,6 +941,7 @@ export default function RestaurantPage({ params }) {
                     {items.map((item) => {
                       const isBestSeller = item._id === globalBestSellerId;
                       const isTopRated = item._id === globalTopRatedId;
+                      const quantity = getQty(item._id);
 
                       return (
                         <div
@@ -950,44 +1029,12 @@ export default function RestaurantPage({ params }) {
                               </div>
 
                               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[110px]">
-                                {getQty(item._id) === 0 ? (
+                                {quantity === 0 ? (
                                   <button
                                     onClick={(event) => {
                                       event.stopPropagation();
                                       rememberViewedItem(item._id);
-                                      animateAddClick(event);
-                                      dispatch(
-                                        addToCart({
-                                          menu_item_id: item._id,
-                                          name: item.name,
-                                          price: item.price,
-                                          restaurant_id: item.restaurant_id,
-                                          image: item.image,
-                                        })
-                                      );
-                                    }}
-                                    className="w-full h-10 bg-white text-green-600 text-sm font-extrabold rounded-lg shadow-md border border-slate-200 uppercase tracking-wide hover:bg-green-50 hover:border-green-300 hover:shadow-lg transition-all duration-200"
-                                  >
-                                    ADD
-                                  </button>
-                                ) : (
-                                  <div className="w-full h-10 bg-white text-green-600 rounded-lg shadow-md border border-slate-200 grid grid-cols-3 place-items-center font-extrabold">
-                                    <button
-                                      className="w-full h-full grid place-items-center text-lg hover:bg-green-50 rounded-l-lg transition-colors duration-150"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        rememberViewedItem(item._id);
-                                        dispatch(decreaseQty(item._id));
-                                      }}
-                                    >
-                                      <span className="block leading-none">−</span>
-                                    </button>
-                                    <span className="text-sm">{getQty(item._id)}</span>
-                                    <button
-                                      className="w-full h-full grid place-items-center text-lg hover:bg-green-50 rounded-r-lg transition-colors duration-150"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        rememberViewedItem(item._id);
+                                      animateAddClick(event.currentTarget, () => {
                                         dispatch(
                                           addToCart({
                                             menu_item_id: item._id,
@@ -997,6 +1044,50 @@ export default function RestaurantPage({ params }) {
                                             image: item.image,
                                           })
                                         );
+                                      });
+                                    }}
+                                    className="w-full h-10 bg-white text-green-600 text-sm font-extrabold rounded-lg shadow-md border border-slate-200 uppercase tracking-wide hover:bg-green-50 hover:border-green-300 hover:shadow-lg transition-colors duration-200"
+                                  >
+                                    ADD
+                                  </button>
+                                ) : (
+                                  <div
+                                    ref={animateStepperEnter}
+                                    className="cart-stepper w-full h-10 bg-white text-green-600 rounded-lg shadow-md border border-slate-200 grid grid-cols-3 place-items-center font-extrabold"
+                                  >
+                                    <button
+                                      className="w-full h-full grid place-items-center text-lg hover:bg-green-50 rounded-l-lg transition-colors duration-150"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        rememberViewedItem(item._id);
+                                        const button = event.currentTarget;
+                                        animateStepperTap(button, -1);
+                                        if (quantity <= 1) {
+                                          setTimeout(() => dispatch(decreaseQty(item._id)), 120);
+                                        } else {
+                                          dispatch(decreaseQty(item._id));
+                                        }
+                                      }}
+                                    >
+                                      <span className="block leading-none">−</span>
+                                    </button>
+                                    <span className="stepper-qty text-sm tabular-nums">{quantity}</span>
+                                    <button
+                                      className="w-full h-full grid place-items-center text-lg hover:bg-green-50 rounded-r-lg transition-colors duration-150"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        rememberViewedItem(item._id);
+                                        const button = event.currentTarget;
+                                        dispatch(
+                                          addToCart({
+                                            menu_item_id: item._id,
+                                            name: item.name,
+                                            price: item.price,
+                                            restaurant_id: item.restaurant_id,
+                                            image: item.image,
+                                          })
+                                        );
+                                        requestAnimationFrame(() => animateStepperTap(button, 1));
                                       }}
                                     >
                                       <span className="block leading-none">+</span>
