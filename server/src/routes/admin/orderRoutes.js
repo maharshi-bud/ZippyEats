@@ -8,6 +8,7 @@ import { requirePermission } from "../../middleware/permissionMiddleware.js";
 import {
   getOrderById,
   updateOrderStatus,
+  updateOrderDetails,
 } from "../../controllers/admin/orderController.js";
 
 const router = express.Router();
@@ -26,6 +27,13 @@ router.put(
   protect,
   requirePermission("orders", "edit"),
   updateOrderStatus
+);
+// Update multiple order details
+router.put(
+  "/:id",
+  protect,
+  requirePermission("orders", "edit"),
+  updateOrderDetails
 );
 
 export default router;

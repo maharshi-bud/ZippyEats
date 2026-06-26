@@ -11,8 +11,8 @@ export default function Footer() {
 
         {/* LOGO + DESC */}
         <div className="footer-col">
-              <img src={logo.src} alt="ZippyEats" className="logo-img2" />
-            
+          <img src={logo.src} alt="ZippyEats" className="logo-img2" />
+
           <h2 className="footer-logo">ZippyEats</h2>
           <p className="footer-text">
             Fast delivery. Great food. Anytime, anywhere.

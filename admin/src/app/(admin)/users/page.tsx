@@ -1,11 +1,141 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import api from "../../../lib/api";
-import Card from "../../../components/ui/Card";
 import Loader from "../../../components/ui/Loader";
 import PermissionGuard from "../../../components/PermissionGuard";
+import CustomSelect from "../../../components/ui/CustomSelect";
+import type { AxiosError } from "axios";
+import gsap from "gsap";
+
+type ApiErrorBody = {
+  message?: string;
+};
+
 const safe = (v: any) => Number(v) || 0;
+
+// ==========================================
+// SHARED STYLES & COMPONENTS
+// ==========================================
+
+type StatCardProps = {
+  title: string;
+  value: number;
+  subtitle: string;
+  accent: "emerald" | "cyan" | "amber" | "red" | "violet" | "blue";
+  icon: ReactNode;
+  startCounter?: boolean;
+  prefix?: string;
+};
+
+const panelClass =
+  "users-reveal rounded-2xl border border-white/70 bg-white/70 shadow-[0_0_34px_rgba(15,23,42,0.08),0_16px_45px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-all duration-300";
+
+const inputClass =
+  "rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500";
+
+const accentClasses = {
+  emerald: {
+    icon: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    bar: "bg-emerald-500",
+    pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  cyan: {
+    icon: "bg-cyan-50 text-cyan-700 ring-cyan-200",
+    bar: "bg-cyan-500",
+    pill: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  },
+  amber: {
+    icon: "bg-amber-50 text-amber-700 ring-amber-200",
+    bar: "bg-amber-500",
+    pill: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  red: {
+    icon: "bg-red-50 text-red-700 ring-red-200",
+    bar: "bg-red-500",
+    pill: "bg-red-50 text-red-700 border-red-200",
+  },
+  violet: {
+    icon: "bg-violet-50 text-violet-700 ring-violet-200",
+    bar: "bg-violet-500",
+    pill: "bg-violet-50 text-violet-700 border-violet-200",
+  },
+  blue: {
+    icon: "bg-blue-50 text-blue-700 ring-blue-200",
+    bar: "bg-blue-500",
+    pill: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+};
+
+function MetricIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function StatCard({ title, value, subtitle, accent, icon, startCounter = false, prefix = "" }: StatCardProps) {
+  const tone = accentClasses[accent] || accentClasses.emerald;
+  const [displayValue, setDisplayValue] = useState(0);
+  
+  useEffect(() => {
+    if (!startCounter) {
+      setDisplayValue(0);
+      return;
+    }
+
+    const counter = { current: 0 };
+    const tween = gsap.to(counter, {
+      current: value || 0,
+      duration: 0.75,
+      ease: "power3.out",
+      onUpdate: () => setDisplayValue(Math.round(counter.current)),
+    });
+
+    return () => {
+      tween.kill();
+    };
+  }, [value, startCounter]);
+
+  return (
+    <div className="users-reveal group relative overflow-hidden rounded-2xl border border-white/70 bg-white/75 p-5 pl-6 shadow-[0_0_34px_rgba(15,23,42,0.08),0_16px_45px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-colors duration-200 hover:border-white hover:bg-white/85">
+      <div className={`absolute left-0 top-5 bottom-5 w-1 rounded-r-full ${tone.bar}`} />
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+            {title}
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 tabular-nums">
+            {prefix}{displayValue.toLocaleString("en-IN")}
+          </h2>
+        </div>
+
+        <div className={`grid h-10 w-10 place-items-center rounded-xl ring-1 ${tone.icon}`}>
+          {icon}
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">{subtitle}</p>
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${tone.pill}`}>
+          Live
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function UsersPage() {
   const [stats, setStats] = useState<any>(null);
@@ -17,6 +147,13 @@ export default function UsersPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [countersReady, setCountersReady] = useState(false);
+  
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState("1");
+
+  const pageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,134 +170,335 @@ export default function UsersPage() {
 
         setStats(statsRes.data);
         setUsers(usersRes.data || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load users");
+      } catch (err: unknown) {
+        const apiError = err as AxiosError<ApiErrorBody>;
+        setError(apiError.response?.data?.message || "Failed to load users");
       } finally {
         setLoading(false);
+        setCountersReady(true);
       }
     };
 
     fetchData();
   }, [sortBy, order, activeFilter]);
 
-  // ✅ HANDLE STATES FIRST
-  if (loading)
+  useEffect(() => {
+    if (!loading && pageRef.current) {
+      const ctx = gsap.context(() => {
+        gsap.fromTo(
+          ".users-reveal",
+          { opacity: 0, y: 15, scale: 0.98 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: "power2.out",
+          }
+        );
+      }, pageRef);
+      return () => ctx.revert();
+    }
+  }, [loading]);
+
+  const limit = 10;
+  const totalPages = Math.max(1, Math.ceil(users.length / limit));
+  const paginatedUsers = users.slice((page - 1) * limit, page * limit);
+
+  const goToPage = () => {
+    const p = parseInt(pageInput, 10);
+    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+      setPage(p);
+    } else {
+      setPageInput(page.toString());
+    }
+  };
+
+  if (loading && !stats)
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Loader />
       </div>
     );
 
-  if (error)
-    return (
-      <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
-        {error}
-      </div>
-    );
-
-  if (!stats) return null;
-
   return (
-        <PermissionGuard resource="users" operation="view">
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-zinc-900">Users</h1>
+    <PermissionGuard resource="users" operation="view">
+      <div ref={pageRef} className="mx-auto max-w-7xl space-y-6 pb-20 p-2 md:p-4">
+        
+        {/* HEADER */}
+        <section className={`${panelClass} p-5 md:p-8 relative z-30`}>
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-xl">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                Users Management
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                Monitor and manage all customer accounts on your platform.
+              </p>
+            </div>
 
-      {/* CARDS */}
-      <div className="grid grid-cols-3 gap-6">
-        <Card title="Total Users" value={safe(stats.totalUsers)} />
-        <Card title="New (7 days)" value={safe(stats.newUsers)} />
-        <Card title="Avg Ticket" value={`₹${safe(stats.avgTicket)}`} />
-      </div>
+            <div className="rounded-2xl border border-emerald-200/80 bg-white/90 px-5 py-4 text-left shadow-sm ring-1 ring-emerald-100/70 md:text-right">
+              <div className="mb-1 flex items-center gap-2 md:justify-end">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700/80">
+                  Showing
+                </p>
+              </div>
+              <p className="text-sm font-semibold text-slate-900">
+                {users.length.toLocaleString("en-IN")} matching users
+              </p>
+            </div>
+          </div>
+        </section>
 
-      {/* FILTERS */}
-      <div className="flex gap-4">
-        <select
-        //   className="border px-3 py-2 rounded-lg"
-          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
-
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="totalSpent">Total Spent</option>
-          <option value="avgTicket">Avg Ticket</option>
-        </select>
-
-        <select
-        //   className="border px-3 py-2 rounded-lg"
-          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
-
-          onChange={(e) => setOrder(e.target.value)}
-        >
-          <option value="desc">High → Low</option>
-          <option value="asc">Low → High</option>
-        </select>
-
-        <select
-          className="border border-zinc-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400"
-
-        //   className="border px-3 py-2 rounded-lg"
-          onChange={(e) => setActiveFilter(e.target.value)}
-        >
-          <option value="">All</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-        </select>
-      </div>
-
-      {/* TABLE */}
-      <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-50 text-zinc-600">
-            <tr>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-left">Email</th>
-              <th className="p-3 text-left">Total Spent</th>
-              <th className="p-3 text-left">Avg Ticket</th>
-              <th className="p-3 text-left">Fav Restaurant</th>
-              <th className="p-3 text-left">Fav Dish</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {users.map((u) => (
-              <tr key={u._id} className="border-t hover:bg-emerald-50">
-                <td className="p-3 font-medium">{u.name}</td>
-
-                <td className="p-3 text-zinc-500">{u.email}</td>
-
-                <td className="p-3 text-emerald-600 font-semibold">
-                  ₹{safe(u.totalSpent)}
-                </td>
-
-                <td className="p-3">₹{safe(u.avgTicket)}</td>
-
-                <td className="p-3">{u.favRestaurant || "-"}</td>
-
-                <td className="p-3">{u.favDish || "-"}</td>
-
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      u.isActive
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {u.isActive ? "Active" : "Inactive"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {users.length === 0 && (
-          <div className="p-6 text-center text-zinc-500">
-            No users found
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
           </div>
         )}
+
+        {/* STATS */}
+        {stats && (
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-3 relative z-20">
+            <StatCard
+              title="Total Users"
+              value={safe(stats.totalUsers)}
+              subtitle="All registered accounts"
+              accent="emerald"
+              startCounter={countersReady}
+              icon={
+                <MetricIcon>
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </MetricIcon>
+              }
+            />
+
+            <StatCard
+              title="New Users"
+              value={safe(stats.newUsers)}
+              subtitle="Joined in last 7 days"
+              accent="cyan"
+              startCounter={countersReady}
+              icon={
+                <MetricIcon>
+                  <path d="M12 20v-8" />
+                  <path d="M8 16h8" />
+                  <circle cx="12" cy="12" r="10" />
+                </MetricIcon>
+              }
+            />
+
+            <StatCard
+              title="Average Ticket"
+              value={safe(stats.avgTicket)}
+              prefix="₹"
+              subtitle="Avg spent per user"
+              accent="amber"
+              startCounter={countersReady}
+              icon={
+                <MetricIcon>
+                  <path d="M6 3h12" />
+                  <path d="M6 8h12" />
+                  <path d="m6 13 8.5 8" />
+                  <path d="M6 13h3" />
+                  <path d="M9 13c6.667 0 6.667-10 0-10" />
+                </MetricIcon>
+              }
+            />
+          </section>
+        )}
+
+        {/* FILTERS */}
+        <section className={`${panelClass} p-5 relative z-10`}>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Filters & Sort
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Filter users by status, or sort by spending habits.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <CustomSelect
+                className="min-w-[160px]"
+                value={sortBy}
+                onChange={(val) => {
+                  setSortBy(val);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "totalSpent", label: "Sort by Total Spent" },
+                  { value: "avgTicket", label: "Sort by Avg Ticket" },
+                ]}
+              />
+
+              <CustomSelect
+                className="min-w-[150px]"
+                value={order}
+                onChange={(val) => {
+                  setOrder(val);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "desc", label: "High → Low" },
+                  { value: "asc", label: "Low → High" },
+                ]}
+              />
+
+              <CustomSelect
+                className="min-w-[140px]"
+                value={activeFilter}
+                onChange={(val) => {
+                  setActiveFilter(val);
+                  setPage(1);
+                }}
+                placeholder="All Status"
+                options={[
+                  { value: "", label: "All Status" },
+                  { value: "true", label: "Active Only" },
+                  { value: "false", label: "Inactive Only" },
+                ]}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* TABLE */}
+        <section className={`${panelClass} overflow-hidden`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50/50 text-xs uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">User</th>
+                  <th className="px-6 py-4 font-semibold">Contact</th>
+                  <th className="px-6 py-4 font-semibold text-right">Total Spent</th>
+                  <th className="px-6 py-4 font-semibold text-right">Avg Ticket</th>
+                  <th className="px-6 py-4 font-semibold">Favorites</th>
+                  <th className="px-6 py-4 font-semibold text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedUsers.map((u) => (
+                  <tr
+                    key={u._id}
+                    className="group transition-colors duration-200 hover:bg-slate-50/70"
+                  >
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-slate-900">{u.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">ID: {u._id.slice(-6)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-slate-600">{u.email}</p>
+                      {u.phone && <p className="text-xs text-slate-500 mt-0.5">{u.phone}</p>}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700">
+                        ₹{safe(u.totalSpent).toLocaleString("en-IN")}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-700">
+                      ₹{safe(u.avgTicket).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {u.favRestaurant || <span className="text-slate-400">—</span>}
+                      {u.favDish && <div className="text-xs text-slate-400 mt-0.5">{u.favDish}</div>}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${
+                          u.isActive
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-red-200 bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {u.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+
+                {users.length === 0 && !loading && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16 text-center">
+                      <p className="text-base font-medium text-slate-600">No users found.</p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Try adjusting your filters to find what you're looking for.
+                      </p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {loading && users.length > 0 && (
+             <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-[2px]">
+               <Loader />
+             </div>
+          )}
+        </section>
+
+        {/* PAGINATION */}
+        <section className={`${panelClass} p-4`}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm font-medium text-slate-500">
+              Page <span className="font-semibold text-slate-900">{page}</span> of{" "}
+              <span className="font-semibold text-slate-900">{totalPages}</span>
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                disabled={page === 1}
+                onClick={() => {
+                  setPage((prev) => Math.max(1, prev - 1));
+                  setPageInput(String(Math.max(1, page - 1)));
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Previous
+              </button>
+
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
+                <span className="pl-1 text-xs font-semibold text-slate-400">Go to</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  value={pageInput}
+                  onChange={(event) => setPageInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") goToPage();
+                  }}
+                  className="h-8 w-16 rounded-lg border border-slate-200 px-2 text-center text-sm font-semibold text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={goToPage}
+                  className="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  Go
+                </button>
+              </div>
+
+              <button
+                disabled={page >= totalPages}
+                onClick={() => {
+                  setPage((prev) => Math.min(totalPages, prev + 1));
+                  setPageInput(String(Math.min(totalPages, page + 1)));
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
     </PermissionGuard>
   );
 }

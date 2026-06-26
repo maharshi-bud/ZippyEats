@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import CustomSelect from "../../../components/ui/CustomSelect";
 import type { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -521,7 +523,7 @@ export default function OrdersPage() {
           />
         </section>
 
-        <section className={`${panelClass} p-5`}>
+        <section className={`${panelClass} p-5 relative z-20`}>
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
@@ -568,36 +570,38 @@ export default function OrdersPage() {
                 </button>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <select
-                    className={inputClass}
+                  <CustomSelect
+                    className="min-w-[200px]"
                     value={sortBy}
-                    onChange={(event) => {
+                    onChange={(val) => {
                       setPage(1);
-                      setSortBy(event.target.value);
+                      setSortBy(val);
                     }}
-                  >
-                    <option value="createdAt">Sort by created date</option>
-                    <option value="total_amount">Sort by total amount</option>
-                    <option value="subtotal">Sort by subtotal</option>
-                    <option value="delivery_fee">Sort by delivery fee</option>
-                    <option value="eta">Sort by ETA</option>
-                    <option value="status">Sort by status</option>
-                    <option value="payment_status">Sort by payment status</option>
-                    <option value="coins_used">Sort by ZipCoins used</option>
-                    <option value="coupon_discount">Sort by coupon discount</option>
-                  </select>
+                    options={[
+                      { value: "createdAt", label: "Sort by created date" },
+                      { value: "total_amount", label: "Sort by total amount" },
+                      { value: "subtotal", label: "Sort by subtotal" },
+                      { value: "delivery_fee", label: "Sort by delivery fee" },
+                      { value: "eta", label: "Sort by ETA" },
+                      { value: "status", label: "Sort by status" },
+                      { value: "payment_status", label: "Sort by payment status" },
+                      { value: "coins_used", label: "Sort by ZipCoins used" },
+                      { value: "coupon_discount", label: "Sort by coupon discount" },
+                    ]}
+                  />
 
-                  <select
-                    className={inputClass}
+                  <CustomSelect
+                    className="min-w-[150px]"
                     value={sort}
-                    onChange={(event) => {
+                    onChange={(val) => {
                       setPage(1);
-                      setSort(event.target.value);
+                      setSort(val);
                     }}
-                  >
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>
-                  </select>
+                    options={[
+                      { value: "desc", label: "Descending" },
+                      { value: "asc", label: "Ascending" },
+                    ]}
+                  />
 
                   <button
                     type="button"
@@ -629,28 +633,29 @@ export default function OrdersPage() {
               {/* Collapsible Advanced Filters Section */}
               <div
                 ref={advancedFiltersRef}
-                className="overflow-hidden transition-all duration-300 ease-in-out px-1 pb-1 -mx-1 -mb-1"
+                className={`transition-all duration-300 ease-in-out px-1 pb-1 -mx-1 -mb-1 ${showAdvanced ? "overflow-visible" : "overflow-hidden"}`}
                 style={{
-                  maxHeight: showAdvanced ? "600px" : "0px",
+                  maxHeight: showAdvanced ? "1000px" : "0px",
                   opacity: showAdvanced ? 1 : 0,
                   marginTop: showAdvanced ? "0.5rem" : "0px",
                 }}
               >
                 <div className="border-t border-slate-100/80 pt-4 mt-2">
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <select
-                      className={inputClass}
+                    <CustomSelect
                       value={status}
-                      onChange={(event) => setStatus(event.target.value)}
-                    >
-                      <option value="">All Status</option>
-                      <option value="placed">Placed</option>
-                      <option value="accepted">Accepted</option>
-                      <option value="preparing">Preparing</option>
-                      <option value="out_for_delivery">Out for delivery</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                      onChange={(val) => setStatus(val)}
+                      placeholder="All Status"
+                      options={[
+                        { value: "", label: "All Status" },
+                        { value: "placed", label: "Placed" },
+                        { value: "accepted", label: "Accepted" },
+                        { value: "preparing", label: "Preparing" },
+                        { value: "out_for_delivery", label: "Out for delivery" },
+                        { value: "delivered", label: "Delivered" },
+                        { value: "cancelled", label: "Cancelled" },
+                      ]}
+                    />
 
                     <input
                       value={city}
@@ -659,47 +664,51 @@ export default function OrdersPage() {
                       className={inputClass}
                     />
 
-                    <select
-                      className={inputClass}
+                    <CustomSelect
                       value={paymentMethod}
-                      onChange={(event) => setPaymentMethod(event.target.value)}
-                    >
-                      <option value="">All Payment Methods</option>
-                      <option value="cod">COD</option>
-                      <option value="upi">UPI</option>
-                      <option value="card">Card</option>
-                    </select>
+                      onChange={(val) => setPaymentMethod(val)}
+                      placeholder="All Payment Methods"
+                      options={[
+                        { value: "", label: "All Payment Methods" },
+                        { value: "cod", label: "COD" },
+                        { value: "upi", label: "UPI" },
+                        { value: "card", label: "Card" },
+                      ]}
+                    />
 
-                    <select
-                      className={inputClass}
+                    <CustomSelect
                       value={paymentStatus}
-                      onChange={(event) => setPaymentStatus(event.target.value)}
-                    >
-                      <option value="">All Payment Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="paid">Paid</option>
-                      <option value="failed">Failed</option>
-                    </select>
+                      onChange={(val) => setPaymentStatus(val)}
+                      placeholder="All Payment Status"
+                      options={[
+                        { value: "", label: "All Payment Status" },
+                        { value: "pending", label: "Pending" },
+                        { value: "paid", label: "Paid" },
+                        { value: "failed", label: "Failed" },
+                      ]}
+                    />
 
-                    <select
-                      className={inputClass}
+                    <CustomSelect
                       value={hasCoupon}
-                      onChange={(event) => setHasCoupon(event.target.value)}
-                    >
-                      <option value="">Coupon: Any</option>
-                      <option value="true">With coupon</option>
-                      <option value="false">No coupon</option>
-                    </select>
+                      onChange={(val) => setHasCoupon(val)}
+                      placeholder="Coupon: Any"
+                      options={[
+                        { value: "", label: "Coupon: Any" },
+                        { value: "true", label: "With coupon" },
+                        { value: "false", label: "No coupon" },
+                      ]}
+                    />
 
-                    <select
-                      className={inputClass}
+                    <CustomSelect
                       value={hasCoins}
-                      onChange={(event) => setHasCoins(event.target.value)}
-                    >
-                      <option value="">ZipCoins: Any</option>
-                      <option value="true">Used ZipCoins</option>
-                      <option value="false">No ZipCoins</option>
-                    </select>
+                      onChange={(val) => setHasCoins(val)}
+                      placeholder="ZipCoins: Any"
+                      options={[
+                        { value: "", label: "ZipCoins: Any" },
+                        { value: "true", label: "Used ZipCoins" },
+                        { value: "false", label: "No ZipCoins" },
+                      ]}
+                    />
 
                     <input
                       type="number"

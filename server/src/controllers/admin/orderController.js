@@ -259,3 +259,71 @@ export const updateOrderStatus = async (req, res) => {
 
   }
 };
+
+export const updateOrderDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      status,
+      payment_status,
+      delivery_address,
+      eta,
+      cancellation_reason,
+      instructions,
+      delivery_fee,
+      coupon_discount,
+    } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // 1. Update basic scalar fields
+    if (payment_status) order.payment_status = payment_status;
+    if (eta) order.eta = new Date(eta);
+    if (cancellation_reason !== undefined) order.cancellation_reason = cancellation_reason;
+    if (instructions !== undefined) order.instructions = instructions;
+
+    // 2. Update numeric fields safely
+    if (delivery_fee !== undefined) order.delivery_fee = Number(delivery_fee);
+    if (coupon_discount !== undefined) order.coupon_discount = Number(coupon_discount);
+
+    // 3. Update delivery address (merge objects)
+    if (delivery_address) {
+      order.delivery_address = {
+        ...order.delivery_address,
+        ...delivery_address,
+      };
+    }
+
+    // 4. Recalculate total amount if financials changed
+    if (delivery_fee !== undefined || coupon_discount !== undefined) {
+      order.total_amount =
+        order.subtotal +
+        order.delivery_fee -
+        order.coupon_discount -
+        (order.coins_discount || 0) +
+        (order.tax_amount || 0);
+    }
+
+    order._updatedByAdmin = true;
+    await order.save();
+
+    // 5. Handle Status Update via the Engine (if status changed)
+    let finalOrder = order;
+    if (status && status !== order.status) {
+      finalOrder = await updateScheduledOrderStatus(id, status, "admin");
+    }
+
+    res.json({
+      success: true,
+      order: finalOrder,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Failed to update order details",
+    });
+  }
+};
